@@ -1,0 +1,27 @@
+@import 'settings/variables'
+@import 'layouts/header'
+@import 'layouts/footer'
+@import 'pages/index'
+@import 'pages/login'
+@import 'pages/admin'
+
+*
+  padding: 0
+  margin: 0
+  box-sizing: border-box
+
+*, *:before, *:after
+    box-sizing: inherit
+
+html
+    box-sizing: border-box
+
+html, body
+    height: 100%
+
+body
+    background-color: black
+    padding: 1rem
+    // overflow: hidden Aqui se oculta el scroll, usar con cuidado para el responsive
+    color: white
+    font-family: 'Poppins', sans-serif

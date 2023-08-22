@@ -1,0 +1,59 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}
+Index
+{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<h1>Bienvenido a Ciber Tec</h1>
+<p>This is the homepage</p>
+<div class="wrapper">
+    <div class="cards">
+
+        {% for game in games %}
+        <div class=" card [ is-collapsed ] ">
+            <div class="card__inner [ js-expander ]">
+                <span>{{ game.displayName }}</span><br>
+                <img src="{% static 'assets/games-cards/futbolito.jpg' %}" alt="Futbolito 1">
+                <div class="remaining__time">
+                    <p id="game__countdown__{{ forloop.counter }}"> No data</p>
+                </div>
+            </div>
+            <div class="card__expander">
+                <i class="fa fa-close [ js-collapser ]"></i>
+                <div class="collapsed__students">
+                    <ul>
+                        {% for player in game.plays_data %}
+                        <div class="student">
+                            <li>{{ player.student_id }}</li>
+                            <form class="end-play-form" id="end-play-form-{{ player.student_id }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="student_id" value="{{ player.student_id }}">
+                                <button type="submit">End Play</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </ul>
+                    <form class="add-student-game" id="add-student-game-{{ game.id }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="game_id" value="{{ game.id }}">
+                        <input type="text" name="student_id" placeholder="Student ID">
+                        <button type="submit">Add Student</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'js/cards.js' %}"></script>
+{% endblock %}
