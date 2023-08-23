@@ -1,0 +1,1 @@
+# App detailed resume and guide
