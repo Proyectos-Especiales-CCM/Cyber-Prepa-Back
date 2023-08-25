@@ -8,7 +8,6 @@ class Student(models.Model):                                                    
     id = models.CharField(primary_key=True, max_length=9)                                       # Matricula
     name = models.CharField(max_length=100, blank=True)                                         # Nombre, opcional
     hash = models.CharField(max_length=1000, null=False, blank=False)                           # Hash de biometricos
-    sanctioned = models.BooleanField(default=False)                                             # Booleano de si esta sancionado
 
 class Plays(models.Model):                                                                      # Modelo de juegos por semana
     student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)
@@ -27,7 +26,7 @@ class Sanction(models.Model):
     cause = models.CharField(max_length=255, null=False, blank=False)                           # Causa de la sancion, escrita por el usuario
     play = models.ForeignKey(Plays, on_delete=models.PROTECT)
     student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)
-    start_time = models.DateTimeField(null=False, blank=False)                                  # Fecha y hora en que se inicio la sancion
+    start_time = models.DateTimeField(auto_now_add=True)                                              # Fecha y hora en que jugó
     end_time = models.DateTimeField(null=False, blank=False)                                    # Fecha y hora en que se termina la sancion
 
 class Log(models.Model):
