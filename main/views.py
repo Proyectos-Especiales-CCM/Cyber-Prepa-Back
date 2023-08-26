@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views import View
@@ -56,6 +56,6 @@ class Login(View):
         else:
             return render(request, 'main/login.html', context={'error_message': "Invalid username or password"})
         
-def logout(request):
+def logout_(request):
     logout(request)
     return redirect('/')

@@ -23,7 +23,7 @@ urlpatterns = [
     path('', Index.as_view(), name='index'),
     path('regulations', Regulations.as_view(), name='regulations'),
     path('login', Login.as_view(), name='login'),
-    path('logout', logout, name='logout'),
+    path('logout', logout_, name='logout'),
     path('rental/', include('rental.urls')),
     path('api/', include('api.urls'))
 ]
