@@ -12,6 +12,7 @@
                 <!-- If the user is authenticated, and is an admin: Shows the admin CRUD page-->
                 <li><a class="cool-hover" href="{% url 'admin' %}">Admin</a></li>
                 {% endif %}
+                <li><a class="cool-hover" href="{% url 'logout' %}">Logout</a></li>
                 {% else %}
                 <li><a class="cool-hover" href="{% url 'login' %}">Login</a></li>
                 {% endif %}
