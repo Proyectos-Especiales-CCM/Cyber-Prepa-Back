@@ -24,6 +24,7 @@ Index
                     <p id="game__countdown__{{ forloop.counter }}"> No data</p>
                 </div>
             </div>
+            {% if user.is_authenticated %}
             <div class="card__expander">
                 <i class="fa fa-close [ js-collapser ]"></i>
                 <div class="collapsed__students">
@@ -47,6 +48,7 @@ Index
                     </form>
                 </div>
             </div>
+            {% endif %}
         </div>
         {% endfor %}
 
@@ -56,4 +58,7 @@ Index
 
 {% block js %}
 <script src="{% static 'js/cards.js' %}"></script>
+{% if user.is_authenticated %}
+<script src="{% static 'js/auth_cards.js' %}"></script>
+{% endif %}
 {% endblock %}
