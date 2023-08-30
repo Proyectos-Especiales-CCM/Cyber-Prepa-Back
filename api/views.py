@@ -37,3 +37,14 @@ def add_student_to_game(request):
             return JsonResponse({'status': 'success'})
         except Game.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Game not found'})
+
+def add_student_to_sanctioned(request):
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        cause = request.POST.get('cause')
+        try:
+            student = Student.objects.get(id=student_id)
+            sanction = Sanction.objects.create(cause=cause, student=student_id)
+            return JsonResponse({'status': 'success'})
+        except Student.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Student not found'})
