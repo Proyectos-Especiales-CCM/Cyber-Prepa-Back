@@ -24,9 +24,9 @@ class Game(models.Model):
 
 class Sanction(models.Model):
     cause = models.CharField(max_length=255, null=False, blank=False)                           # Causa de la sancion, escrita por el usuario
-    play = models.ForeignKey(Plays, on_delete=models.PROTECT)
-    student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)
-    start_time = models.DateTimeField(auto_now_add=True)                                              # Fecha y hora en que jugó
+    play = models.ForeignKey(Plays, on_delete=models.PROTECT, null=True, blank=True)            # Relacion a la play en la que se dio la sancion, puede ser null/blank
+    student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)     # Relacion al estudiante que esta siendo sancionado
+    start_time = models.DateTimeField(auto_now_add=True)                                        # Fecha y hora en que se inicia la sancion
     end_time = models.DateTimeField(null=False, blank=False)                                    # Fecha y hora en que se termina la sancion
 
 class Log(models.Model):
