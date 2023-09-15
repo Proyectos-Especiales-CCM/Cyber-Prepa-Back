@@ -4,7 +4,7 @@ from .views import *
 
 # Functions
 def _is_admin(user):
-    return user.groups.filter(name='Administrator').exists()
+    return user.groups.filter(name='admin').exists()
 
 
 urlpatterns = [
