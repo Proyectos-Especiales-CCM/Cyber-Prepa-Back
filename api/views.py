@@ -1,7 +1,8 @@
 # Views (Logic) for API calls.
 from django.http import JsonResponse
-from rental.models import Game, Plays, Student
+from rental.models import Game, Plays, Student, Sanction
 
+# Index calls
 def get_start_times(request):
     try:
         games = Game.objects.filter(show=True).values('start_time')
@@ -48,3 +49,14 @@ def add_student_to_sanctioned(request):
             return JsonResponse({'status': 'success'})
         except Student.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Student not found'})
+
+# Admin CRUD datatables calls
+def get_plays_list(request):
+    if request.method == 'GET':
+        plays = (
+            Plays.objects
+            .select_related('game')
+            .values('id', 'student_id', 'game__name', 'ended', 'time')
+        )
+        data = {'plays': list(plays)}
+        return JsonResponse(data, safe=False)

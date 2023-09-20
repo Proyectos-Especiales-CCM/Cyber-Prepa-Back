@@ -42,13 +42,10 @@ async function initCountdowns(gameStartTimes) {
 
 async function fetchGameStartTimes() {
     let currentIP = window.location.hostname;
-    console.log(currentIP)
     if (currentIP === "127.0.0.1" || currentIP === "localhost") {
         currentIP = currentIP + ":8000";
     }
-    console.log(currentIP)
     var file = "http://" + currentIP + "/api/get-games-start-time";
-    console.log(file)
     let response = await fetch(file);
     let obj = await response.json();
 

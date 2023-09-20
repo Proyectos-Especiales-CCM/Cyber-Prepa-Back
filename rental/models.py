@@ -10,8 +10,8 @@ class Student(models.Model):                                                    
     hash = models.CharField(max_length=1000, null=False, blank=False)                           # Hash de biometricos
 
 class Plays(models.Model):                                                                      # Modelo de juegos por semana
-    student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)
-    game = models.ForeignKey('Game', on_delete=models.PROTECT, null=False, blank=False)
+    student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)     # Relacion al estudiante que jugo
+    game = models.ForeignKey('Game', on_delete=models.PROTECT, null=False, blank=False)         # Relacion al juego que se jugo
     ended = models.BooleanField(default=False)                                                  # Booleano de si terminó su juego y lo regresó
     time = models.DateTimeField(auto_now_add=True)                                              # Fecha y hora en que jugó
 
