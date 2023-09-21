@@ -1,6 +1,6 @@
 # Views (Logic) for API calls.
 from django.http import JsonResponse
-from rental.models import Game, Plays, Student
+from rental.models import Game, Plays, Student, Sanction
 
 def get_start_times(request):
     try:
@@ -45,6 +45,7 @@ def add_student_to_sanctioned(request):
         try:
             student = Student.objects.get(id=student_id)
             sanction = Sanction.objects.create(cause=cause, student=student_id)
+            sanction.save()
             return JsonResponse({'status': 'success'})
         except Student.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Student not found'})
