@@ -21,6 +21,7 @@ class Game(models.Model):
     available = models.BooleanField(default=True)                                               # Booleano de si esta disponible para jugar (No hay ningun estudiante jugando)
     show = models.BooleanField(default=True)                                                    # Booleano de si se muestra en la lista de juegos (Todavía se puede jugar o no)
     start_time = models.DateTimeField(null=True, blank=True)                                    # Fecha y hora en que el primer estudiante comenzó a jugar
+    file_route = models.CharField(default='assets/games_cards/game.png', max_length=255)        # Ruta de la imagen del juego
 
 class Sanction(models.Model):
     cause = models.CharField(max_length=255, null=False, blank=False)                           # Causa de la sancion, escrita por el usuario
