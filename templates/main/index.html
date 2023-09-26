@@ -18,7 +18,7 @@ Index
         <div class=" card [ is-collapsed ] ">
             <div class="card__inner [ js-expander ]">
                 <span>{{ game.displayName }}</span><br>
-                <img src="{% static 'assets/games-cards/futbolito.jpg' %}" alt="Futbolito 1">
+                <img class="game__image" src="{% static game.file_route %}" alt="Futbolito 1">
                 <div class="remaining__time">
                     <p id="game__countdown__{{ forloop.counter }}"> No data</p>
                 </div>
