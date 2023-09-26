@@ -11,7 +11,6 @@ Index
 
 {% block content %}
 <h1>Bienvenido a Ciber Tec</h1>
-<p>This is the homepage</p>
 <div class="wrapper">
     <div class="cards">
 
@@ -19,7 +18,7 @@ Index
         <div class=" card [ is-collapsed ] ">
             <div class="card__inner [ js-expander ]">
                 <span>{{ game.displayName }}</span><br>
-                <img src="{% static 'assets/games-cards/futbolito.jpg' %}" alt="Futbolito 1">
+                <img class="game__image" src="{% static game.file_route %}" alt="Futbolito 1">
                 <div class="remaining__time">
                     <p id="game__countdown__{{ forloop.counter }}"> No data</p>
                 </div>
@@ -53,6 +52,9 @@ Index
         {% endfor %}
 
     </div>
+</div>
+<div id="error-alert" class="alert alert-danger d-none" role="alert">
+    <!-- Error messages will be inserted here -->
 </div>
 {% endblock %}
 

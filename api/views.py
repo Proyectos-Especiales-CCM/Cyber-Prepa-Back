@@ -1,5 +1,6 @@
 # Views (Logic) for API calls.
 from django.http import JsonResponse
+from datetime import timedelta
 from rental.models import Game, Plays, Student, Sanction
 
 # Index calls
@@ -8,9 +9,22 @@ def get_start_times(request):
         games = Game.objects.filter(show=True).values('start_time')
         data = []
         for game in games:
-            formatted_time = game['start_time'].strftime('%b %d, %Y %H:%M:%S')
+            original_time = game['start_time']
+            subtracted_time = original_time - timedelta(hours=5, minutes=5)
+            formatted_time = subtracted_time.strftime('%b %d, %Y %H:%M:%S')
             data.append({'time': formatted_time})
             print(formatted_time)
+        return JsonResponse(data, safe=False)
+    except:
+        return JsonResponse({'status': 'error'})
+    
+def get_available_games(request):
+    try:
+        games = Game.objects.filter(show=True).values('available')
+        data = []
+        for game in games:
+            data.append({'available': game['available']})
+        print(data)
         return JsonResponse(data, safe=False)
     except:
         return JsonResponse({'status': 'error'})
@@ -32,12 +46,12 @@ def add_student_to_game(request):
         game_id = request.POST.get('game_id')
         try:
             game = Game.objects.get(id=game_id)
-            student = Student.objects.get(id=student_id)
+            student, created = Student.objects.get_or_create(id=student_id)
             play = Plays.objects.create(game=game, student=student)
             play.save()
-            return JsonResponse({'status': 'success'})
-        except Game.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Game not found'})
+            return JsonResponse({'status': 'success', 'message': 'Student added to the game'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
 
 def add_student_to_sanctioned(request):
     if request.method == 'POST':
@@ -46,6 +60,7 @@ def add_student_to_sanctioned(request):
         try:
             student = Student.objects.get(id=student_id)
             sanction = Sanction.objects.create(cause=cause, student=student_id)
+            sanction.save()
             return JsonResponse({'status': 'success'})
         except Student.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Student not found'})
