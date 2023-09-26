@@ -18,7 +18,7 @@ class Plays(models.Model):                                                      
 class Game(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, unique=True)               # Nombre del juego, unico, para identificarlo en cualquier lugar y momento
     displayName = models.CharField(max_length=100, null=False, blank=False)                     # Nombre que se muestra en la lista de juegos
-    available = models.BooleanField(default=True)
+    available = models.BooleanField(default=True)                                               # Booleano de si esta disponible para jugar (No hay ningun estudiante jugando)
     show = models.BooleanField(default=True)                                                    # Booleano de si se muestra en la lista de juegos (Todavía se puede jugar o no)
     start_time = models.DateTimeField(null=True, blank=True)                                    # Fecha y hora en que el primer estudiante comenzó a jugar
 
@@ -37,8 +37,14 @@ class Log(models.Model):
 @receiver(post_save, sender=Plays)
 def update_game_start_time(sender, instance, **kwargs):
     # Check if there are no other ended plays for the same game
-    other_ended_plays = Plays.objects.filter(game=instance.game, ended=False).exclude(id=instance.id)
-    if not other_ended_plays.exists():
+    other_ended_plays = Plays.objects.filter(game=instance.game, ended=False).exclude(id=instance.id).exists()
+    print(f'Play: {instance.ended}; Other ended plays: {other_ended_plays}')
+    print(f'{not other_ended_plays and instance.ended}')
+    if not other_ended_plays and instance.ended:
+        instance.game.available = True
+        instance.game.save()
+    elif not other_ended_plays:
         # Update the related game's 'start_time' field with the current play's 'time'
         instance.game.start_time = instance.time
+        instance.game.available = False # Make it unavailable since there is a student playing
         instance.game.save()  # Save the related game with the updated 'start_time'
