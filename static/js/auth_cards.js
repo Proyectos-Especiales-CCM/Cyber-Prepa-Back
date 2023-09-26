@@ -70,6 +70,8 @@ $(document).ready(function () {
             beforeSend: function (xhr, settings) {
                 // Disable the submit button to prevent multiple submissions
                 form.find("button[type=submit]").prop("disabled", true);
+                // Hide the error alert before sending the request
+                $("#error-alert").addClass("d-none");
             },
             success: function (data) {
                 // Handle successful response
@@ -81,6 +83,10 @@ $(document).ready(function () {
                     studentList.append('<div class="student"><li>' + studentId + '</li></div>');
                 } else {
                     console.error("Error: " + data.message);
+
+                    // Display the error message in the alert
+                    $("#error-alert").text(data.message);
+                    $("#error-alert").removeClass("d-none");
                 }
             },
             error: function (xhr, status, error) {
