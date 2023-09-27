@@ -11,39 +11,23 @@ Login
 {% endblock %}
 
 {% block content %}
-    <script src="https://kit.fontawesome.com/ab00d86059.js" crossorigin="anonymous"></script>
-    <div class="container-log">
-        <div class="login-container">
-            <form method="POST">
-                {% csrf_token %}
-                <h2>Welcome</h2>
-                <div class="input-div one">
-                    <div class="i">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="login-field">
-                        <h5>Username</h5>
-                        <input class="input" type="text" name="username">
-                    </div>
-                </div>
-                <div class="input-div two">
-                    <div class="i">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div class="login-field">
-                        <h5>Password</h5>
-                        <input class="input" type="password" name="password">
-                    </div>
-                </div>
-                <a class="forgot-pass" href="#">Forgot Pasword</a>
-                {% if error_message %}
-                    <p class="login-error">{{ error_message }}</p>
-                {% endif %}
-                <input class="btn" type="submit" value="Login">
-            </form>
-        </div>
+<form method="POST">
+    {% csrf_token %}
+    <h2>Bienvenido</h2>
+    <div class="login-field">
+        <h5>Usuario:</h5>
+        <input class="input" type="text" name="username">
     </div>
-    <script type="text/javascript" src="{% static 'js/login.js' %}"></script>
+    <div class="login-field">
+        <h5>Contraseña:</h5>
+        <input class="input" type="password" name="password">
+    </div>
+    <a class="forgot-pass" href="#">Forgot Pasword</a>
+    {% if error_message %}
+    <p class="login-error">{{ error_message }}</p>
+    {% endif %}
+    <input class="btn" type="submit" value="Login">
+</form>
 {% endblock %}
 
 {% block js %}
