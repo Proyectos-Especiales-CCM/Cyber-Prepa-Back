@@ -1,6 +1,6 @@
 // open and close card when clicked on card
 $cell.find('.js-expander').click(function () {
-    var $thisCell = $(this).closest('.card');
+    var $thisCell = $(this).closest('.cyber__card');
 
     if ($thisCell.hasClass('is-collapsed')) {
         $cell.removeClass('is-expanded').addClass('is-collapsed');
@@ -12,7 +12,7 @@ $cell.find('.js-expander').click(function () {
 
 // close card when click on cross
 $cell.find('.js-collapser').click(function () {
-    var $thisCell = $(this).closest('.card');
+    var $thisCell = $(this).closest('.cyber__card');
     $thisCell.removeClass('is-expanded').addClass('is-collapsed');
 });
 
