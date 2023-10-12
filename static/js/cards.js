@@ -1,4 +1,4 @@
-var $cell = $('.card');
+var $cell = $('.cyber__card');
 
 // Fetch and create Countdowns
 async function initCountdowns(gameStartTimes) {
