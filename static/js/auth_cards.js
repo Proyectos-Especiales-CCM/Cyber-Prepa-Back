@@ -80,7 +80,7 @@ $(document).ready(function () {
 
                     // Optionally, update the UI to reflect the added student
                     const studentList = form.siblings("ul");
-                    studentList.append('<div class="student"><li>' + studentId + '</li></div>');
+                    studentList.append('<div class="student draggable" draggable="true"><li>' + studentId + '</li></div>');
                 } else {
                     console.error("Error: " + data.message);
 
