@@ -18,4 +18,7 @@ urlpatterns = [
     path('get-logs-list', user_passes_test(_is_admin)(get_logs_list), name='get_log_list'),
     path('get-sanctions-list', user_passes_test(_is_admin)(get_sanctions_list), name='get_sanctions_list'),
     path('add-student-to-sanctioned', login_required(add_student_to_sanctioned), name='add_student_to_sanctioned'),
+    # Admin CRUD datatables calls
+    path('game', login_required(game), name='game'),
+    #path('upload-game-image', login_required(upload_game_image), name='upload_game_image'),
 ]

@@ -27,7 +27,7 @@ async function initCountdowns(gameStartTimes) {
             }
 
             // Display the result in the element with id="demo"
-            var id = "game__countdown__" + (index);
+            var id = "cyber__countdown__" + (index);
 
             document.getElementById(id).innerHTML = timeTextDisplay;
 

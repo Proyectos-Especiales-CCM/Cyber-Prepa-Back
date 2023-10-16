@@ -2,6 +2,8 @@
 from django.http import JsonResponse
 from datetime import timedelta
 from rental.models import Game, Plays, Student, Log, Sanction
+from django.views.decorators.http import require_http_methods
+import json
 
 # Index calls
 def get_start_times(request):
@@ -11,10 +13,14 @@ def get_start_times(request):
             data = []
             for game in games:
                 original_time = game['start_time']
+                # For new created games start_time is None, handle it by adding a default time
+                # for displaying the game in the frontend; cards.js line 30
+                if original_time is None:
+                    data.append({'time': 'Jan 1, 2000 00:00:00'})
+                    continue
                 subtracted_time = original_time - timedelta(hours=5, minutes=5)
                 formatted_time = subtracted_time.strftime('%b %d, %Y %H:%M:%S')
                 data.append({'time': formatted_time})
-                print(formatted_time)
             return JsonResponse(data, safe=False)
         except:
             return JsonResponse({'status': 'error'})
@@ -119,3 +125,81 @@ def get_sanctions_list(request):
         )
         data = {'sanctions': list(sanctions)}
         return JsonResponse(data, safe=False)
+
+# Admin CRUD operations
+### Upload game image to static folder
+"""
+def upload_game_image(request):
+    if request.method == 'POST':
+        image = request.FILES.get('image')
+        try:
+            with open(f'static/images/{image.name}', 'wb+') as destination:
+                for chunk in image.chunks():
+                    destination.write(chunk)
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    if request.method == 'PUT':
+        image = request.FILES.get('image')
+        try:
+            with open(f'static/images/{image.name}', 'wb+') as destination:
+                for chunk in image.chunks():
+                    destination.write(chunk)
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+"""
+            
+### Create game
+def game(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        displayName = request.POST.get('displayName')
+        show = request.POST.get('show')
+        show = show == 'on'
+        
+        try:
+            game = Game.objects.create(name=name, displayName=displayName, show=show)
+            game.save()
+            log = Log.objects.create(actionPerformed=f' Crea juego: {name}', user=request.user)
+            log.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    # Patch method needs testing
+    if request.method == 'PATCH':
+        id = request.POST.get('id')
+        name = request.POST.get('name')
+        displayName = request.POST.get('displayName')
+        available = request.POST.get('available')
+        show = request.POST.get('show')
+        file_route = request.POST.get('file_route')
+        try:
+            game = Game.objects.get(id=id)
+            game.name = name
+            game.displayName = displayName
+            game.available = available
+            game.show = show
+            game.file_route = file_route
+            game.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    if request.method == 'DELETE':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            game_id = data.get('id')
+            print(game_id)
+
+            if game_id is not None:
+                game = Game.objects.get(id=game_id)
+                game.delete()
+                return JsonResponse({'status': 'success'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Missing or invalid id in request body'})
+        except Game.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Game not found'})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': 'error', 'message': str(e)})
