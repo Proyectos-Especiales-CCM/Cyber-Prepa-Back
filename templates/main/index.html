@@ -13,10 +13,12 @@ Index
 {% block content %}
 <h1>Bienvenido a Ciber Tec</h1>
 <div class="cyber__wrapper">
+
     <div class="cyber__cards">
 
         {% for game in games %}
-        <div class=" cyber__card [ is-collapsed ] ">
+        <div class="cyber__card [ is-collapsed ]">
+
             <div class="cyber__card__inner [ js-expander ]">
                 <span>{{ game.displayName }}</span><br>
                 <img class="cyber__image" src="{% static game.file_route %}" alt="Futbolito 1">
@@ -24,14 +26,15 @@ Index
                     <p id="cyber__countdown__{{ forloop.counter }}"> No data</p>
                 </div>
             </div>
+
             {% if user.is_authenticated %}
             <div class="cyber__card__expander">
-<link rel="stylesheet" href="{% static 'vendor/DataTables/datatables.min.css' %}">
+            <link rel="stylesheet" href="{% static 'vendor/DataTables/datatables.min.css' %}">
                 <i class="fa fa-close [ js-collapser ]"></i>
                 <div class="collapsed__students">
-                    <ul>
+                    <ul class="container-dropzone">
                         {% for player in game.plays_data %}
-                        <div class="student">
+                        <div id="{{ player.student_id }}" class="student draggable" draggable="true">
                             <li>{{ player.student_id }}</li>
                             <form class="end-play-form" id="end-play-form-{{ player.student_id }}">
                                 {% csrf_token %}
@@ -54,6 +57,19 @@ Index
         {% endfor %}
 
     </div>
+
+    <!-- modal: Change the user play -->
+    <div id="confirmation_modal" class="change_play_modal">
+        <div class="modal-content">
+            <!-- <span class="close">&times;</span> -->
+            <span>Estás seguro que quieres cambiar al usuario X del juego Y al juego Z</span>
+            <div class="buttons-container">
+                <button class="confirmation-button">Confirmar</button>
+                <button class="reject-button">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 <div id="error-alert" class="alert alert-danger d-none" role="alert">
     <!-- Error messages will be inserted here -->
@@ -69,5 +85,6 @@ Index
 <script src="{% static 'js/cards.js' %}"></script>
 {% if user.is_authenticated %}
 <script src="{% static 'js/auth_cards.js' %}"></script>
+<script src="{% static 'js/drag_drop.js' %}"></script>
 {% endif %}
 {% endblock %}
