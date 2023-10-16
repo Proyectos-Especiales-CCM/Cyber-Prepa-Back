@@ -73,7 +73,11 @@ cardContainers.forEach(cardContainer => {
                     // }
                     if (answerConfirmation) {
                          collapsedStudents.appendChild(draggable);
-                         // TODO: Call the backend function here or trigger any other action based on user confirmation
+                         // TODO: Call the backend function here 
+                         // so that we can trigger the update on 
+                         // the database:
+                         // 1. Delete from model.play the student_id
+                         // 2. Add to new model.play the student_id
                     }
                })
           }
