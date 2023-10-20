@@ -32,7 +32,6 @@ def get_available_games(request):
             data = []
             for game in games:
                 data.append({'available': game['available']})
-            print(data)
             return JsonResponse(data, safe=False)
         except:
             return JsonResponse({'status': 'error'})
@@ -57,8 +56,16 @@ def add_student_to_game(request):
         try:
             game = Game.objects.get(id=game_id)
             student, created = Student.objects.get_or_create(id=student_id)
-            play = Plays.objects.create(game=game, student=student)
-            play.save()
+            if created:
+                student.save()
+                play = Plays.objects.create(game=game, student=student)
+                play.save()
+            else:
+                is_playing = Plays.objects.filter(student__id=student_id, ended=False).exists()
+                if is_playing:
+                    return JsonResponse({'status': 'error', 'message': 'Student is already playing'})
+                play = Plays.objects.create(game=game, student=student)
+                play.save()
             log = Log.objects.create(actionPerformed=f' Inicia sesión de juego para: {student_id}', user=request.user)
             log.save()
             return JsonResponse({'status': 'success', 'message': 'Student added to the game'})
@@ -190,7 +197,6 @@ def game(request):
             # Parse the request body as JSON
             data = json.loads(request.body.decode('utf-8'))
             game_id = data.get('id')
-            print(game_id)
 
             if game_id is not None:
                 game = Game.objects.get(id=game_id)
@@ -201,5 +207,4 @@ def game(request):
         except Game.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Game not found'})
         except Exception as e:
-            print(e)
             return JsonResponse({'status': 'error', 'message': str(e)})

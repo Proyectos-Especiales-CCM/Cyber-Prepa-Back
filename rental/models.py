@@ -39,8 +39,6 @@ class Log(models.Model):
 def update_game_start_time(sender, instance, **kwargs):
     # Check if there are no other ended plays for the same game
     other_ended_plays = Plays.objects.filter(game=instance.game, ended=False).exclude(id=instance.id).exists()
-    print(f'Play: {instance.ended}; Other ended plays: {other_ended_plays}')
-    print(f'{not other_ended_plays and instance.ended}')
     if not other_ended_plays and instance.ended:
         instance.game.available = True
         instance.game.save()
