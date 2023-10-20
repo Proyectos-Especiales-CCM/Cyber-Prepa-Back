@@ -16,17 +16,22 @@ $cell.find('.js-collapser').click(function () {
     $thisCell.removeClass('is-expanded').addClass('is-collapsed');
 });
 
-// Student end play form
-$(document).ready(function () {
+// Override end play form submit
+function overrideEndPlayFormSubmit() {
     $(".end-play-form").submit(function (event) {
         event.preventDefault();
         const form = $(this);
         const studentId = form.find("input[name=student_id]").val();
+        // CSRF token
+        var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         $.ajax({
             type: "POST",
             url: "/api/set-play-ended",
             data: form.serialize(),
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
             dataType: "json",
             beforeSend: function (xhr, settings) {
                 // Disable the submit button to prevent multiple submissions
@@ -54,6 +59,11 @@ $(document).ready(function () {
             },
         });
     });
+}
+
+// Student end play form
+$(document).ready(function () {
+    overrideEndPlayFormSubmit();
 
     // Game add student form
     $(".add-student-game").submit(function (event) {
@@ -61,11 +71,16 @@ $(document).ready(function () {
         const form = $(this);
         const gameId = form.find("input[name=game_id]").val();
         const studentId = form.find("input[name=student_id]").val();
+        // CSRF token
+        var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         $.ajax({
             type: "POST",
             url: "/api/add-student-to-game",
             data: form.serialize(),
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
             dataType: "json",
             beforeSend: function (xhr, settings) {
                 // Disable the submit button to prevent multiple submissions
@@ -80,7 +95,9 @@ $(document).ready(function () {
 
                     // Optionally, update the UI to reflect the added student
                     const studentList = form.siblings("ul");
-                    studentList.append('<div class="student draggable" draggable="true"><li>' + studentId + '</li></div>');
+                    const htmlToAppend = '<div class="student draggable" draggable="true"><li>' + studentId + '</li><form class="end-play-form" id="end-play-form-' + studentId + '"><input type="hidden" name="student_id" value="' + studentId + '"><button type="submit">End Play</button></form></div>';
+                    studentList.append(htmlToAppend);
+                    overrideEndPlayFormSubmit();
                 } else {
                     console.error("Error: " + data.message);
 
