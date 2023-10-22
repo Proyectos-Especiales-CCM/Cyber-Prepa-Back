@@ -50,7 +50,20 @@ def set_play_ended(request):
             return JsonResponse({'status': 'success'})
         except Plays.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Play not found'})
-        
+
+
+def condiciones_para_juego(student_id):
+    """Verifica si el estudiante tiene sanciones presentes"""
+    current_datetime = timezone.now()
+
+    active_sanctions = Sanction.objects.filter(
+        student__id=student_id,
+        end_time__gt=current_datetime
+    ).exists()
+
+    return not active_sanctions
+
+
 def add_student_to_game(request):
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
@@ -58,19 +71,21 @@ def add_student_to_game(request):
         try:
             game = Game.objects.get(id=game_id)
             student, created = Student.objects.get_or_create(id=student_id)
+
             if created:
                 student.save()
-                play = Plays.objects.create(game=game, student=student)
-                play.save()
-            else:
+
+            if condiciones_para_juego(student_id):
                 is_playing = Plays.objects.filter(student__id=student_id, ended=False).exists()
                 if is_playing:
                     return JsonResponse({'status': 'error', 'message': 'Student is already playing'})
                 play = Plays.objects.create(game=game, student=student)
                 play.save()
-            log = Log.objects.create(actionPerformed=f' Inicia sesión de juego para: {student_id}', user=request.user)
-            log.save()
-            return JsonResponse({'status': 'success', 'message': 'Student added to the game'})
+                log = Log.objects.create(actionPerformed=f' Inicia sesión de juego para: {student_id}', user=request.user)
+                log.save()
+                return JsonResponse({'status': 'success', 'message': 'Student added to the game'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Student has active sanctions'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
