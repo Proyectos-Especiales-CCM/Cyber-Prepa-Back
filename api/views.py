@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 from rental.models import Game, Plays, Student, Log, Sanction
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 # Index calls
@@ -65,17 +66,23 @@ def add_student_to_game(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
+@csrf_exempt
 def add_student_to_sanctioned(request):
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
         cause = request.POST.get('cause')
         try:
             student = Student.objects.get(id=student_id)
-            sanction = Sanction.objects.create(cause=cause, student=student_id)
+            sanction = Sanction(
+                cause=cause,
+                student=student
+            )
             sanction.save()
             return JsonResponse({'status': 'success'})
         except Student.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Student not found'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
 
 # Admin CRUD datatables calls
 def get_plays_list(request):

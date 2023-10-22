@@ -40,6 +40,7 @@ Index
                                 {% csrf_token %}
                                 <input type="hidden" name="student_id" value="{{ player.student_id }}">
                                 <button type="submit">End Play</button>
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="{{ player.student_id}}" >Sancionar</button>
                             </form>
                         </div>
                         {% endfor %}
@@ -74,6 +75,34 @@ Index
 <div id="error-alert" class="alert alert-danger d-none" role="alert">
     <!-- Error messages will be inserted here -->
 </div>
+
+<!-- modal: add user to sanctions -->
+<div class="modal fade" id="modalSanciones" tabindex="-1" aria-labelledby="modalSancionesLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSancionesLabel">New message</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="matriculaSancion" class="col-form-label">Matricula:</label>
+            <input type="text" class="form-control" id="matriculaSancion">
+          </div>
+          <div class="mb-3">
+            <label for="causaSancion" class="col-form-label">Causa:</label>
+            <textarea class="form-control" id="causaSancion"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="sancionarBtn">Sancionar</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block js %}
@@ -87,4 +116,60 @@ Index
 <script src="{% static 'js/auth_cards.js' %}"></script>
 <script src="{% static 'js/drag_drop.js' %}"></script>
 {% endif %}
+
+<!-- Script modal -->
+<script type="text/javascript">
+
+modalSanciones.addEventListener('show.bs.modal', function (event) {
+    // Button that triggered the modal
+    var button = event.relatedTarget
+    var recipient = button.getAttribute('data-bs-matricula')
+    // If necessary, you could initiate an AJAX request here
+    // and then do the updating in a callback.
+    // Update the modal's content.
+    var modalTitle = modalSanciones.querySelector('.modal-title')
+    var modalBodyInput = modalSanciones.querySelector('.modal-body input')
+
+    modalTitle.textContent = 'Sancion'
+    modalBodyInput.value = recipient
+})
+</script>
+
+<!-- Script sancion -->
+<script>
+  document.getElementById("sancionarBtn").addEventListener("click", function() {
+    var student_id = document.getElementById("matriculaSancion").value;
+    var cause = document.getElementById("causaSancion").value;
+      console.log(student_id)
+      console.log(cause)
+
+      var data = {
+          student_id: student_id,
+          cause: cause
+      };
+
+      fetch('api/add-student-to-sanctioned', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+      })
+          .then(response => {
+              if (response.ok) {
+                  // La solicitud fue exitosa, puedes mostrar un mensaje de éxito o hacer otras acciones necesarias.
+                  // document.getElementById("matriculaSancion").value = ''; // Limpia el campo de matrícula
+                  // document.getElementById("causaSancion").value = ''; // Limpia el campo de causa
+                  console.log("se hace")
+              } else {
+                  // La solicitud falló, puedes mostrar un mensaje de error o manejar el error de otra manera.
+                  console.log("no se hace")
+              }
+          })
+          .catch(error => {
+              // Manejo de errores de red u otros errores inesperados.
+              console.error('Error:', error);
+          });
+  });
+</script>
 {% endblock %}
