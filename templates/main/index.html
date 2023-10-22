@@ -40,7 +40,7 @@ Index
                                 {% csrf_token %}
                                 <input type="hidden" name="student_id" value="{{ player.student_id }}">
                                 <button type="submit">End Play</button>
-                                <button type="button" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="{{ player.student_id}}" >Sancionar</button>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="{{ player.student_id}}" >Sancionar</button>
                             </form>
                         </div>
                         {% endfor %}
@@ -81,24 +81,39 @@ Index
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalSancionesLabel">New message</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="modalSancionesLabel">Nueva sanción</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
         <form>
           <div class="mb-3">
-            <label for="matriculaSancion" class="col-form-label">Matricula:</label>
+            <label for="matriculaSancion" class="col-form-label">Matrícula:</label>
             <input type="text" class="form-control" id="matriculaSancion">
           </div>
           <div class="mb-3">
             <label for="causaSancion" class="col-form-label">Causa:</label>
             <textarea class="form-control" id="causaSancion"></textarea>
           </div>
+          <div class="mb-3">
+            <label for="diasSancion" class="col-form-label">Días de sanción:</label>
+            <select class="form-select" id="diasSancion">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="sancionarBtn">Sancionar</button>
+        <button type="button" class="btn btn-primary" id="sancionarBtn" data-bs-dismiss="modal">Sancionar</button>
       </div>
     </div>
   </div>
@@ -117,7 +132,7 @@ Index
 <script src="{% static 'js/drag_drop.js' %}"></script>
 {% endif %}
 
-<!-- Script modal -->
+<!-- Script modal sanctions-->
 <script type="text/javascript">
 
 modalSanciones.addEventListener('show.bs.modal', function (event) {
@@ -137,39 +152,38 @@ modalSanciones.addEventListener('show.bs.modal', function (event) {
 
 <!-- Script sancion -->
 <script>
-  document.getElementById("sancionarBtn").addEventListener("click", function() {
-    var student_id = document.getElementById("matriculaSancion").value;
-    var cause = document.getElementById("causaSancion").value;
-      console.log(student_id)
-      console.log(cause)
+document.getElementById("sancionarBtn").addEventListener("click", function() {
+  var student_id = document.getElementById("matriculaSancion").value;
+  var cause = document.getElementById("causaSancion").value;
+  var days = document.getElementById("diasSancion").value;
 
-      var data = {
-          student_id: student_id,
-          cause: cause
-      };
+  var data = {
+    student_id: student_id,
+    cause: cause,
+    days: days
+  };
 
-      fetch('api/add-student-to-sanctioned', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-      })
-          .then(response => {
-              if (response.ok) {
-                  // La solicitud fue exitosa, puedes mostrar un mensaje de éxito o hacer otras acciones necesarias.
-                  // document.getElementById("matriculaSancion").value = ''; // Limpia el campo de matrícula
-                  // document.getElementById("causaSancion").value = ''; // Limpia el campo de causa
-                  console.log("se hace")
-              } else {
-                  // La solicitud falló, puedes mostrar un mensaje de error o manejar el error de otra manera.
-                  console.log("no se hace")
-              }
-          })
-          .catch(error => {
-              // Manejo de errores de red u otros errores inesperados.
-              console.error('Error:', error);
-          });
+  var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+  fetch('api/add-student-to-sanctioned', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (response.ok) {
+      var modal = new bootstrap.Modal(document.getElementById("modalSanciones"));
+      modal.hide();
+    } else {
+      console.error('Error:', response);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
   });
+});
 </script>
 {% endblock %}

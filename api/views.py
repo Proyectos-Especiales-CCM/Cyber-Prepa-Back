@@ -3,7 +3,8 @@ from django.http import JsonResponse
 from datetime import timedelta
 from rental.models import Game, Plays, Student, Log, Sanction
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from json import loads
 import json
 
 # Index calls
@@ -73,23 +74,30 @@ def add_student_to_game(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-@csrf_exempt
+
 def add_student_to_sanctioned(request):
     if request.method == 'POST':
-        student_id = request.POST.get('student_id')
-        cause = request.POST.get('cause')
+        data = loads(request.body)
+        student_id = data['student_id']
+        cause = data['cause']
+        days = data['days']
+
         try:
             student = Student.objects.get(id=student_id)
-            sanction = Sanction(
-                cause=cause,
-                student=student
-            )
-            sanction.save()
-            return JsonResponse({'status': 'success'})
         except Student.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Student not found'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
+            student = Student.objects.create(id=student_id)
+
+        current_time = timezone.now()
+        end_time = current_time + timezone.timedelta(days=int(days))
+        sanction = Sanction(
+            student=student,
+            cause=cause,
+            start_time=current_time,
+            end_time=end_time,
+        )
+        sanction.save()
+        return JsonResponse({'status': 'success'})
+
 
 # Admin CRUD datatables calls
 def get_plays_list(request):
