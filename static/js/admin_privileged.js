@@ -1,8 +1,4 @@
 /* Definition of functions that are used on call by the event listeners */
-// Inits datatable for students
-let dataTableStudents;
-let dataTableStudentsIsInit = false;
-
 const dataTableStudentsOptions = {
     columnDefs: [
         { className: 'centered', targets: [0, 1, 2] },
@@ -12,48 +8,6 @@ const dataTableStudentsOptions = {
     pageLength: 10,
     destroy: true,
 };
-const initDataTableStudents = async () => {
-    if (dataTableStudentsIsInit) {
-        dataTableStudents.destroy();
-    }
-    await listStudents();
-    dataTableStudents = $('#students-table').DataTable(dataTableStudentsOptions);
-    dataTableStudentsIsInit = true;
-};
-
-const listStudents = async () => {
-    try {
-        let currentIP = window.location.hostname;
-        if (currentIP === "127.0.0.1" || currentIP === "localhost") {
-            currentIP = currentIP + ":8000";
-        }
-        var file = "http://" + currentIP + "/api/get-students-list";
-        const res = await fetch(file)
-        const data = await res.json()
-
-        let content = ``;
-        data.students.forEach((student) => {
-            content += `
-                <tr>
-                    <td>${student.id}</td>
-                    <td>${student.name}</td>
-                    <td>
-                        <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
-                        <button class='btn btn-sm btn-danger delete-student' data-id='${student.id}'><i class='fa-solid fa-trash-can'></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-        var tableBody_students = document.getElementById("tableBody_students");
-        tableBody_students.innerHTML = content;
-    } catch (err) {
-        alert(err);
-    }
-};
-
-// Inits datatable for games
-let dataTableGames;
-let dataTableGamesIsInit = false;
 
 const dataTableGamesOptions = {
     columnDefs: [
@@ -64,58 +18,6 @@ const dataTableGamesOptions = {
     pageLength: 10,
     destroy: true,
 };
-const initDataTableGames = async () => {
-    if (dataTableGamesIsInit) {
-        dataTableGames.destroy();
-    }
-    await listGames();
-    dataTableGames = $('#games-table').DataTable(dataTableGamesOptions);
-    dataTableGamesIsInit = true;
-};
-
-const listGames = async () => {
-    try {
-        let currentIP = window.location.hostname;
-        if (currentIP === "127.0.0.1" || currentIP === "localhost") {
-            currentIP = currentIP + ":8000";
-        }
-        var file = "http://" + currentIP + "/api/get-games-list";
-        const res = await fetch(file)
-        const data = await res.json()
-
-        let content = ``;
-        data.games.forEach((game) => {
-            content += `
-                <tr>
-                    <td>${game.id}</td>
-                    <td>${game.name}</td>
-                    <td>${game.displayName}</td>
-                    <td>${game.available == true
-                    ? "<i class='fa-solid fa-check' style='color:green;'></i>"
-                    : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}
-                    </td>
-                    <td>${game.show == true
-                    ? "<i class='fa-solid fa-check' style='color:green;'></i>"
-                    : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}
-                    </td>
-                    <td>
-                        <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
-                        <button class='btn btn-sm btn-danger delete-game' data-id='${game.id}'><i class='fa-solid fa-trash-can'></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-        var tableBody_games = document.getElementById("tableBody_games");
-        tableBody_games.innerHTML = content;
-    } catch (err) {
-        alert(err);
-    }
-};
-
-
-// Inits datatable for logs
-let dataTableLogs;
-let dataTableLogsIsInit = false;
 
 const dataTableLogsOptions = {
     columnDefs: [
@@ -126,47 +28,6 @@ const dataTableLogsOptions = {
     pageLength: 10,
     destroy: true,
 };
-const initDataTableLogs = async () => {
-    if (dataTableLogsIsInit) {
-        dataTableLogs.destroy();
-    }
-    await listLogs();
-    dataTableLogs = $('#logs-table').DataTable(dataTableLogsOptions);
-    dataTableLogsIsInit = true;
-};
-
-const listLogs = async () => {
-    try {
-        let currentIP = window.location.hostname;
-        if (currentIP === "127.0.0.1" || currentIP === "localhost") {
-            currentIP = currentIP + ":8000";
-        }
-        var file = "http://" + currentIP + "/api/get-logs-list";
-        const res = await fetch(file)
-        const data = await res.json()
-
-        let content = ``;
-        data.logs.forEach((log) => {
-            content += `
-                <tr>
-                    <td>${log.id}</td>
-                    <td>${log.user__username}</td>
-                    <td>${log.actionPerformed}</td>
-                    <td>${log.time}</td>
-                </tr>
-            `;
-        });
-        var tableBody_logs = document.getElementById("tableBody_logs");
-        tableBody_logs.innerHTML = content;
-    } catch (err) {
-        alert(err);
-    }
-};
-
-
-// Inits datatable for users
-let dataTableUsers;
-let dataTableUsersIsInit = false;
 
 const dataTableUsersOptions = {
     columnDefs: [
@@ -177,56 +38,79 @@ const dataTableUsersOptions = {
     pageLength: 10,
     destroy: true,
 };
-const initDataTableUsers = async () => {
-    if (dataTableUsersIsInit) {
-        dataTableUsers.destroy();
-    }
-    await listUsers();
-    dataTableUsers = $('#users-table').DataTable(dataTableUsersOptions);
-    dataTableUsersIsInit = true;
+
+const studentTemplate = (student) => `
+    <tr>
+        <td>${student.id}</td>
+        <td>${student.name}</td>
+        <td>
+            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
+            <button class='btn btn-sm btn-danger delete-student' data-id='${student.id}'><i class='fa-solid fa-trash-can'></i></button>
+        </td>
+    </tr>
+`;
+
+const gameTemplate = (game) => `
+    <tr>
+        <td>${game.id}</td>
+        <td>${game.name}</td>
+        <td>${game.displayName}</td>
+        <td>${game.available ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}</td>
+        <td>${game.show ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class 'fa-solid fa-xmark' style='color:red;'></i>"}</td>
+        <td>
+            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
+            <button class='btn btn-sm btn-danger delete-game' data-id='${game.id}'><i class='fa-solid fa-trash-can'></i></button>
+        </td>
+    </tr>
+`;
+
+const logTemplate = (log) => `
+    <tr>
+        <td>${log.id}</td>
+        <td>${log.user__username}</td>
+        <td>${log.actionPerformed}</td>
+        <td>${log.time}</td>
+    </tr>
+`;
+
+const userTemplate = (user) => `
+    <tr>
+        <td>${user.id}</td>
+        <td>${user.username}</td>
+        <td>${user.is_admin ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}</td>
+        <td>
+            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
+            <button class='btn btn-sm btn-danger delete-user' data-id='${user.id}'><i class='fa-solid fa-trash-can'></i></button>
+        </td>
+    </tr>
+`;
+
+const listStudents = async () => {
+    const data = await fetchData("get-students-list");
+    populateTable(data.students, document.getElementById("tableBody_students"), studentTemplate);
+};
+
+const listGames = async () => {
+    const data = await fetchData("get-games-list");
+    populateTable(data.games, document.getElementById("tableBody_games"), gameTemplate);
+};
+
+const listLogs = async () => {
+    const data = await fetchData("get-logs-list");
+    populateTable(data.logs, document.getElementById("tableBody_logs"), logTemplate);
 };
 
 const listUsers = async () => {
-    try {
-        let currentIP = window.location.hostname;
-        if (currentIP === "127.0.0.1" || currentIP === "localhost") {
-            currentIP = currentIP + ":8000";
-        }
-        var file = "http://" + currentIP + "/api/get-users-list";
-        const res = await fetch(file)
-        const data = await res.json()
-
-        let content = ``;
-        data.users.forEach((user) => {
-            content += `
-                <tr>
-                    <td>${user.id}</td>
-                    <td>${user.username}</td>
-                    <td>${user.is_admin == true
-                    ? "<i class='fa-solid fa-check' style='color:green;'></i>"
-                    : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}
-                    </td>
-                    <td>
-                        <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
-                        <button class='btn btn-sm btn-danger delete-user' data-id='${user.id}'><i class='fa-solid fa-trash-can'></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-        var tableBody_user = document.getElementById("tableBody_users");
-        tableBody_user.innerHTML = content;
-    } catch (err) {
-        alert(err);
-    }
+    const data = await fetchData("get-users-list");
+    populateTable(data.users, document.getElementById("tableBody_users"), userTemplate);
 };
-
 
 // Inits all datatables
 const initDataTablesPrivileged = async () => {
-    await initDataTableStudents();
-    await initDataTableGames();
-    await initDataTableLogs();
-    await initDataTableUsers();
+    await initDataTable("students-table", dataTableStudentsOptions, listStudents);
+    await initDataTable("games-table", dataTableGamesOptions, listGames);
+    await initDataTable("logs-table", dataTableLogsOptions, listLogs);
+    await initDataTable("users-table", dataTableUsersOptions, listUsers);
 }
 
 // On page load
@@ -244,7 +128,7 @@ window.addEventListener('load', async () => {
         // Send data using AJAX
         $.ajax({
             type: 'POST',
-            url: baseURL + '/api/game',
+            url: BASEURL + '/api/game',
             data: formData,
             success: function (data) {
                 //console.log(data);
@@ -299,7 +183,7 @@ window.addEventListener('load', async () => {
         // Send data using AJAX
         $.ajax({
             type: 'POST',
-            url: baseURL + '/api/user',
+            url: BASEURL + '/api/user',
             data: formData,
             success: function (data) {
                 //console.log(data);
@@ -318,81 +202,21 @@ window.addEventListener('load', async () => {
 
 // Student deletion
 $(document).on('click', '.delete-student', function () {
-    // Get student id
-    var studentId = $(this).data('id');
-
-    if (confirm('¿Seguro que quieres borrar este estudiante?')) {
-        // Send an AJAX request to delete the student
-        $.ajax({
-            type: 'DELETE',
-            url: baseURL + '/api/student',
-            data: JSON.stringify({ id: studentId }),
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            success: function (data) {
-                console.log(data);
-                location.reload();
-            },
-            error: function (error) {
-                // Handle errors
-                alert("No se puede borrar el estudiante porque tiene partidas asociadas");
-                console.error(error);
-            }
-        });
-    }
+    const studentId = $(this).data('id');
+    const message = '¿Seguro que quieres borrar este estudiante?';
+    confirmAndDelete('student', studentId, message);
 });
 
 // Game deletion
 $(document).on('click', '.delete-game', function () {
-    // Get game id
-    var gameId = $(this).data('id');
-
-    if (confirm('¿Seguro que quieres borrar el juego?')) {
-        // Send an AJAX request to delete the game
-        $.ajax({
-            type: 'DELETE',
-            url: baseURL + '/api/game',
-            data: JSON.stringify({ id: gameId }),
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            success: function (data) {
-                console.log(data);
-                location.reload();
-            },
-            error: function (error) {
-                // Handle errors
-                alert("No se puede borrar el juego porque tiene partidas asociadas");
-                console.error(error);
-            }
-        });
-    }
+    const gameId = $(this).data('id');
+    const message = '¿Seguro que quieres borrar este juego?';
+    confirmAndDelete('game', gameId, message);
 });
 
 // User deletion
 $(document).on('click', '.delete-user', function () {
-    // Get user id
-    var userId = $(this).data('id');
-
-    if (confirm('¿Seguro que quieres eliminar el acceso a este usuario?')) {
-        // Send an AJAX request to delete (deactivate) the user
-        $.ajax({
-            type: 'DELETE',
-            url: baseURL + '/api/user',
-            data: JSON.stringify({ id: userId }),
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            success: function (data) {
-                console.log(data);
-                location.reload();
-            },
-            error: function (error) {
-                // Handle errors
-                alert("No se puede borrar el usuario");
-                console.error(error);
-            }
-        });
-    }
+    const userId = $(this).data('id');
+    const message = '¿Seguro que quieres eliminar el acceso a este usuario?';
+    confirmAndDelete('user', userId, message);
 });
