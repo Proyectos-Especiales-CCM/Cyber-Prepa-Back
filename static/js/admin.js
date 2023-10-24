@@ -69,7 +69,6 @@ const playsTemplate = (play) => `
         <td>${play.time}</td>
         <td>${play.ended ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}</td>
         <td>
-            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
             <button class='btn btn-sm btn-danger delete-play' data-id='${play.id}'><i class='fa-solid fa-trash-can'></i></button>
         </td>
     </tr>

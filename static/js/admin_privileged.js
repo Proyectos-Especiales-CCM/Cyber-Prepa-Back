@@ -79,7 +79,7 @@ const userTemplate = (user) => `
         <td>${user.username}</td>
         <td>${user.is_admin ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}</td>
         <td>
-            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
+            <button class='btn btn-sm btn-primary modify-user' data-bs-user-id='${user.id}' data-bs-user-email='${user.email}' data-bs-user-is_admin='${user.is_admin ? "true" : "false"}'><i class='fa-solid fa-pencil'></i></button>
             <button class='btn btn-sm btn-danger delete-user' data-id='${user.id}'><i class='fa-solid fa-trash-can'></i></button>
         </td>
     </tr>
@@ -119,6 +119,15 @@ window.addEventListener('load', async () => {
     // Modal, set values when editing
     var exampleModal = document.getElementById('exampleModal')
     exampleModal.addEventListener('show.bs.modal', function () { })
+    var userModal = document.getElementById('userModal')
+    userModal.addEventListener('show.bs.modal', function () {
+        $('#userModalLabel').text('Nuevo usuario');
+        $('#submitUser').text('Crear');
+        $('#email').val('');
+        $('#password').prop('required', true);
+        $('#password2').prop('required', true);
+        $('#is_admin').removeAttr('checked');
+    })
 
     // Game creation form
     $('#submitGame').click(function () {
@@ -145,7 +154,7 @@ window.addEventListener('load', async () => {
     });
 
     // User creation form
-    $('#submitUser').click(function () {
+    $('#submitUser').off('click').click(function () {
         // Get form data
         var formData = $('#userForm').serialize();
 
@@ -212,6 +221,102 @@ $(document).on('click', '.delete-game', function () {
     const gameId = $(this).data('id');
     const message = '¿Seguro que quieres borrar este juego?';
     confirmAndDelete('game', gameId, message);
+});
+
+// User modify
+$(document).on('click', '.modify-user', function () {
+    const userId = $(this).data('bs-user-id');
+    const email = $(this).data('bs-user-email');
+    const is_admin = $(this).data('bs-user-is_admin');
+    $('#userModal').modal('show');
+    $('#userModalLabel').text('Modificar usuario');
+    $('#submitUser').text('Modificar');
+    $('#email').val(email);
+    // Add the "checked" attribute if the user is an admin
+    if (is_admin === true) {
+        $('#is_admin').prop('checked', true);
+    } else {
+        $('#is_admin').prop('checked', false);
+    }
+    $('#password').prop('required', false);
+    $('#password2').prop('required', false);
+
+    // On form submit
+    $('#submitUser').off('click').click(function (event) {
+        event.preventDefault();
+
+        // Creates formData object
+        var formData = {
+            id: userId,
+        };
+
+        // if email is modified, recheck if it's valid
+        if ($('#email').val() != email) {
+            // Use regex to check if email is valid
+            var changedEmail = $('#email').val();
+            var emailRegex = /\S+@\S+\.\S+/;
+            if (!emailRegex.test(changedEmail)) {
+                alert("El email no es válido");
+                return;
+            }
+
+            // Create the username from the email
+            const parts = changedEmail.split('@');
+            const modfUsername = parts[0].toUpperCase();
+            const modfEmail = parts.join('@');
+
+            // Add both to formData
+            formData.username = modfUsername;
+            formData.email = modfEmail;
+        }
+
+        // If password is not empty, check if it's valid
+        if ($('#password').val() != "") {
+            var password = $('#password').val();
+            var passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+            if (!passwordRegex.test(password)) {
+                alert("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número");
+                return;
+            }
+            var password2 = $('#password2').val();
+            if (password != password2) {
+                alert("Las contraseñas no coinciden");
+                return;
+            }
+
+            // If password is valid, add it to formData
+            formData.password = password;
+        }
+
+        // If is_admin and #is_admin are different, add the is_admin field to formData
+        if ($('#is_admin').prop('checked') != is_admin) {
+            formData.is_admin = $('#is_admin').prop('checked');
+        }
+
+        // Convert formData to JSON
+        var jsonData = JSON.stringify(formData);
+
+        // Send data using AJAX as JSON
+        $.ajax({
+            type: 'PUT',
+            url: BASEURL + '/api/user',
+            data: jsonData,
+            contentType: 'application/json', // Set the content type to JSON
+            headers: {
+                'X-CSRFToken': CSRFTOKEN
+            },
+            success: function (data) {
+                $('#userModal').modal('hide');
+
+                // Reload the page to reflect the changes
+                location.reload();
+            },
+            error: function (error) {
+                // Handle errors
+                console.error(error);
+            }
+        });
+    });
 });
 
 // User deletion

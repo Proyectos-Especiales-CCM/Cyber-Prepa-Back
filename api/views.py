@@ -308,7 +308,6 @@ def user(request):
         password = request.POST.get('password')
         email = request.POST.get('email')
         is_admin = request.POST.get('is_admin')
-        print(is_admin)
         try:
             # First check if the user already exists, in which case verify that it is not active
             user = User.objects.filter(username=username)
@@ -336,6 +335,37 @@ def user(request):
 
             log = Log.objects.create(actionPerformed=f' Crea usuario: {username}', user=request.user)
             log.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    if request.method == 'PUT':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            id = data.get('id')
+            user = User.objects.get(id=id)
+            # Check if the email changed and if it changed, update it
+            username = data.get('username')
+            email = data.get('email')
+            if user.email != email and email != '' and email != None:
+                # Check if the email changed and if it is already in use
+                if User.objects.filter(email=email).exists():
+                    return JsonResponse({'status': 'error', 'message': 'Email already in use'})
+                user.email = email
+                user.username = username
+            # Check if the password changed and if it changed, update it
+            password = data.get('password')
+            if password != '' and password != None:
+                user.set_password(password)
+            # Check if the is_admin field changed and if it changed, update it
+            is_admin = data.get('is_admin')
+            if is_admin == True and is_admin != None:
+                admin_group = Group.objects.get(name='admin')
+                user.groups.add(admin_group)
+            else:
+                admin_group = Group.objects.get(name='admin')
+                user.groups.remove(admin_group)
+            user.save()
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
