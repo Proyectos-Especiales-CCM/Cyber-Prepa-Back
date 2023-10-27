@@ -349,6 +349,7 @@ def user(request):
                     return JsonResponse({'status': 'error', 'message': 'User already exists'})
                 else:
                     user.is_active = True
+                    user.set_password(password)
                     if is_admin == 'on':
                         admin_group = Group.objects.get(name='admin')
                         user.groups.add(admin_group)
