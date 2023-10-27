@@ -44,7 +44,7 @@ const studentTemplate = (student) => `
         <td>${student.id}</td>
         <td>${student.name}</td>
         <td>
-            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
+            <button class='btn btn-sm btn-primary modify-student' data-bs-student-id='${student.id}' data-bs-student-name='${student.name}'><i class='fa-solid fa-pencil'></i></button>
             <button class='btn btn-sm btn-danger delete-student' data-id='${student.id}'><i class='fa-solid fa-trash-can'></i></button>
         </td>
     </tr>
@@ -56,9 +56,9 @@ const gameTemplate = (game) => `
         <td>${game.name}</td>
         <td>${game.displayName}</td>
         <td>${game.available ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}</td>
-        <td>${game.show ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class 'fa-solid fa-xmark' style='color:red;'></i>"}</td>
+        <td>${game.show ? "<i class='fa-solid fa-check' style='color:green;'></i>" : "<i class='fa-solid fa-xmark' style='color:red;'></i>"}</td>
         <td>
-            <button class='btn btn-sm btn-primary'><i class='fa-solid fa-pencil'></i></button>
+            <button class='btn btn-sm btn-primary modify-game' data-bs-game-id='${game.id}' data-bs-game-name='${game.name}' data-bs-game-displayname='${game.displayName}' data-bs-game-show='${game.show}'><i class='fa-solid fa-pencil'></i></button>
             <button class='btn btn-sm btn-danger delete-game' data-id='${game.id}'><i class='fa-solid fa-trash-can'></i></button>
         </td>
     </tr>
@@ -117,8 +117,14 @@ const initDataTablesPrivileged = async () => {
 window.addEventListener('load', async () => {
     await initDataTablesPrivileged();
     // Modal, set values when editing
-    var exampleModal = document.getElementById('exampleModal')
-    exampleModal.addEventListener('show.bs.modal', function () { })
+    var gameModal = document.getElementById('gameModal')
+    gameModal.addEventListener('show.bs.modal', function () {
+        $('#gameModalLabel').text('Nuevo juego');
+        $('#submitGame').text('Crear');
+        $('#name').val('');
+        $('#displayName').val('');
+        $('#show').removeAttr('checked');
+    })
     var userModal = document.getElementById('userModal')
     userModal.addEventListener('show.bs.modal', function () {
         $('#userModalLabel').text('Nuevo usuario');
@@ -130,7 +136,7 @@ window.addEventListener('load', async () => {
     })
 
     // Game creation form
-    $('#submitGame').click(function () {
+    $('#submitGame').off('click').click(function () {
         // Get form data
         var formData = $('#gameForm').serialize();
 
@@ -141,7 +147,7 @@ window.addEventListener('load', async () => {
             data: formData,
             success: function (data) {
                 //console.log(data);
-                $('#exampleModal').modal('hide');
+                $('#gameModal').modal('hide');
 
                 // Reload the page to reflect the changes
                 location.reload();
@@ -209,11 +215,120 @@ window.addEventListener('load', async () => {
     });
 });
 
+// Student modify
+$(document).on('click', '.modify-student', function () {
+    const studentId = $(this).data('bs-student-id');
+    const studentName = $(this).data('bs-student-name');
+    $('#studentModal').modal('show');
+    $('#studentId').val(studentId);
+    $('#studentName').val(studentName);
+    
+
+    // On form submit
+    $('#submitStudent').off('click').click(function (event) {
+        event.preventDefault();
+
+        // Create JSON form data
+        var formData = {
+            id: studentId,
+            name: $('#studentName').val(),
+        }
+
+        var jsonData = JSON.stringify(formData);
+
+        // Send data using AJAX as JSON
+        $.ajax({
+            type: 'PATCH',
+            url: BASEURL + '/api/student',
+            data: jsonData,
+            contentType: 'application/json', // Set the content type to JSON
+            headers: {
+                'X-CSRFToken': CSRFTOKEN
+            },
+            success: function (data) {
+                $('#studentModal').modal('hide');
+
+                // Reload the page to reflect the changes
+                location.reload();
+            },
+            error: function (error) {
+                // Handle errors
+                console.error(error);
+            }
+        });
+    });
+});
+
 // Student deletion
 $(document).on('click', '.delete-student', function () {
     const studentId = $(this).data('id');
     const message = '¿Seguro que quieres borrar este estudiante?';
     confirmAndDelete('student', studentId, message);
+});
+
+// Game modify
+$(document).on('click', '.modify-game', function () {
+    const gameId = $(this).data('bs-game-id');
+    const gameName = $(this).data('bs-game-name');
+    const gameDisplayName = $(this).data('bs-game-displayname');
+    const gameShow = $(this).data('bs-game-show');
+    $('#gameModal').modal('show');
+    $('#gameModalLabel').text('Modificar juego');
+    $('#submitGame').text('Modificar');
+    $('#gameId').val(gameId);
+    $('#name').val(gameName);
+    $('#displayName').val(gameDisplayName);
+    // Add the "checked" attribute if the game is shown
+    if (gameShow === true) {
+        $('#show').prop('checked', true);
+    } else {
+        $('#show').prop('checked', false);
+    }
+
+    // On form submit
+    $('#submitGame').off('click').click(function (event) {
+        event.preventDefault();
+
+        // Create JSON form data
+        var formData = {
+            id: gameId,
+        }
+
+        if ($('#name').val() != gameName) {
+            formData.name = $('#name').val();
+        }
+
+        if ($('#displayName').val() != gameDisplayName) {
+            formData.displayName = $('#displayName').val();
+        }
+
+        if ($('#show').prop('checked') != gameShow) {
+            formData.show = $('#show').prop('checked');
+        }
+
+        var jsonData = JSON.stringify(formData);
+
+        // Send data using AJAX as JSON
+        $.ajax({
+            type: 'PATCH',
+            url: BASEURL + '/api/game',
+            data: jsonData,
+            contentType: 'application/json', // Set the content type to JSON
+            headers: {
+                'X-CSRFToken': CSRFTOKEN
+            },
+            success: function (data) {
+                $('#gameModal').modal('hide');
+
+                // Reload the page to reflect the changes
+                location.reload();
+            },
+            error: function (error) {
+                // Handle errors
+                console.error(error);
+            }
+        });
+    });
 });
 
 // Game deletion
@@ -298,7 +413,7 @@ $(document).on('click', '.modify-user', function () {
 
         // Send data using AJAX as JSON
         $.ajax({
-            type: 'PUT',
+            type: 'PATCH',
             url: BASEURL + '/api/user',
             data: jsonData,
             contentType: 'application/json', // Set the content type to JSON

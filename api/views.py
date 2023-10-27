@@ -223,19 +223,31 @@ def game(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
     # Patch method needs testing
     if request.method == 'PATCH':
-        id = request.POST.get('id')
-        name = request.POST.get('name')
-        displayName = request.POST.get('displayName')
-        available = request.POST.get('available')
-        show = request.POST.get('show')
-        file_route = request.POST.get('file_route')
         try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            id = data.get('id')
             game = Game.objects.get(id=id)
-            game.name = name
-            game.displayName = displayName
-            game.available = available
-            game.show = show
-            game.file_route = file_route
+            # Check if the name changed and if it changed, update it
+            name = data.get('name')
+            if name != '' and name != None:
+                game.name = name
+            # Check if the displayName changed and if it changed, update it
+            displayName = data.get('displayName')
+            if displayName != '' and displayName != None:
+                game.displayName = displayName
+            # Check if the show field changed and if it changed, update it
+            show = data.get('show')
+            if show != None:
+                game.show = show
+            # Check if the available field changed and if it changed, update it
+            available = data.get('available')
+            if available != None:
+                game.available = available
+            # Check if the file_route field changed and if it changed, update it
+            file_route = data.get('file_route')
+            if file_route != '' and file_route != None:
+                game.file_route = file_route
             game.save()
             return JsonResponse({'status': 'success'})
         except Exception as e:
@@ -261,6 +273,26 @@ def game(request):
 
 ### Create, update and delete students
 def student(request):
+    if request.method == 'PATCH':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            id = data.get('id')
+            student = Student.objects.get(id=id)
+            # Check if the name changed and if it changed, update it
+            name = data.get('name')
+            if name != '' and name != None:
+                student.name = name
+            # Check if the hash changed and if it changed, update it
+            hash = data.get('hash')
+            if hash != '' and hash != None:
+                student.hash = hash
+            student.save()
+            log = Log.objects.create(actionPerformed=f' Actualiza datos de estudiante: {student.id}', user=request.user)
+            log.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
     if request.method == 'DELETE':
         try:
             # Parse the request body as JSON
@@ -333,12 +365,12 @@ def user(request):
                     admin_group = Group.objects.get(name='admin')
                     user.groups.add(admin_group)
 
-            log = Log.objects.create(actionPerformed=f' Crea usuario: {username}', user=request.user)
+            log = Log.objects.create(actionPerformed=f' Crea usuario: {username}; admin = {is_admin}', user=request.user)
             log.save()
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
-    if request.method == 'PUT':
+    if request.method == 'PATCH':
         try:
             # Parse the request body as JSON
             data = json.loads(request.body.decode('utf-8'))
@@ -365,7 +397,10 @@ def user(request):
             else:
                 admin_group = Group.objects.get(name='admin')
                 user.groups.remove(admin_group)
+                is_admin = False
             user.save()
+            log = Log.objects.create(actionPerformed=f' Actualiza usuario: {username}; admin = {is_admin}', user=request.user)
+            log.save()
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
