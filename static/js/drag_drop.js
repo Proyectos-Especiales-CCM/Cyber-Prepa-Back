@@ -34,20 +34,21 @@ cardContainers.forEach(cardContainer => {
 	cardContainer.addEventListener('drop', e => {
 		e.preventDefault()
           const draggable = document.querySelector('.dragging')
-		// const closestContainer = e.target.closest('[data-gameName]');
-		// if (closestContainer) {
-		// 	const gameName = closestContainer.getAttribute('data-gameName');
+		const closestContainer = e.target.closest('[data-gameName]');
+		if (closestContainer) {
+			const gameName = closestContainer.getAttribute('data-gameName');
+			console.log('Game Name:', gameName);
 		
 			$('#changeUserPlayModal').find('#id_usuario').attr('placeholder', draggable.id);
-			$('#changeUserPlayModal').find('#actual_play').attr('placeholder', draggable.dataset.gameName);
-			$('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', cardContainer.id);
-			// $('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', closestContainer.id);
+			$('#changeUserPlayModal').find('#actual_play').attr('placeholder', gameName);
+			// $('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', cardContainer.id);
+			$('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', closestContainer.id);
 			$('#changeUserPlayModal').modal('show');
 
           	cardContainer.style.backgroundColor = ''
 		}
 	})
-// })
+})
 
 containers.forEach(container => {
 	container.addEventListener('dragover', e => {
