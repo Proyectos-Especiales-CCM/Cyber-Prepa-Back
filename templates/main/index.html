@@ -130,60 +130,7 @@ Index
 {% if user.is_authenticated %}
 <script src="{% static 'js/auth_cards.js' %}"></script>
 <script src="{% static 'js/drag_drop.js' %}"></script>
+<script src="{% static 'js/sanction_modal.js' %}"></script>
+<script src="{% static 'js/sanctions.js' %}"></script>
 {% endif %}
-
-<!-- Script modal sanctions-->
-<script type="text/javascript">
-
-modalSanciones.addEventListener('show.bs.modal', function (event) {
-    // Button that triggered the modal
-    var button = event.relatedTarget
-    var recipient = button.getAttribute('data-bs-matricula')
-    // If necessary, you could initiate an AJAX request here
-    // and then do the updating in a callback.
-    // Update the modal's content.
-    var modalTitle = modalSanciones.querySelector('.modal-title')
-    var modalBodyInput = modalSanciones.querySelector('.modal-body input')
-
-    modalTitle.textContent = 'Sancion'
-    modalBodyInput.value = recipient
-})
-</script>
-
-<!-- Script sancion -->
-<script>
-document.getElementById("sancionarBtn").addEventListener("click", function() {
-  var student_id = document.getElementById("matriculaSancion").value;
-  var cause = document.getElementById("causaSancion").value;
-  var days = document.getElementById("diasSancion").value;
-
-  var data = {
-    student_id: student_id,
-    cause: cause,
-    days: days
-  };
-
-  var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
-  fetch('api/add-student-to-sanctioned', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => {
-    if (response.ok) {
-      var modal = new bootstrap.Modal(document.getElementById("modalSanciones"));
-      modal.hide();
-    } else {
-      console.error('Error:', response);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-});
-</script>
 {% endblock %}
