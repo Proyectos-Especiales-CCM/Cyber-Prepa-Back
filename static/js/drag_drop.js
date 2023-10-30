@@ -1,7 +1,7 @@
 const draggables = document.querySelectorAll('.draggable');
 const containers = document.querySelectorAll('.container-dropzone');
 const cardContainers = document.querySelectorAll('.cyber__card__inner');
-const modal = document.getElementById('confirmation_modal');
+const modal = document.getElementById('changeUserPlayModal');
 const closeBtn = document.getElementsByClassName('close')[0];
 const confirmBtn = document.getElementsByClassName('confirm')[0];
 const rejectBtn = document.getElementsByClassName('reject')[0];
@@ -17,33 +17,33 @@ draggables.forEach(draggable => {
 	})
 })
 
-function fire_up_modal() {
-     modal.style.display = 'flex';
-     document.body.style.overflow = 'hidden';
+// function fire_up_modal() {
+//      modal.style.display = 'flex';
+//      document.body.style.overflow = 'hidden';
 
-     return new Promise(resolve => {
-          // $('#confirmation_modal').modal('show')
+//      return new Promise(resolve => {
+//           // $('#confirmation_modal').modal('show')
           
-          $('.confirmation-button').click(function() {
-               modal.style.display = 'none';
-               document.body.style.overflow = 'auto';
-               resolve(true)
-          })
+//           $('.confirmation-button').click(function() {
+//                modal.style.display = 'none';
+//                document.body.style.overflow = 'auto';
+//                resolve(true)
+//           })
 
-          $('.reject-button').click(function() {
-               modal.style.display = 'none';
-               document.body.style.overflow = 'auto';
-               resolve(false)
-          })
-     })
-}
+//           $('.reject-button').click(function() {
+//                modal.style.display = 'none';
+//                document.body.style.overflow = 'auto';
+//                resolve(false)
+//           })
+//      })
+// }
 
-window.onclick = function(event) {
-     if (event.target == modal) {
-         modal.style.display = 'none';
-         document.body.style.overflow = 'auto';
-     }
- }
+// window.onclick = function(event) {
+//      if (event.target == modal) {
+//          modal.style.display = 'none';
+//          document.body.style.overflow = 'auto';
+//      }
+//  }
 
 cardContainers.forEach(cardContainer => {
      const cardContainerSibling = cardContainer.nextElementSibling
@@ -64,23 +64,31 @@ cardContainers.forEach(cardContainer => {
 	cardContainer.addEventListener('drop', e => {
 		e.preventDefault()
           const draggable = document.querySelector('.dragging')
-          if (collapsedStudents) {
-               fire_up_modal().then(answerConfirmation => {
-                    // closeBtn.onclick = function() {
-                    //      modal.style.display = 'none';
-                    //      document.body.style.overflow = 'auto';
-                    //      cardContainer.style.backgroundColor = ''
-                    // }
-                    if (answerConfirmation) {
-                         collapsedStudents.appendChild(draggable);
-                         // TODO: Call the backend function here 
-                         // so that we can trigger the update on 
-                         // the database:
-                         // 1. Delete from model.play the student_id
-                         // 2. Add to new model.play the student_id
-                    }
-               })
-          }
+          console.log(cardContainer.id)
+          console.log(draggable.id)
+          $('#changeUserPlayModal').find('#id_usuario').attr('placeholder', draggable.id);
+          $('#changeUserPlayModal').find('#actual_play').attr('placeholder', draggable.name);
+          $('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', cardContainer.id);
+          $('#changeUserPlayModal').modal('show');
+
+          // if (collapsedStudents) {
+          //      fire_up_modal().then(answerConfirmation => {
+          //           // closeBtn.onclick = function() {
+          //           //      modal.style.display = 'none';
+          //           //      document.body.style.overflow = 'auto';
+          //           //      cardContainer.style.backgroundColor = ''
+          //           // }
+          //           if (answerConfirmation) {
+          //                collapsedStudents.appendChild(draggable);
+          //                // TODO: Call the backend function here 
+          //                // so that we can trigger the update on 
+          //                // the database:
+          //                // 1. Delete from model.play the student_id
+          //                // 2. Add to new model.play the student_id
+          //           }
+          //      })
+          // }
+          cardContainer.style.backgroundColor = ''
 	})
 
 })
