@@ -19,7 +19,7 @@ Index
         {% for game in games %}
         <div class="cyber__card [ is-collapsed ]">
 
-            <div class="cyber__card__inner [ js-expander ]">
+            <div id="{{ game.name }}" class="cyber__card__inner [ js-expander ]">
                 <span>{{ game.displayName }}</span><br>
                 <img class="cyber__image" src="{% static game.file_route %}" alt="Futbolito 1">
                 <div class="remaining__time">
@@ -34,7 +34,7 @@ Index
                 <div class="collapsed__students">
                     <ul class="container-dropzone">
                         {% for player in game.plays_data %}
-                        <div id="{{ player.student_id }}" class="student draggable" draggable="true">
+                        <div id="{{ player.student_id }}" data-gameName="{{ game.name }}" class="student draggable" draggable="true">
                             <li>{{ player.student_id }}</li>
                             <form class="end-play-form" id="end-play-form-{{ player.student_id }}">
                                 {% csrf_token %}
@@ -60,18 +60,53 @@ Index
     </div>
 
     <!-- modal: Change the user play -->
-    <div id="confirmation_modal" class="change_play_modal">
+    <!-- <div id="confirmation_modal" class="change_play_modal">
         <div class="modal-content">
-            <!-- <span class="close">&times;</span> -->
             <span>Estás seguro que quieres cambiar al usuario X del juego Y al juego Z</span>
             <div class="buttons-container">
                 <button class="confirmation-button">Confirmar</button>
                 <button class="reject-button">Cancelar</button>
             </div>
         </div>
+    </div> -->
+
+    <!-- Modal for add/edit -->
+    <div class="modal fade" id="changeUserPlayModal" tabindex="-1" aria-labelledby="changeUserPlayModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Estás cambiando a un usuario de juego</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="col-form-label">ID Usuario:</label>
+                        <input type="text" class="form-control" id="id_usuario" name="id_usuario" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="col-form-label">Play actual:</label>
+                        <input type="text" class="form-control" id="actual_play" name="actual_play" required disabled>
+
+                        <label for="name" class="col-form-label">Play nuevo:</label>
+                        <input type="text" class="form-control" id="nuevo_play" name="nuevo_play" required disabled>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary btn-green" id="confirmPlayChange">Confirmar</button>
+                    <button type="button" class="btn btn-primary btn-red" id="rejectPlayChange">Cancelar</button>
+                </div>
+            </div>
+        </div>
     </div>
+    <!-- End of modal for add/edit -->
 
 </div>
+
+<div id="success-alert" class="alert alert-success d-none" role="alert">
+    <!-- Succesfull messages will be inserted here -->
+</div>
+
 <div id="error-alert" class="alert alert-danger d-none" role="alert">
     <!-- Error messages will be inserted here -->
 </div>

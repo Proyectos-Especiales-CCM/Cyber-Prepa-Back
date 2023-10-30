@@ -104,6 +104,10 @@ $(document).ready(function () {
                     // Display the error message in the alert
                     $("#error-alert").text(data.message);
                     $("#error-alert").removeClass("d-none");
+                    
+                    setTimeout(function() {
+                        $("#error-alert").addClass("d-none");
+                    }, 3000);
                 }
             },
             error: function (xhr, status, error) {
