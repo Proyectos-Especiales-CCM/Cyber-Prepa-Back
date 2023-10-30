@@ -34,7 +34,7 @@ Index
                 <div class="collapsed__students">
                     <ul class="container-dropzone">
                         {% for player in game.plays_data %}
-                        <div id="{{ player.student_id }}" name="{{ game.name }}" class="student draggable" draggable="true">
+                        <div id="{{ player.student_id }}" data-gameName="{{ game.name }}" class="student draggable" draggable="true">
                             <li>{{ player.student_id }}</li>
                             <form class="end-play-form" id="end-play-form-{{ player.student_id }}">
                                 {% csrf_token %}
@@ -101,6 +101,10 @@ Index
     </div>
     <!-- End of modal for add/edit -->
 
+</div>
+
+<div id="success-alert" class="alert alert-success d-none" role="alert">
+    <!-- Succesfull messages will be inserted here -->
 </div>
 
 <div id="error-alert" class="alert alert-danger d-none" role="alert">
