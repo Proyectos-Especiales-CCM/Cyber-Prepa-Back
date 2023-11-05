@@ -1,5 +1,4 @@
 {% load static %}
-{% load template_functions %}
 <header>
     <div id="nav-container">
         <div id="nav-overlay"></div>
@@ -8,10 +7,8 @@
                 <li><a class="cool-hover" href="{% url 'index' %}">Home</a></li>
                 <li><a class="cool-hover" href="{% url 'regulations' %}">Reglamento</a></li>
                 {% if user.is_authenticated %}
-                {% if request.user|has_group:"admin" %}
-                <!-- If the user is authenticated, and is an admin: Shows the admin CRUD page-->
+                <!-- If the user is authenticated shows the admin CRUD page-->
                 <li><a class="cool-hover" href="{% url 'admin' %}">Admin</a></li>
-                {% endif %}
                 <li><a class="cool-hover" href="{% url 'logout' %}">Logout</a></li>
                 {% else %}
                 <li><a class="cool-hover" href="{% url 'login' %}">Login</a></li>

@@ -2,6 +2,7 @@
 from django.http import JsonResponse
 from datetime import timedelta
 from rental.models import Game, Plays, Student, Log, Sanction
+from django.contrib.auth.models import User, Group
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from json import loads
@@ -162,6 +163,23 @@ def get_sanctions_list(request):
         )
         data = {'sanctions': list(sanctions)}
         return JsonResponse(data, safe=False)
+    
+def get_users_list(request):
+    if request.method == 'GET':
+        users = User.objects.filter(is_active=True)
+        user_data = []
+
+        for user in users:
+            user_dict = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_admin': user.groups.filter(name='admin').exists(),
+            }
+            user_data.append(user_dict)
+
+        data = {'users': user_data}
+        return JsonResponse(data, safe=False)
 
 # Admin CRUD operations
 ### Upload game image to static folder
@@ -187,7 +205,7 @@ def upload_game_image(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 """
             
-### Create game
+### Create, update and delete games
 def game(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -205,19 +223,31 @@ def game(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
     # Patch method needs testing
     if request.method == 'PATCH':
-        id = request.POST.get('id')
-        name = request.POST.get('name')
-        displayName = request.POST.get('displayName')
-        available = request.POST.get('available')
-        show = request.POST.get('show')
-        file_route = request.POST.get('file_route')
         try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            id = data.get('id')
             game = Game.objects.get(id=id)
-            game.name = name
-            game.displayName = displayName
-            game.available = available
-            game.show = show
-            game.file_route = file_route
+            # Check if the name changed and if it changed, update it
+            name = data.get('name')
+            if name != '' and name != None:
+                game.name = name
+            # Check if the displayName changed and if it changed, update it
+            displayName = data.get('displayName')
+            if displayName != '' and displayName != None:
+                game.displayName = displayName
+            # Check if the show field changed and if it changed, update it
+            show = data.get('show')
+            if show != None:
+                game.show = show
+            # Check if the available field changed and if it changed, update it
+            available = data.get('available')
+            if available != None:
+                game.available = available
+            # Check if the file_route field changed and if it changed, update it
+            file_route = data.get('file_route')
+            if file_route != '' and file_route != None:
+                game.file_route = file_route
             game.save()
             return JsonResponse({'status': 'success'})
         except Exception as e:
@@ -231,10 +261,167 @@ def game(request):
             if game_id is not None:
                 game = Game.objects.get(id=game_id)
                 game.delete()
+                log = Log.objects.create(actionPerformed=f' Elimina juego: {game.name}', user=request.user)
+                log.save()
                 return JsonResponse({'status': 'success'})
             else:
                 return JsonResponse({'status': 'error', 'message': 'Missing or invalid id in request body'})
         except Game.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Game not found'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+### Create, update and delete students
+def student(request):
+    if request.method == 'PATCH':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            id = data.get('id')
+            student = Student.objects.get(id=id)
+            # Check if the name changed and if it changed, update it
+            name = data.get('name')
+            if name != '' and name != None:
+                student.name = name
+            # Check if the hash changed and if it changed, update it
+            hash = data.get('hash')
+            if hash != '' and hash != None:
+                student.hash = hash
+            student.save()
+            log = Log.objects.create(actionPerformed=f' Actualiza datos de estudiante: {student.id}', user=request.user)
+            log.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    if request.method == 'DELETE':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            student_id = data.get('id')
+
+            if student_id is not None:
+                student = Student.objects.get(id=student_id)
+                student.delete()
+                log = Log.objects.create(actionPerformed=f' Elimina datos de estudiante: {student_id}', user=request.user)
+                log.save()
+                return JsonResponse({'status': 'success'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Missing or invalid id in request body'})
+        except Student.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Student not found'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+### Create, update and delete plays
+def play(request):
+    if request.method == 'DELETE':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            play_id = data.get('id')
+
+            if play_id is not None:
+                play = Plays.objects.get(id=play_id)
+                play.delete()
+                log = Log.objects.create(actionPerformed=f' Elimina sesión de juego de: {play.student_id}', user=request.user)
+                log.save()
+                return JsonResponse({'status': 'success'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Missing or invalid id in request body'})
+        except Plays.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Play not found'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        
+### Create, update and delete users
+def user(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        email = request.POST.get('email')
+        is_admin = request.POST.get('is_admin')
+        try:
+            # First check if the user already exists, in which case verify that it is not active
+            user = User.objects.filter(username=username)
+            if user.exists():
+                user = user.first()
+                if user.is_active:
+                    return JsonResponse({'status': 'error', 'message': 'User already exists'})
+                else:
+                    user.is_active = True
+                    user.set_password(password)
+                    if is_admin == 'on':
+                        admin_group = Group.objects.get(name='admin')
+                        user.groups.add(admin_group)
+                    user.save()
+                    log = Log.objects.create(actionPerformed=f' Reactiva usuario: {username}', user=request.user)
+                    log.save()
+                    return JsonResponse({'status': 'success'})
+            else:
+                user = User.objects.create_user(username=username, password=password, email=email)
+                user.save()
+
+                # Add user to admin group if is_admin is True
+                if is_admin == 'on':
+                    admin_group = Group.objects.get(name='admin')
+                    user.groups.add(admin_group)
+
+            log = Log.objects.create(actionPerformed=f' Crea usuario: {username}; admin = {is_admin}', user=request.user)
+            log.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    if request.method == 'PATCH':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            id = data.get('id')
+            user = User.objects.get(id=id)
+            # Check if the email changed and if it changed, update it
+            username = data.get('username')
+            email = data.get('email')
+            if user.email != email and email != '' and email != None:
+                # Check if the email changed and if it is already in use
+                if User.objects.filter(email=email).exists():
+                    return JsonResponse({'status': 'error', 'message': 'Email already in use'})
+                user.email = email
+                user.username = username
+            # Check if the password changed and if it changed, update it
+            password = data.get('password')
+            if password != '' and password != None:
+                user.set_password(password)
+            # Check if the is_admin field changed and if it changed, update it
+            is_admin = data.get('is_admin')
+            if is_admin == True and is_admin != None:
+                admin_group = Group.objects.get(name='admin')
+                user.groups.add(admin_group)
+            else:
+                admin_group = Group.objects.get(name='admin')
+                user.groups.remove(admin_group)
+                is_admin = False
+            user.save()
+            log = Log.objects.create(actionPerformed=f' Actualiza usuario: {username}; admin = {is_admin}', user=request.user)
+            log.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    if request.method == 'DELETE':
+        try:
+            # Parse the request body as JSON
+            data = json.loads(request.body.decode('utf-8'))
+            user_id = data.get('id')
+
+            if user_id is not None:
+                # Deactivate the user instead of deleting it
+                user = User.objects.get(id=user_id)
+                user.is_active = False
+                user.save()
+                log = Log.objects.create(actionPerformed=f' Desactiva usuario: {user.username}', user=request.user)
+                log.save()
+                return JsonResponse({'status': 'success'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Missing or invalid id in request body'})
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})

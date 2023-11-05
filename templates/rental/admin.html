@@ -1,5 +1,6 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+{% load template_functions %}
 
 {% block title %}
 Rental Admin CRUD
@@ -38,6 +39,7 @@ Rental Admin CRUD
             </div>
         </div>
     </div>
+    {% if request.user|has_group:"admin" %}
     <div class="row">
         <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
             <div class="table-responsive">
@@ -63,7 +65,7 @@ Rental Admin CRUD
             <div class="table-responsive">
                 <h2 class="table-title">Games Table</h2>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#exampleModal">Agregar juego</button>
+                    data-bs-target="#gameModal">Agregar juego</button>
                 <table id="games-table" class="table table-striped table-bordered">
                     <caption>
                         Juegos registrados en el sistema
@@ -104,6 +106,7 @@ Rental Admin CRUD
             </div>
         </div>
     </div>
+    {% endif %}
     <div class="row">
         <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
             <div class="table-responsive">
@@ -127,14 +130,40 @@ Rental Admin CRUD
             </div>
         </div>
     </div>
+    {% if request.user|has_group:"admin" %}
+    <div class="row">
+        <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
+            <div class="table-responsive">
+                <h2 class="table-title">Usuarios</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">Agregar
+                    usuario</button>
+                <table id="users-table" class="table table-striped table-bordered">
+                    <caption>
+                        Usuarios registrados en el sistema.
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th class="centered">ID</th>
+                            <th class="centered">Nombre de usuario</th>
+                            <th class="centered">Administrador</th>
+                            <th class="centered">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody_users"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Modal for add/edit -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+{% if request.user|has_group:"admin" %}
+<!-- Modal for add/edit game -->
+<div class="modal fade" id="gameModal" tabindex="-1" aria-labelledby="gameModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Nuevo Juego</h5>
+                <h5 class="modal-title" id="gameModalLabel">Nuevo Juego</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
@@ -156,12 +185,77 @@ Rental Admin CRUD
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="submitGame">Crear Juego</button>
+                <button type="button" class="btn btn-primary" id="submitGame">Crear</button>
             </div>
         </div>
     </div>
 </div>
 
+
+<!-- Modal for add/edit user -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalLabel">Nuevo Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" action="{% url 'user' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="displayName" class="col-form-label">Correo:</label>
+                        <input type="text" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="col-form-label">Contraseña:</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password2" class="col-form-label">Confirmar contraseña:</label>
+                        <input type="password" class="form-control" id="password2" name="password2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin" class="col-form-label">Hacer Administrador:</label>
+                        <input type="checkbox" class="form-check-input" id="is_admin" name="is_admin">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="submitUser">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal for edit student -->
+<div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentModalLabel">Modificar Estudiante</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="displayName" class="col-form-label">Nombre:</label>
+                    <input type="text" class="form-control" id="studentName" name="studentName" required>
+                </div>
+                <input type="hidden" id="studentId" name="studentId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="submitStudent">Modificar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adds CSRF token to AJAX requests -->
+{% csrf_token %}
 
 <!-- Modal for delete confirmation -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel"
@@ -202,4 +296,7 @@ Rental Admin CRUD
 <script src="{% static 'vendor/bootstrap-5.2.3-dist/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'vendor/DataTables/datatables.min.js' %}"></script>
 <script src="{% static 'js/admin.js' %}"></script>
+{% if request.user|has_group:"admin" %}
+<script src="{% static 'js/admin_privileged.js' %}"></script>
+{% endif %}
 {% endblock %}
