@@ -130,19 +130,8 @@ Index
             <textarea class="form-control" id="causaSancion"></textarea>
           </div>
           <div class="mb-3">
-            <label for="diasSancion" class="col-form-label">Días de sanción:</label>
-            <select class="form-select" id="diasSancion">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-              <option value="9">9</option>
-              <option value="10">10</option>
-            </select>
+            <label for="diasSancion" class="col-form-label">Fin de la sancion:</label>
+            <input type="date" id="diasSancion" name="diasSancion">
           </div>
         </form>
       </div>
@@ -165,60 +154,7 @@ Index
 {% if user.is_authenticated %}
 <script src="{% static 'js/auth_cards.js' %}"></script>
 <script src="{% static 'js/drag_drop.js' %}"></script>
+<script src="{% static 'js/sanction_modal.js' %}"></script>
+<script src="{% static 'js/sanctions.js' %}"></script>
 {% endif %}
-
-<!-- Script modal sanctions-->
-<script type="text/javascript">
-
-modalSanciones.addEventListener('show.bs.modal', function (event) {
-    // Button that triggered the modal
-    var button = event.relatedTarget
-    var recipient = button.getAttribute('data-bs-matricula')
-    // If necessary, you could initiate an AJAX request here
-    // and then do the updating in a callback.
-    // Update the modal's content.
-    var modalTitle = modalSanciones.querySelector('.modal-title')
-    var modalBodyInput = modalSanciones.querySelector('.modal-body input')
-
-    modalTitle.textContent = 'Sancion'
-    modalBodyInput.value = recipient
-})
-</script>
-
-<!-- Script sancion -->
-<script>
-document.getElementById("sancionarBtn").addEventListener("click", function() {
-  var student_id = document.getElementById("matriculaSancion").value;
-  var cause = document.getElementById("causaSancion").value;
-  var days = document.getElementById("diasSancion").value;
-
-  var data = {
-    student_id: student_id,
-    cause: cause,
-    days: days
-  };
-
-  var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
-  fetch('api/add-student-to-sanctioned', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => {
-    if (response.ok) {
-      var modal = new bootstrap.Modal(document.getElementById("modalSanciones"));
-      modal.hide();
-    } else {
-      console.error('Error:', response);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-});
-</script>
 {% endblock %}

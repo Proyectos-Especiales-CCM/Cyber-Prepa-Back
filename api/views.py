@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from json import loads
 import json
+from datetime import datetime
 
 # Index calls
 def get_start_times(request):
@@ -91,12 +92,13 @@ def add_student_to_game(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+
 def add_student_to_sanctioned(request):
     if request.method == 'POST':
         data = loads(request.body)
         student_id = data['student_id']
         cause = data['cause']
-        days = data['days']
+        date = data['days']
 
         try:
             student = Student.objects.get(id=student_id)
@@ -104,7 +106,10 @@ def add_student_to_sanctioned(request):
             student = Student.objects.create(id=student_id)
 
         current_time = timezone.now()
-        end_time = current_time + timezone.timedelta(days=int(days))
+
+        date = datetime.strptime(date, '%Y-%m-%d')
+        end_time = timezone.make_aware(date)
+
         sanction = Sanction(
             student=student,
             cause=cause,
@@ -113,7 +118,6 @@ def add_student_to_sanctioned(request):
         )
         sanction.save()
         return JsonResponse({'status': 'success'})
-
 
 # Admin CRUD datatables calls
 def get_plays_list(request):
