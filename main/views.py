@@ -59,3 +59,9 @@ class Login(View):
 def logout_(request):
     logout(request)
     return redirect('/')
+
+def test(request):
+    return render(request, "main/test.html")
+
+def room(request, room_name):
+    return render(request, "main/room.html", {"room_name": room_name})
