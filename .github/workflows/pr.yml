@@ -1,0 +1,39 @@
+name: Pull Requests Workflow
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Label PR
+        if: github.event_name == 'pull_request_target'
+        uses: actions/labeler@v4
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
+  assign-author:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto Author Assign
+        if: github.event_name == 'pull_request_target'
+        uses: toshimaru/auto-author-assign@v1.1.0
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
+  add-reviews:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto Assign
+        if: github.event_name == 'pull_request'
+        uses: kentaro-m/auto-assign-action@v1.2.5
+        with:
+          configuration-path: '.github/some_name_for_configs.yml' # Only needed if you use something other than .github/auto_assign.yml
