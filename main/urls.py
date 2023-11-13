@@ -26,6 +26,4 @@ urlpatterns = [
     path('logout', logout_, name='logout'),
     path('rental/', include('rental.urls')),
     path('api/', include('api.urls')),
-    path('test', test, name='test'),
-    path("<str:room_name>/", room, name="room"),
 ]
