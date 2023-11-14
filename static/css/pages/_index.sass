@@ -18,14 +18,17 @@ ul
 
 .cyber__card
     margin: 15px
-    width: calc((100% / 3) - 30px)
+    width: calc((100% / 5) - 30px)
     transition: all 0.2s ease-in-out
 
     @media screen and (max-width: 991px)
-        width: calc((100% / 2) - 30px)
+        width: calc((100% / 4) - 30px)
     /* Add a property here */
 
     @media screen and (max-width: 767px)
+        width: calc((100% / 3) - 30px)
+
+    @media screen and (max-width: 600px)
         width: 100%
 
     &:hover .cyber__card__inner
@@ -56,7 +59,7 @@ ul
     justify-content: center
     align-items: center
     color: #eceef1
-    font-size: 1.5em
+    font-size: 1rem
 
     &:hover
         opacity: 0.9
@@ -89,7 +92,7 @@ ul
     border-bottom: 15px solid #333a45
 
 .cyber__card.is-expanded .cyber__card__expander
-    max-height: 1000px
+    max-height: 300px
     min-height: 200px
     overflow: visible
     margin-top: 30px
@@ -107,48 +110,43 @@ ul
     transform: scale(1)
 
 .collapsed__students
-    width: 80%
-
-.student
-    background-color: #282e379e
-    border-radius: 5px
     display: flex
-    align-items: center
-    justify-content: space-between
-    padding: 5px
-    margin: 5px
-    
+    flex-flow: row nowrap
+    overflow-x: auto
+    width: 90%
 
-.end-play-form
-    padding: 5px
-    transition: all 0.2s ease-in-out
-
-    button[type="submit"]
-        padding: 5px
-        border-radius: 5px
-        border: 0px
-
-        &:hover
-            background-color: #b6434337
-            transform: scale(1.05)
-
-
-.add-student-game
-    justify-content: center
-    padding: 10px
+.container__dropzone
+    display: flex
     width: 100%
 
-    input[type="text"]
-        width: auto
-        padding: 10px
-        border-radius: 5px
-        border: 0px
+.scroll-button
+    position: absolute
+    top: 50%
+    transform: translateY(-50%)
+    padding: 10px
+    background-color: #ddd
+    border: none
+    cursor: pointer
 
-    button[type="submit"]
-        width: auto
-        padding: 10px
-        border-radius: 5px
-        border: 0px
+.scroll-button.left
+    left: 0
+
+.scroll-button.right
+    right: 0
+
+.student
+    background-color: rgba(40,46,55,.6196078431)
+    border-radius: 5px
+    display: flex
+    flex-flow: column
+    justify-content: space-between
+    align-items: center
+    padding: 15px
+    height: 100%
+    margin: 5px
+
+.input-group
+    width: 50%
 
 .dragging
     opacity: 0.5
@@ -156,17 +154,23 @@ ul
 
 
 @media screen and (min-width: 992px)
-    .cyber__card:nth-of-type(3n+2) .cyber__card__expander
+    .cyber__card:nth-of-type(5n+2) .cyber__card__expander
         margin-left: calc(-100% - 30px)
 
-    .cyber__card:nth-of-type(3n+3) .cyber__card__expander
+    .cyber__card:nth-of-type(5n+3) .cyber__card__expander
         margin-left: calc(-200% - 60px)
+    
+    .cyber__card:nth-of-type(5n+4) .cyber__card__expander
+        margin-left: calc(-300% - 90px)
 
-    .cyber__card:nth-of-type(3n+4)
+    .cyber__card:nth-of-type(5n+5) .cyber__card__expander
+        margin-left: calc(-400% - 120px)
+
+    .cyber__card:nth-of-type(5n+6)
         clear: left
 
     .cyber__card__expander
-        width: calc(300% + 60px)
+        width: calc(500% + 120px)
 
 @media screen and (min-width: 768px) and (max-width: 991px)
     .cyber__card:nth-of-type(2n+2) .cyber__card__expander
