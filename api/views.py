@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from json import loads
 import json
+from datetime import datetime
 
 # Index calls
 def get_start_times(request):
@@ -54,15 +55,35 @@ def set_play_ended(request):
 
 
 def condiciones_para_juego(student_id):
-    """Verifica si el estudiante tiene sanciones presentes"""
+    """
+    Verifica si el estudiante tiene sanciones presentes o
+    si cumple con las reglas de juego (3 veces a la semana,
+    1 vez por día).
+    """
     current_datetime = timezone.now()
+    one_week_ago = current_datetime - timedelta(days=7)
 
+    # Sanciones activas
     active_sanctions = Sanction.objects.filter(
         student__id=student_id,
         end_time__gt=current_datetime
     ).exists()
 
-    return not active_sanctions
+    # Verificacion semanal
+    student_plays_last_week = Plays.objects.filter(
+        student_id=student_id,
+        time__gte=one_week_ago,
+        time__lt=current_datetime
+    )
+    weekly_play_limit = 3
+    has_exceeded_weekly_limit = student_plays_last_week.count() >= weekly_play_limit
+
+    # Verificacion diaria
+    today = current_datetime.date()
+    student_plays_today = student_plays_last_week.filter(time__date=today)
+    has_played_more_than_once_today = student_plays_today.count() > 1
+
+    return not (active_sanctions or has_exceeded_weekly_limit or has_played_more_than_once_today)
 
 
 def add_student_to_game(request):
@@ -91,12 +112,13 @@ def add_student_to_game(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+
 def add_student_to_sanctioned(request):
     if request.method == 'POST':
         data = loads(request.body)
         student_id = data['student_id']
         cause = data['cause']
-        days = data['days']
+        date = data['days']
 
         try:
             student = Student.objects.get(id=student_id)
@@ -104,7 +126,10 @@ def add_student_to_sanctioned(request):
             student = Student.objects.create(id=student_id)
 
         current_time = timezone.now()
-        end_time = current_time + timezone.timedelta(days=int(days))
+
+        date = datetime.strptime(date, '%Y-%m-%d')
+        end_time = timezone.make_aware(date)
+
         sanction = Sanction(
             student=student,
             cause=cause,
@@ -113,7 +138,6 @@ def add_student_to_sanctioned(request):
         )
         sanction.save()
         return JsonResponse({'status': 'success'})
-
 
 # Admin CRUD datatables calls
 def get_plays_list(request):
