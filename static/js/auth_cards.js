@@ -4,9 +4,10 @@ $cell.find('.js-expander').click(function () {
     var rect = $thisCell[0].getBoundingClientRect();
     
     // scrollTo(rect.top + window.scrollY);
-    $('html, body').animate({
-        scrollTop: $thisCell.offset().top
-    }, );
+    // $('html, body').animate({
+    //     scrollTop: $thisCell.offset().top
+    // }, );
+    $('html, body').scrollTop($thisCell.offset().top);
 
     if ($thisCell.hasClass('is-collapsed')) {
         $cell.removeClass('is-expanded').addClass('is-collapsed');

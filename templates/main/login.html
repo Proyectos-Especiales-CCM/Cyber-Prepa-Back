@@ -11,23 +11,41 @@ Login
 {% endblock %}
 
 {% block content %}
-<form method="POST">
-    {% csrf_token %}
-    <h2>Bienvenido</h2>
-    <div class="login-field">
-        <h5>Usuario:</h5>
-        <input class="input" type="text" name="username">
+
+<div class="container">
+    <div class="row justify-content-center mt-5">
+      <div class="col-lg-4 col-md-6 col-sm-6">
+        <div class="card shadow">
+          <div class="card-title text-center border-bottom">
+            <h2 class="p-3">Login</h2>
+          </div>
+          <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+              <div class="mb-4">
+                <label for="username" class="form-label">Usuario/Email</label>
+                <input type="text" class="form-control" id="username" name="username"/>
+              </div>
+              <div class="mb-4">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password"/>
+              </div>
+              <div class="mb-4">
+                <input type="checkbox" class="form-check-input" id="remember" />
+                <label for="remember" class="form-label">Recordarme</label>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn text-light main-bg" value="login">Ingresar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="login-field">
-        <h5>Contraseña:</h5>
-        <input class="input" type="password" name="password">
-    </div>
-    <a class="forgot-pass" href="#">Forgot Pasword</a>
-    {% if error_message %}
-    <p class="login-error">{{ error_message }}</p>
-    {% endif %}
-    <input class="btn" type="submit" value="Login">
-</form>
+  </div>
+
+
+
 {% endblock %}
 
 {% block js %}
