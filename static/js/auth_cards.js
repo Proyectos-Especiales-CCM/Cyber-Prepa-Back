@@ -1,6 +1,12 @@
 // open and close card when clicked on card
 $cell.find('.js-expander').click(function () {
-    var $thisCell = $(this).closest('.cyber__card');
+    var $thisCell = $(this).closest('.cyber__card');    
+    var rect = $thisCell[0].getBoundingClientRect();
+    
+    // scrollTo(rect.top + window.scrollY);
+    $('html, body').animate({
+        scrollTop: $thisCell.offset().top
+    }, );
 
     if ($thisCell.hasClass('is-collapsed')) {
         $cell.removeClass('is-expanded').addClass('is-collapsed');
@@ -9,6 +15,7 @@ $cell.find('.js-expander').click(function () {
         $thisCell.removeClass('is-expanded').addClass('is-collapsed');
     }
 });
+
 
 // close card when click on cross
 $cell.find('.js-collapser').click(function () {
