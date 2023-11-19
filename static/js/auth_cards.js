@@ -92,6 +92,8 @@ $(document).ready(function () {
                 // Handle successful response
                 if (data.status === "success") {
                     console.log("Student added to game successfully:", studentId);
+                    // Re-fetch the game start times
+                    fetchGameStartTimes();
 
                     // Optionally, update the UI to reflect the added student
                     const studentList = form.siblings("ul");
