@@ -1,19 +1,28 @@
-\:root
-  --main-bg:#e91e63
+.login-container
+  background-color: #161A1E
+  border-color: #1F2227
+  border-width: 2px
+  border-style: solid
 
-body
-  color: black
+.form-header
+  font-size: 25px
+  color: #f6f6f6
 
-.main-bg
-  background: var(--main-bg) !important
+.input-block
+  margin-top: 4px
+  margin-bottom: 16px
 
-input:focus, button:focus
-  border: 1px solid var(--main-bg) !important
-  box-shadow: none !important
+.label-link
+  float: right
+  font-size: 12px
+  right: 0
 
-.form-check-input:checked
-  background-color: var(--main-bg) !important
-  border-color: var(--main-bg) !important
+.sign-in-btn
+  margin-top: 16px
+  display: block
+  width: 100%
+  text-align: center
 
-.card, .btn, input
-  border-radius: 0 !important
+@media screen and (max-width: 390px)
+  body
+    overflow-x: hidden
