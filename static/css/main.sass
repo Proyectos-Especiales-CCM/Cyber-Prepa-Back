@@ -1,8 +1,9 @@
 @import 'settings/variables'
+@import 'settings/fonts'
 @import 'layouts/header'
 @import 'layouts/footer'
 @import 'pages/index'
-@import 'pages/login'
+@import 'pages/_login'
 @import 'pages/admin'
 @import 'pages/regulations'
 @import 'components/buttons'
@@ -22,8 +23,8 @@ html, body
     height: 100%
 
 body
-    background-color: black
+    background-color: $color-canvas-default
     padding: 1rem
     // overflow: hidden Aqui se oculta el scroll, usar con cuidado para el responsive
     color: white
-    font-family: 'Poppins', sans-serif
+    font-family: $global-font

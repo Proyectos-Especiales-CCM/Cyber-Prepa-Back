@@ -31,26 +31,40 @@ Index
             <div class="cyber__card__expander">
             <link rel="stylesheet" href="{% static 'vendor/DataTables/datatables.min.css' %}">
                 <i class="fa fa-close [ js-collapser ]"></i>
+
+                <form class="input-group mb-3" id="add-student-game-{{ game.id }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="game_id" value="{{ game.id }}">
+                    <input type="text" class="form-control" name="student_id" placeholder="ID estudiante" aria-label="ID estudiante" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="submit">Agregar estudiante</button>
+                    </div>
+                </form>
+
                 <div class="collapsed__students">
-                    <ul class="container-dropzone">
+                    <ul class="container__dropzone">
                         {% for player in game.plays_data %}
                         <div id="{{ player.student_id }}" data-gameName="{{ game.name }}" class="student draggable" draggable="true">
                             <li>{{ player.student_id }}</li>
-                            <form class="end-play-form" id="end-play-form-{{ player.student_id }}">
+                            <form class="" id="end-play-form-{{ player.student_id }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="student_id" value="{{ player.student_id }}">
-                                <button type="submit">End Play</button>
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="{{ player.student_id}}" >Sancionar</button>
+                                <button type="submit" class="btn btn-success">End Play</button>
                             </form>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="{{ player.student_id}}" >Sancionar</button>
                         </div>
                         {% endfor %}
                     </ul>
-                    <form class="add-student-game" id="add-student-game-{{ game.id }}">
-                        {% csrf_token %}
-                        <input type="hidden" name="game_id" value="{{ game.id }}">
-                        <input type="text" name="student_id" placeholder="Student ID">
-                        <button type="submit">Add Student</button>
-                    </form>
+                    <button class="scroll-button left">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left-square-fill" viewBox="0 0 16 16">
+                            <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm10.5 10V4a.5.5 0 0 0-.832-.374l-4.5 4a.5.5 0 0 0 0 .748l4.5 4A.5.5 0 0 0 10.5 12z"/>
+                        </svg>
+                    </button>
+                    <button class="scroll-button right">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right-square-fill" viewBox="0 0 16 16">
+                            <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 .832.374l4.5-4a.5.5 0 0 0 0-.748l-4.5-4A.5.5 0 0 0 5.5 4v8z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             {% endif %}
@@ -153,6 +167,7 @@ Index
 <script src="{% static 'js/cards.js' %}"></script>
 {% if user.is_authenticated %}
 <script src="{% static 'js/auth_cards.js' %}"></script>
+<script src="{% static 'js/scroll_left_right.js' %}"></script>
 <script src="{% static 'js/drag_drop.js' %}"></script>
 <script src="{% static 'js/sanction_modal.js' %}"></script>
 <script src="{% static 'js/sanctions.js' %}"></script>
