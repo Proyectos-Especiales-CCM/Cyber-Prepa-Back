@@ -167,11 +167,11 @@ Login
     <form method="POST">
       {% csrf_token %}
       
-      <label for="username" style="font-size: 14px;">Usuario o correo electrónico</label>
+      <label for="username" class="label-container">Usuario o correo electrónico</label>
       <input type="text" class="form-control input-block js-login-field rounded" id="username" name="username" placeholder="" aria-label="Username" aria-describedby="basic-addon1">      
       
       <div class="position-relative">
-        <label for="password">Contraseña</label>
+        <label class="label-container" for="password">Contraseña</label>
         <input type="password" name="password" id="password" class="form-control input-block rounded">
         <a href="" class="label-link position-absolute top-0">¿Olvidaste tu contraseña?</a>
 
