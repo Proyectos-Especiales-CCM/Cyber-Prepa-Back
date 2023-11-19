@@ -1,20 +1,5 @@
 # Cyber-Prepa
 
-<style>
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .label {
-        color: white;
-        border-radius: 8px;
-        padding: 2px 10px;
-        font-size: 14px;
-    }
-</style>
-
 ## App resume and guide
 Please look at the [APP_GUIDE.md](APP_GUIDE.md) file for more information about how the app works.
 
@@ -139,22 +124,26 @@ Please follow the following naming convention for your branches so the github ac
 
 `feature/user-authentication` **or**
 `feat/chat-groups`
-<p class="center"><span class="label" style="background-color: #183D07; border: 1.5px solid #4FB916;">feature</span></p>
+
+![feature label](https://img.shields.io/badge/feature-4FB916?style=for-the-badge)
 
 `bug/fix-header-styling` **or**
 `hotfix/security-patch` **or**
 `fix/fix-login-redirect`
-<p class="center"><span class="label" style="background-color: #5F0000; border: 1.5px solid red;">bug</span></p>
+
+![bug label](https://img.shields.io/badge/bug-FF0000?style=for-the-badge)
 
 `docs/update-readme` **or** `documentation/add-documentation` **or** `doc/add-new-guide`
-<p class="center"><span class="label" style="background-color: #003E6B; border: 1.5px solid #0075CA;">documentation</span></p>
+
+![docs label](https://img.shields.io/badge/docs-0075CA?style=for-the-badge)
 
 `style/update-styles` **or** `frontend/add-styles` **or** `ui/add-new-component` **or** `ux/add-new-animation`
-<p class="center"><span class="label" style="background-color: #782306; border: 1.5px solid #D93F0B;">frontend</span></p>
+
+![frontend label](https://img.shields.io/badge/frontend-D93F0B?style=for-the-badge)
 
 `enhancement/add-new-feature` **or** `enhance/improve-feature`
-<p class="center"><span class="label" style="background-color: #5e8c8c; border: 1.5px solid #A2EEEF;">enhancement</span></p>
 
+![enhancement label](https://img.shields.io/badge/enhancement-A2EEEF?style=for-the-badge)
 
 If already working on a remote branch, you can pull the latest changes from it and create your local branch.
 ```bash
