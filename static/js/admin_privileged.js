@@ -143,7 +143,7 @@ window.addEventListener('load', async () => {
         // Send data using AJAX
         $.ajax({
             type: 'POST',
-            url: BASEURL + '/api/game',
+            url: BASEURL + '/api/game/',
             data: formData,
             success: function (data) {
                 //console.log(data);
@@ -198,7 +198,7 @@ window.addEventListener('load', async () => {
         // Send data using AJAX
         $.ajax({
             type: 'POST',
-            url: BASEURL + '/api/user',
+            url: BASEURL + '/api/user/',
             data: formData,
             success: function (data) {
                 //console.log(data);
@@ -311,9 +311,9 @@ $(document).on('click', '.modify-game', function () {
         // Send data using AJAX as JSON
         $.ajax({
             type: 'PATCH',
-            url: BASEURL + '/api/game',
+            url: BASEURL + '/api/game/',
             data: jsonData,
-            contentType: 'application/json', // Set the content type to JSON
+            contentType: 'application/json/', // Set the content type to JSON
             headers: {
                 'X-CSRFToken': CSRFTOKEN
             },
@@ -414,9 +414,9 @@ $(document).on('click', '.modify-user', function () {
         // Send data using AJAX as JSON
         $.ajax({
             type: 'PATCH',
-            url: BASEURL + '/api/user',
+            url: BASEURL + '/api/user/',
             data: jsonData,
-            contentType: 'application/json', // Set the content type to JSON
+            contentType: 'application/json/', // Set the content type to JSON
             headers: {
                 'X-CSRFToken': CSRFTOKEN
             },
