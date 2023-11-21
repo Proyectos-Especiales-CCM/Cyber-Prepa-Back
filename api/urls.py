@@ -8,6 +8,7 @@ def _is_admin(user):
     return user.groups.filter(name='admin').exists()
 
 urlpatterns = [
+    path('get-games/', get_games),
     path('get-games-start-time', get_start_times),
     path('get-available-games', get_available_games),
     path('set-play-ended', login_required(set_play_ended), name='set_play_ended'),

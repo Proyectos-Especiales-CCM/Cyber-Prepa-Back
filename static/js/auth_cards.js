@@ -1,30 +1,38 @@
-// open and close card when clicked on card
-$cell.find('.js-expander').click(function () {
-    var $thisCell = $(this).closest('.cyber__card');    
-    var rect = $thisCell[0].getBoundingClientRect();
-    
-    // scrollTo(rect.top + window.scrollY);
-    // $('html, body').animate({
-    //     scrollTop: $thisCell.offset().top
-    // }, );
-    $('html, body').scrollTop($thisCell.offset().top);
+// Initializes the expandable feature of the cards
+function initCardsFunctionality(cards) {
+    // open and close card when clicked on card
+    cards.find('.js-expander').click(function () {
+        var $thisCell = $(this).closest('.cyber__card');
+        var rect = $thisCell[0].getBoundingClientRect();
 
-    if ($thisCell.hasClass('is-collapsed')) {
-        $cell.removeClass('is-expanded').addClass('is-collapsed');
-        $thisCell.removeClass('is-collapsed').addClass('is-expanded');
-    } else {
+        // scrollTo(rect.top + window.scrollY);
+        // $('html, body').animate({
+        //     scrollTop: $thisCell.offset().top
+        // }, );
+        $('html, body').scrollTop($thisCell.offset().top);
+
+        if ($thisCell.hasClass('is-collapsed')) {
+            cards.removeClass('is-expanded').addClass('is-collapsed');
+            $thisCell.removeClass('is-collapsed').addClass('is-expanded');
+        } else {
+            $thisCell.removeClass('is-expanded').addClass('is-collapsed');
+        }
+    });
+
+
+    // close card when click on cross
+    cards.find('.js-collapser').click(function () {
+        var $thisCell = $(this).closest('.cyber__card');
         $thisCell.removeClass('is-expanded').addClass('is-collapsed');
-    }
-});
+    });
+}
 
-
-// close card when click on cross
-$cell.find('.js-collapser').click(function () {
-    var $thisCell = $(this).closest('.cyber__card');
-    $thisCell.removeClass('is-expanded').addClass('is-collapsed');
-});
-
-// Override end play form submit
+/*  Override the end play form submit default behavior to use
+    AJAX, update the UI, and send a message to the updates socket
+     This is to prevent the page from reloading when the form
+     is submitted and keep the application state updated without
+     interrupting the user experience
+*/
 function overrideEndPlayFormSubmit() {
     $(".end-play-form").submit(function (event) {
         event.preventDefault();
@@ -54,6 +62,10 @@ function overrideEndPlayFormSubmit() {
                     // Remove the student element from the UI
                     const studentElement = form.closest(".student");
                     studentElement.remove();
+                    updatesSocket.send(JSON.stringify({
+                        'message': 'Plays updated',
+                        'sender': user_username,
+                    }));
                 } else {
                     console.error("Error: " + data.message);
                 }
@@ -67,17 +79,19 @@ function overrideEndPlayFormSubmit() {
             },
         });
     });
-}
+};
 
-// Student end play form
-$(document).ready(function () {
-    overrideEndPlayFormSubmit();
-
+/*  Override the add student game form submit default behavior to use AJAX,
+    update the UI, and send a message to the updates socket
+     This is to prevent the page from reloading when the form
+     is submitted and keep the application state updated without
+     interrupting the user experience
+*/
+function overrideAddStudentFormSubmit() {
     // Game add student form
     $(".add-student-game").submit(function (event) {
         event.preventDefault();
         const form = $(this);
-        const gameId = form.find("input[name=game_id]").val();
         const studentId = form.find("input[name=student_id]").val();
         // CSRF token
         var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -104,8 +118,17 @@ $(document).ready(function () {
                     fetchGameStartTimes();
 
                     // Optionally, update the UI to reflect the added student
-                    const studentList = form.siblings("ul");
-                    const htmlToAppend = '<div class="student draggable" draggable="true"><li>' + studentId + '</li><form class="end-play-form" id="end-play-form-' + studentId + '"><input type="hidden" name="student_id" value="' + studentId + '"><button type="submit">End Play</button></form></div>';
+                    const studentList = form.nextAll('.collapsed__students').first().children('ul');
+                    const htmlToAppend = `
+                    <div id="${studentId}" data-gameName="${'hopefully this isnt required'}" class="student draggable" draggable="true">
+                        <li>${studentId}</li>
+                        <form class="end-play-form" id="end-play-form-${studentId}">
+                            <input type="hidden" name="student_id" value="${studentId}">
+                            <button type="submit" class="btn btn-success">End Play</button>
+                        </form>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="${studentId}" >Sancionar</button>
+                    </div>
+                    `;
                     studentList.append(htmlToAppend);
                     overrideEndPlayFormSubmit();
                     updatesSocket.send(JSON.stringify({
@@ -134,4 +157,4 @@ $(document).ready(function () {
             },
         });
     });
-});
+};
