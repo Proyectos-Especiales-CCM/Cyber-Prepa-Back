@@ -100,12 +100,18 @@ $(document).ready(function () {
                 // Handle successful response
                 if (data.status === "success") {
                     console.log("Student added to game successfully:", studentId);
+                    // Re-fetch the game start times
+                    fetchGameStartTimes();
 
                     // Optionally, update the UI to reflect the added student
                     const studentList = form.siblings("ul");
                     const htmlToAppend = '<div class="student draggable" draggable="true"><li>' + studentId + '</li><form class="end-play-form" id="end-play-form-' + studentId + '"><input type="hidden" name="student_id" value="' + studentId + '"><button type="submit">End Play</button></form></div>';
                     studentList.append(htmlToAppend);
                     overrideEndPlayFormSubmit();
+                    updatesSocket.send(JSON.stringify({
+                        'message': 'Plays updated',
+                        'sender': user_username,
+                    }));
                 } else {
                     console.error("Error: " + data.message);
 

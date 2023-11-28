@@ -25,5 +25,5 @@ urlpatterns = [
     path('login', Login.as_view(), name='login'),
     path('logout', logout_, name='logout'),
     path('rental/', include('rental.urls')),
-    path('api/', include('api.urls'))
+    path('api/', include('api.urls')),
 ]

@@ -1,10 +1,17 @@
 var $cell = $('.cyber__card');
+const userInfoElement = document.getElementById('user-info');
+var user_username = '';
 
+if (userInfoElement) {
+    user_username = userInfoElement.dataset.username;
+}
+
+var countdownInterval;
 // Fetch and create Countdowns
 async function initCountdowns(gameStartTimes) {
 
     // Update the count down every 1 second
-    var x = setInterval(function () {
+    countdownInterval = setInterval(function () {
 
         // Get current's date and time
         var now = new Date().getTime();
@@ -33,7 +40,6 @@ async function initCountdowns(gameStartTimes) {
 
             // If the count down is finished, write some text
             if (distance < 0) {
-                //clearInterval(x);
                 document.getElementById(id).innerHTML = "EXPIRED";
             }
         }
@@ -41,6 +47,7 @@ async function initCountdowns(gameStartTimes) {
 }
 
 async function fetchGameStartTimes() {
+    clearInterval(countdownInterval);
     let currentIP = window.location.hostname;
     if (currentIP === "127.0.0.1" || currentIP === "localhost") {
         currentIP = currentIP + ":8000";
@@ -52,5 +59,22 @@ async function fetchGameStartTimes() {
     const gameStartTimes = obj.map(item => new Date(item.time));
     initCountdowns(gameStartTimes);
 }
+
+const updatesSocket = new WebSocket(`ws://${window.location.host}/ws/updates/`);
+
+updatesSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    const message = data['message'];
+    const sender = data['sender'];
+    if (sender !== user_username) {
+        if (message === 'Plays updated') {
+            fetchGameStartTimes();
+        }
+    }
+};
+
+updatesSocket.onclose = function (e) {
+    console.error('Chat socket closed unexpectedly');
+};
 
 fetchGameStartTimes();
