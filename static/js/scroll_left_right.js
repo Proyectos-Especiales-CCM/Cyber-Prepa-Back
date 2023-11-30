@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+function addScrollLeftRight() {
      const container = document.querySelector(".collapsed__students");
      const scrollButtonLeft = document.querySelector(".scroll-button.left");
      const scrollButtonRight = document.querySelector(".scroll-button.right");
@@ -16,4 +16,4 @@ document.addEventListener("DOMContentLoaded", function () {
              behavior: "smooth",
          });
      });
- });
+ };
