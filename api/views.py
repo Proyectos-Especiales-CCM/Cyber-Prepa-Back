@@ -1,4 +1,5 @@
 # Views (Logic) for API calls.
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from datetime import timedelta
 from rental.models import Game, Plays, Student, Log, Sanction
@@ -10,6 +11,42 @@ import json
 from datetime import datetime
 
 # Index calls
+def get_games(request):
+    if request.method == 'GET':
+        try:
+            games = Game.objects.filter(show=True).values('id', 'name', 'displayName', 'available', 'file_route')
+
+            # If the user is authenticated, add the plays data to the games
+            # Plays data is the student id and the start time of the plays that are not ended for each game
+            if request.user.is_authenticated:
+                for game in games:
+
+                    plays = Plays.objects.filter(game__name=game['name'], ended=False)
+                    game_data_list = []
+
+                    for play in plays:
+                        student_id = play.student.id
+                        play_time = play.time
+
+                        play_data = {
+                            'student_id': student_id,
+                            'start_time': play_time
+                        }
+
+                        game_data_list.append(play_data)
+
+                    game['plays_data'] = game_data_list
+            
+            # Convert the QuerySet to a list so it can be serialized and inserted into the context
+            games = list(games)
+            context = {
+                'games': games
+            }
+            return JsonResponse(context, safe=False)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': 'Internal error'})
+
 def get_start_times(request):
     if request.method == 'GET':
         try:
@@ -107,7 +144,7 @@ def add_student_to_game(request):
                 log.save()
                 return JsonResponse({'status': 'success', 'message': 'Student added to the game'})
             else:
-                return JsonResponse({'status': 'error', 'message': 'Student has active sanctions'})
+                return JsonResponse({'status': 'error', 'message': 'El alumno no cumple con las condiciones para jugar, ya sea que jugó hoy, tres veces en la semana o tiene sanciones activas.'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
