@@ -50,19 +50,31 @@ class UpdatesConsumer(WebsocketConsumer):
         # Must contain 'message' and 'sender'
         # - sender is the username of the user who sent the message
         # - message is the update message describing the update the user made
+         # - info is an optional field that contains the game id of the game that was updated
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         sender = text_data_json['sender']
 
-        # Send the update message to room group
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, {
+        if message == 'Plays updated':
+            data = {
+                'type': 'plays_updated',
+                'message': message,
+                'info': text_data_json['info'],
+                'sender': sender
+            }
+        else:
+            data = {
                 'type': 'update_message',
                 'message': message,
                 'sender': sender
             }
+
+        # Send the update message to room group
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name, data
         )
 
+    # Generic update message handler
     def update_message(self, event):
         """ Receive message from room group and send to WebSocket. """
         message = event['message']
@@ -71,5 +83,20 @@ class UpdatesConsumer(WebsocketConsumer):
         # Send message to WebSocket
         self.send(text_data=json.dumps({
             'message': message,
+            'sender': sender
+        }))
+
+    # Plays updated message handler
+    # info is the game id of the game that was updated
+    def plays_updated(self, event):
+        """ Receive message from room group and send to WebSocket. """
+        message = event['message']
+        sender = event['sender']
+        info = event['info']
+
+        # Send message to WebSocket
+        self.send(text_data=json.dumps({
+            'message': message,
+            'info': info,
             'sender': sender
         }))
