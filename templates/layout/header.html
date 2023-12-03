@@ -1,5 +1,5 @@
 {% load static %}
-<header style="z-index: 100;" class="color-bg-default position-sticky border-bottom top-0">
+<header style="z-index: 100;" class="position-sticky top-0">
     <div id="nav-container">
         <div id="nav-overlay"></div>
         <nav id="nav-fullscreen">
@@ -15,23 +15,24 @@
                 {% endif %}
             </ul>
         </nav>
-        <!-- <div class="d-flex justify-content-start align-items-center"> -->
+
         <div class="d-flex flex-justify-between flex-items-center flex-wrap align-items-center gap-4">
+
             <a id="nav-toggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </a>
-            <div class="hide-sm border-left pl-3">
-                <div class="d-flex justify-content-start align-items-center">
-                    <img width=50 src="../../static/assets/CyberTecLogo.svg"/>
-                    <div class="heading-header">
-                        Bienvenido a CyberTec<br>
-                    </div>
+
+            <div class="d-flex justify-content-start align-items-center">
+                <img width=50 src="../../static/assets/CyberTecLogo.svg"/>
+                <div class="heading-header">
+                    Bienvenido a CyberTec<br>
                 </div>
             </div>
+            
             {% if user.is_authenticated %}
-                <div class="heading-user" id="user-info" data-username="{{ user.username }}">Usuario: {{ user.username }}</div>
+                <div class="heading-user" id="user-info" data-username="{{ user.username }}"><span class="user-tag">Usuario:</span> <span class="user-name">{{ user.username }}</span></div>
             {% endif %}
         </div>
         
