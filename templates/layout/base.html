@@ -15,8 +15,8 @@
 <body>
     {% include 'layout/header.html' %}
     {% block content %}
-        {% include 'layout/footer.html' %}
     {% endblock %}
+    {% include 'layout/footer.html' %}
     <script src="{% static 'js/jquery.min.js' %}"></script>
     {% block js %}{% endblock %}
     <script src="{% static 'js/main.js' %}"></script>

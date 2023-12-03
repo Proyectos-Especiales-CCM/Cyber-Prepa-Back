@@ -11,6 +11,10 @@ Reglamento
 {% endblock %}
 
 {% block content %}
+<button type="button" class="btn btn-danger btn-floating btn-lg" id="btn-back-to-top">
+  <i class="fas fa-arrow-up"></i>
+</button>
+
 <div class="wrapper">
     <!-- logo -->
     <div class="d-flex justify-content-start align-items-center pb-4">
@@ -289,4 +293,5 @@ Reglamento
 
 {% block js %}
 <script src="{% static 'js/search_regulations.js' %}"></script>
+<script src="{% static 'js/back_to_top.js' %}"></script>
 {% endblock %}
