@@ -27,16 +27,17 @@
             <div class="d-flex justify-content-start align-items-center">
                 <img width=50 src="../../static/assets/CyberTecLogo.svg"/>
                 <div class="heading-header">
-                    Bienvenido a CyberTec<br>
+                    {% block header-title %}{% endblock %}<br>
                 </div>
             </div>
             
             {% if user.is_authenticated %}
                 <div class="heading-user" id="user-info" data-username="{{ user.username }}"><span class="user-tag">Usuario:</span> <span class="user-name">{{ user.username }}</span></div>
             {% endif %}
+
+            {% block searchbox %}{% endblock %}
         </div>
         
-
         <div class="dark-light" style="background-color: aqua;">Dark-Light</div>
     </div>
 </header>

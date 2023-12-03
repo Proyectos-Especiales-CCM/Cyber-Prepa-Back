@@ -6,6 +6,23 @@
 Reglamento
 {% endblock %}
 
+{% block nav-container %}
+<div id="nav-container">
+{% endblock %}
+
+{% block header-logo %}
+<img width=50 src="../../static/assets/CyberTecLogo.svg"/>
+{% endblock %}
+
+{% block header-title %}
+Reglamento CyberTec
+{% endblock %}
+
+{% block searchbox %}
+<input type="text" id="busqueda" class="form-control-2" aria-label="Search" placeholder="Busca en el reglamento" autocorrect="off" autocomplete="off" autocapitalize="off">
+<input type="button" class="" id="searchBtn" value="Buscar" onclick="search();">
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.2.3-dist/css/bootstrap.min.css' %}">
 {% endblock %}
@@ -16,18 +33,6 @@ Reglamento
 </button>
 
 <div class="wrapper">
-    <!-- logo -->
-    <div class="d-flex justify-content-start align-items-center pb-4">
-        <img width=80 src="../../static/assets/CyberTecLogo.svg"/>
-        <div class="heading p-4">
-            Reglamento CyberTec<br>
-        </div>
-        <div class="searchBox">
-            <input type="text" id="busqueda" placeholder="Busca en el reglamento"></input>
-            <input type="button" class="" id="searchBtn" value="Buscar" onclick="search();">
-        </div>
-    </div>
-
     <!-- grid -->
     <div class="growth-container">
         <div class="layout-grid">

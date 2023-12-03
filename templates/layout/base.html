@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -13,9 +13,70 @@
 </head>
 
 <body>
-    {% include 'layout/header.html' %}
+    <header style="z-index: 100;" class="position-sticky top-0">
+        {% block nav-container %}{% endblock %}
+            <div id="nav-overlay"></div>
+            <nav id="nav-fullscreen">
+                <ul>
+                    <li><a class="cool-hover" href="{% url 'index' %}">Home</a></li>
+                    <li><a class="cool-hover" href="{% url 'regulations' %}">Reglamento</a></li>
+                    {% if user.is_authenticated %}
+                    <!-- If the user is authenticated shows the admin CRUD page-->
+                    <li><a class="cool-hover" href="{% url 'admin' %}">Admin</a></li>
+                    <li><a class="cool-hover" href="{% url 'logout' %}">Logout</a></li>
+                    {% else %}
+                    <li><a class="cool-hover" href="{% url 'login' %}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <div class="d-flex flex-justify-between flex-items-center flex-wrap align-items-center gap-4">
+
+                <a id="nav-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </a>
+
+                <div class="d-flex justify-content-start align-items-center">
+                        {% block header-logo %}{% endblock %}
+                    <div class="heading-header">
+                        {% block header-title %}{% endblock %}<br>
+                    </div>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div class="heading-user" id="user-info" data-username="{{ user.username }}"><span class="user-tag">Usuario:</span> <span class="user-name">{{ user.username }}</span></div>
+                {% endif %}
+
+            </div>
+            
+            {% block searchbox %}{% endblock %}
+
+            <label for="theme" class="theme">
+                <span class="theme__toggle-wrap">
+                    <input id="theme" class="theme__toggle" type="checkbox" role="switch" name="theme" value="dark">
+                    <span class="theme__fill"></span>
+                    <span class="theme__icon">
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                        <span class="theme__icon-part"></span>
+                    </span>
+                </span>
+            </label>
+
+        </div>
+    </header>
+
     {% block content %}
     {% endblock %}
+    
     {% include 'layout/footer.html' %}
     <script src="{% static 'js/jquery.min.js' %}"></script>
     {% block js %}{% endblock %}
