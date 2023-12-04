@@ -86,22 +86,22 @@ const userTemplate = (user) => `
 `;
 
 const listStudents = async () => {
-    const data = await fetchData("get-students-list");
+    const data = await fetchData("get-students-list/");
     populateTable(data.students, document.getElementById("tableBody_students"), studentTemplate);
 };
 
 const listGames = async () => {
-    const data = await fetchData("get-games-list");
+    const data = await fetchData("get-games-list/");
     populateTable(data.games, document.getElementById("tableBody_games"), gameTemplate);
 };
 
 const listLogs = async () => {
-    const data = await fetchData("get-logs-list");
+    const data = await fetchData("get-logs-list/");
     populateTable(data.logs, document.getElementById("tableBody_logs"), logTemplate);
 };
 
 const listUsers = async () => {
-    const data = await fetchData("get-users-list");
+    const data = await fetchData("get-users-list/");
     populateTable(data.users, document.getElementById("tableBody_users"), userTemplate);
 };
 
@@ -143,7 +143,7 @@ window.addEventListener('load', async () => {
         // Send data using AJAX
         $.ajax({
             type: 'POST',
-            url: BASEURL + '/api/game/',
+            url: baseUrl + '/api/game/',
             data: formData,
             success: function (data) {
                 //console.log(data);
@@ -198,7 +198,7 @@ window.addEventListener('load', async () => {
         // Send data using AJAX
         $.ajax({
             type: 'POST',
-            url: BASEURL + '/api/user/',
+            url: baseUrl + '/api/user/',
             data: formData,
             success: function (data) {
                 //console.log(data);
@@ -239,7 +239,7 @@ $(document).on('click', '.modify-student', function () {
         // Send data using AJAX as JSON
         $.ajax({
             type: 'PATCH',
-            url: BASEURL + '/api/student',
+            url: baseUrl + '/api/student/',
             data: jsonData,
             contentType: 'application/json', // Set the content type to JSON
             headers: {
@@ -263,7 +263,7 @@ $(document).on('click', '.modify-student', function () {
 $(document).on('click', '.delete-student', function () {
     const studentId = $(this).data('id');
     const message = '¿Seguro que quieres borrar este estudiante?';
-    confirmAndDelete('student', studentId, message);
+    confirmAndDelete('student/', studentId, message);
 });
 
 // Game modify
@@ -311,9 +311,9 @@ $(document).on('click', '.modify-game', function () {
         // Send data using AJAX as JSON
         $.ajax({
             type: 'PATCH',
-            url: BASEURL + '/api/game/',
+            url: baseUrl + '/api/game/',
             data: jsonData,
-            contentType: 'application/json/', // Set the content type to JSON
+            contentType: 'application/json', // Set the content type to JSON
             headers: {
                 'X-CSRFToken': CSRFTOKEN
             },
@@ -335,7 +335,7 @@ $(document).on('click', '.modify-game', function () {
 $(document).on('click', '.delete-game', function () {
     const gameId = $(this).data('id');
     const message = '¿Seguro que quieres borrar este juego?';
-    confirmAndDelete('game', gameId, message);
+    confirmAndDelete('game/', gameId, message);
 });
 
 // User modify
@@ -414,9 +414,9 @@ $(document).on('click', '.modify-user', function () {
         // Send data using AJAX as JSON
         $.ajax({
             type: 'PATCH',
-            url: BASEURL + '/api/user/',
+            url: baseUrl + '/api/user/',
             data: jsonData,
-            contentType: 'application/json/', // Set the content type to JSON
+            contentType: 'application/json', // Set the content type to JSON
             headers: {
                 'X-CSRFToken': CSRFTOKEN
             },
@@ -438,5 +438,5 @@ $(document).on('click', '.modify-user', function () {
 $(document).on('click', '.delete-user', function () {
     const userId = $(this).data('id');
     const message = '¿Seguro que quieres eliminar el acceso a este usuario?';
-    confirmAndDelete('user', userId, message);
+    confirmAndDelete('user/', userId, message);
 });
