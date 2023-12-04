@@ -6,6 +6,7 @@ from rental.models import Game, Plays, Student, Log, Sanction
 from django.contrib.auth.models import User, Group
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from json import loads
 import json
 from datetime import datetime
@@ -15,6 +16,9 @@ def get_games(request):
     if request.method == 'GET':
         try:
             games = Game.objects.filter(show=True).values('id', 'name', 'displayName', 'available', 'file_route')
+            # Get the number of players for each game
+            for game in games:
+                game['players'] = Plays.objects.filter(game__name=game['name'], ended=False).count()
 
             # If the user is authenticated, add the plays data to the games
             # Plays data is the student id and the start time of the plays that are not ended for each game
@@ -44,28 +48,69 @@ def get_games(request):
             }
             return JsonResponse(context, safe=False)
         except Exception as e:
-            print(e)
             return JsonResponse({'status': 'Internal error'})
 
 def get_start_times(request):
     if request.method == 'GET':
         try:
-            games = Game.objects.filter(show=True).values('start_time')
-            data = []
+            games = Game.objects.filter(show=True).values('id', 'start_time')
+            times = []
             for game in games:
                 original_time = game['start_time']
                 # For new created games start_time is None, handle it by adding a default time
-                # for displaying the game in the frontend; cards.js line 30
                 if original_time is None:
-                    data.append({'time': 'Jan 1, 2000 00:00:00'})
+                    times.append({'time': 'Jan 1, 2000 00:00:00'})
                     continue
                 subtracted_time = original_time - timedelta(hours=5, minutes=5)
                 formatted_time = subtracted_time.strftime('%b %d, %Y %H:%M:%S')
-                data.append({'time': formatted_time})
-            return JsonResponse(data, safe=False)
-        except:
+                times.append({
+                    'time': formatted_time,
+                    'game_id': game['id'],
+                    })
+            return JsonResponse(times, safe=False)
+        except Exception as e:
             return JsonResponse({'status': 'error'})
-    
+
+def get_players(request):
+    """
+    Retrieve the players for a game; returns for each play in the specified game:
+    - student_id
+    - start_time
+    - game_id
+    - game_name
+    """
+
+    if request.method == 'GET':
+        game_id = request.GET.get('game-id')
+        if game_id is not None:
+            try:
+                game = get_object_or_404(Game, pk=game_id)
+                plays = Plays.objects.filter(game=game, ended=False)
+                game_data_list = []
+
+                for play in plays:
+                    student_id = play.student.id
+                    play_time = play.time
+
+                    play_data = {
+                        'student_id': student_id,
+                        'start_time': play_time,
+                        'game_id': game.pk,
+                        'game_name': game.name,
+                    }
+
+                    game_data_list.append(play_data)
+                
+                context = {
+                    'status': 'success',
+                    'players': game_data_list
+                }
+                return JsonResponse(context, safe=False)
+            except:
+                return JsonResponse({'status': 'error'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'game-id parameter missing'})
+
 def get_available_games(request):
     if request.method == 'GET':
         try:
@@ -82,6 +127,8 @@ def set_play_ended(request):
         student_id = request.POST.get('student_id')
         try:
             play = Plays.objects.filter(student__id=student_id).latest('time')
+            if play.ended:
+                return JsonResponse({'status': 'error', 'message': 'Play already ended'})
             play.ended = True
             play.save()
             log = Log.objects.create(actionPerformed=f' Termina sesión de juego de: {student_id}', user=request.user)
