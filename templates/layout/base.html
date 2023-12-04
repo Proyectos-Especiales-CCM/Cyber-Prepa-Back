@@ -6,19 +6,220 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/CyberTec.ico' %}">
     <title>{% block title %}{% endblock %}</title>
     {% block extra_css %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'css/main.min.css' %}">
+    <link id="mystylesheet" rel="stylesheet" type="text/css" href="{% static 'css/main.min.css' %}">
 </head>
 
-<body>
-    {% include 'layout/header.html' %}
+<body class>
+    <header style="z-index: 100;" class="position-sticky top-0">
+        {% block nav-container %}{% endblock %}
+            <div id="nav-overlay"></div>
+            <nav id="nav-fullscreen">
+                <ul>
+                    <li><a class="cool-hover" href="{% url 'index' %}">Home</a></li>
+                    <li><a class="cool-hover" href="{% url 'regulations' %}">Reglamento</a></li>
+                    {% if user.is_authenticated %}
+                    <!-- If the user is authenticated shows the admin CRUD page-->
+                    <li><a class="cool-hover" href="{% url 'admin' %}">Admin</a></li>
+                    <li><a class="cool-hover" href="{% url 'logout' %}">Logout</a></li>
+                    {% else %}
+                    <li><a class="cool-hover" href="{% url 'login' %}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <div class="d-flex flex-justify-between flex-items-center flex-wrap align-items-center gap-4">
+
+                <a id="nav-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </a>
+
+                <div class="d-flex justify-content-start align-items-center">
+                        {% block header-logo %}{% endblock %}
+                    <div class="heading-header">
+                        {% block header-title %}{% endblock %}<br>
+                    </div>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div class="heading-user" id="user-info" data-username="{{ user.username }}"><span class="user-tag">Usuario:</span> <span class="user-name">{{ user.username }}</span></div>
+                {% endif %}
+
+            </div>
+            
+            {% block searchbox %}{% endblock %}
+
+            <button class="btn dropdown-toggle align-items-center theme-button show" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" data-bs-display="static">
+              <svg class="bi my-1 theme-icon-active" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_65_5)">
+                <path d="M19.9996 15.3151L23.3146 12.0001L19.9996 8.68506V4.00006H15.3146L11.9996 0.685059L8.68457 4.00006H3.99957V8.68506L0.68457 12.0001L3.99957 15.3151V20.0001H8.68457L11.9996 23.3151L15.3146 20.0001H19.9996V15.3151ZM11.9996 18.0001V6.00006C15.3146 6.00006 17.9996 8.68506 17.9996 12.0001C17.9996 15.3151 15.3146 18.0001 11.9996 18.0001Z" fill="white"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_65_5">
+                <rect width="24" height="24" fill="white"/>
+                </clipPath>
+                </defs>
+              </svg>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end theme-dropdown" aria-labelledby="bd-theme-text">
+              <li>
+                <button onclick="swapStyles('main.min.css')" class="dropdown-item d-flex align-items-center theme-item-button active" data-theme="dark" aria-pressed="false">
+                  <svg class="bi me-2 theme-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.4843 8.48431V3.51569H15.5157L12 0L8.48431 3.51569H3.51569V8.48431L0 12L3.51569 15.5157V20.4843H8.48431L12 24L15.5157 20.4843H20.4843V15.5157L24 12L20.4843 8.48431ZM12 18.3632C11.0508 18.3632 10.1547 18.1511 9.34865 17.7799C11.5387 16.7724 13.0605 14.5665 13.0605 12C13.0605 9.43349 11.5387 7.22757 9.34865 6.22006C10.1547 5.84887 11.0508 5.63676 12 5.63676C15.5157 5.63676 18.3632 8.48431 18.3632 12C18.3632 15.5157 15.5157 18.3632 12 18.3632Z" fill="#D5A0FF"/>
+                    </svg>                    
+                  Dark
+                  <svg class="bi ms-auto" width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.0071 3.62252C17.994 3.6258 17.9809 3.63072 17.9678 3.63565C17.8578 3.66354 17.7627 3.73408 17.7053 3.83252L9.12152 17.1413L3.21527 11.8125C3.11191 11.6813 2.93964 11.6238 2.77722 11.6665C2.6148 11.7092 2.49503 11.8453 2.47042 12.011C2.44581 12.1767 2.52128 12.3408 2.66402 12.4294L8.92464 18.0994C9.01652 18.1798 9.13956 18.2159 9.26097 18.1978C9.38238 18.1798 9.48902 18.1109 9.55464 18.0075L18.414 4.27877C18.5108 4.14096 18.5157 3.95885 18.4271 3.81612C18.3385 3.67338 18.1728 3.59791 18.0071 3.62252Z" fill="black"/>
+                  </svg>    
+                </button>
+              </li>
+              <li>
+                <button onclick="swapStyles('main-light.min.css')" class="dropdown-item d-flex align-items-center theme-item-button" data-theme="light" aria-pressed="true">
+                  <svg class="bi me-2 theme-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_65_8)">
+                    <path d="M19.9996 15.3151L23.3146 12.0001L19.9996 8.68506V4.00006H15.3146L11.9996 0.685059L8.68457 4.00006H3.99957V8.68506L0.68457 12.0001L3.99957 15.3151V20.0001H8.68457L11.9996 23.3151L15.3146 20.0001H19.9996V15.3151ZM11.9996 18.0001C8.68457 18.0001 5.99957 15.3151 5.99957 12.0001C5.99957 8.68506 8.68457 6.00006 11.9996 6.00006C15.3146 6.00006 17.9996 8.68506 17.9996 12.0001C17.9996 15.3151 15.3146 18.0001 11.9996 18.0001Z" fill="#F5FFBB"/>
+                    </g>
+                    <defs>
+                    <clipPath id="clip0_65_8">
+                    <rect width="24" height="24" fill="white"/>
+                    </clipPath>
+                    </defs>
+                  </svg>
+                  Light
+                  <svg class="" width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.0071 3.62252C17.994 3.6258 17.9809 3.63072 17.9678 3.63565C17.8578 3.66354 17.7627 3.73408 17.7053 3.83252L9.12152 17.1413L3.21527 11.8125C3.11191 11.6813 2.93964 11.6238 2.77722 11.6665C2.6148 11.7092 2.49503 11.8453 2.47042 12.011C2.44581 12.1767 2.52128 12.3408 2.66402 12.4294L8.92464 18.0994C9.01652 18.1798 9.13956 18.2159 9.26097 18.1978C9.38238 18.1798 9.48902 18.1109 9.55464 18.0075L18.414 4.27877C18.5108 4.14096 18.5157 3.95885 18.4271 3.81612C18.3385 3.67338 18.1728 3.59791 18.0071 3.62252Z" fill="black"/>
+                  </svg>                    
+                </button>
+              </li>
+              <li>
+                <button onclick="swapStyles('')" class="dropdown-item d-flex align-items-center theme-item-button" data-theme="auto" aria-pressed="false">
+                  <svg class="bi me-2 theme-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_65_14)">
+                    <path d="M19.9999 8.69004V5.00004C19.9999 4.45004 19.5499 4.00004 18.9999 4.00004H15.3099L12.7099 1.40004C12.3199 1.01004 11.6899 1.01004 11.2999 1.40004L8.68992 4.00004H4.99992C4.44992 4.00004 3.99992 4.45004 3.99992 5.00004V8.69004L1.39992 11.29C1.00992 11.68 1.00992 12.31 1.39992 12.7L3.99992 15.3V19C3.99992 19.55 4.44992 20 4.99992 20H8.68992L11.2899 22.6C11.6799 22.99 12.3099 22.99 12.6999 22.6L15.2999 20H18.9999C19.5499 20 19.9999 19.55 19.9999 19V15.31L22.5999 12.71C22.9899 12.32 22.9899 11.69 22.5999 11.3L19.9999 8.69004ZM11.9999 18C8.68992 18 5.99992 15.31 5.99992 12C5.99992 8.69004 8.68992 6.00004 11.9999 6.00004C15.3099 6.00004 17.9999 8.69004 17.9999 12C17.9999 15.31 15.3099 18 11.9999 18ZM11.9999 8.00004C9.78992 8.00004 7.99992 9.79004 7.99992 12C7.99992 14.21 9.78992 16 11.9999 16C14.2099 16 15.9999 14.21 15.9999 12C15.9999 9.79004 14.2099 8.00004 11.9999 8.00004Z" fill="white"/>
+                    </g>
+                    <defs>
+                    <clipPath id="clip0_65_14">
+                    <rect width="24" height="24" fill="white"/>
+                    </clipPath>
+                    </defs>
+                  </svg>  
+                  Auto
+                  <svg class="bi ms-auto" width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.0071 3.62252C17.994 3.6258 17.9809 3.63072 17.9678 3.63565C17.8578 3.66354 17.7627 3.73408 17.7053 3.83252L9.12152 17.1413L3.21527 11.8125C3.11191 11.6813 2.93964 11.6238 2.77722 11.6665C2.6148 11.7092 2.49503 11.8453 2.47042 12.011C2.44581 12.1767 2.52128 12.3408 2.66402 12.4294L8.92464 18.0994C9.01652 18.1798 9.13956 18.2159 9.26097 18.1978C9.38238 18.1798 9.48902 18.1109 9.55464 18.0075L18.414 4.27877C18.5108 4.14096 18.5157 3.95885 18.4271 3.81612C18.3385 3.67338 18.1728 3.59791 18.0071 3.62252Z" fill="black"/>
+                  </svg>    
+                </button>
+              </li>
+            </ul>
+        </div>
+    </header>
+
     {% block content %}
-        {% include 'layout/footer.html' %}
     {% endblock %}
+    
+    {% include 'layout/footer.html' %}
     <script src="{% static 'js/jquery.min.js' %}"></script>
     {% block js %}{% endblock %}
     <script src="{% static 'js/main.js' %}"></script>
+    <!-- <script src="{% static 'js/dark_light_mode.js' %}"></script> -->
+    <script>
+
+        function getCookie(name) {
+		    var cookieValue = null;
+		    if (document.cookie && document.cookie !== '') {
+		        var cookies = document.cookie.split(';');
+		        for (var i = 0; i < cookies.length; i++) {
+		            var cookie = cookies[i].trim();
+		            // Does this cookie string begin with the name we want?
+		            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+		                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+		                break;
+		            }
+		        }
+		    }
+		    return cookieValue;
+		}
+		var csrftoken = getCookie('csrftoken');
+
+        var cssFile = "{% static 'css' %}"
+
+        function swapStyles(sheet){
+
+            if (sheet !== '') {
+			    document.getElementById('mystylesheet').href = cssFile + '/' + sheet
+			    localStorage.setItem('theme', sheet)
+                updateTheme(sheet)
+            }
+
+            document.querySelectorAll('.theme-item-button').forEach(button => {
+                if (sheet === 'main.min.css') {
+                    if (button.dataset.theme === 'dark') {
+                        button.classList.add('active');    
+                    } else {
+                        button.classList.remove('active')
+                    }
+                } else if (sheet === 'main-light.min.css') {
+                    if (button.dataset.theme === 'light') {
+                        button.classList.add('active');    
+                    } else {
+                        button.classList.remove('active')
+                    }
+                } else if (sheet === '') {
+                    if (button.dataset.theme === 'auto') {
+                        button.classList.add('active');    
+                    } else {
+                        button.classList.remove('active')
+                    }
+                }
+            });
+		}
+
+		function loadSettings(){
+			//Call data and set local storage
+
+			var url = "{% url 'user_settings' %}"
+			fetch(url, {
+				method:'GET',
+				headers:{
+					'Content-type':'application/json'
+				}
+			})
+			.then((response) => response.json())
+			.then(function(data){
+
+				console.log('Data:', data)
+
+				var theme = data.value;
+				
+				if (theme == 'light.css' || null){
+					swapStyles('light.css')
+				}else if(theme == 'dark.css'){
+					swapStyles('dark.css')
+				}
+				
+
+			})
+
+		}
+		
+		loadSettings()
+
+
+		function updateTheme(theme){
+			var url = "{% url 'update_theme' %}"
+			fetch(url, {
+				method:'POST',
+				headers:{
+					'Content-type':'application/json',
+					'X-CSRFToken':csrftoken,
+				},
+				body:JSON.stringify({'theme':theme})
+			})
+		}
+    </script>
 </body>
 
 </html>

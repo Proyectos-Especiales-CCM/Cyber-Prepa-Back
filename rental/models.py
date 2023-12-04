@@ -35,6 +35,14 @@ class Log(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)             # Usuario que realizo la accion
     time = models.DateTimeField(auto_now_add=True)                                              # Fecha y hora en que se realizo la accion
 
+class Setting(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE)
+	name = models.CharField(max_length=200)
+	value = models.CharField(max_length=200)
+
+	def __str__(self):
+		return self.name
+
 @receiver(post_save, sender=Plays)
 def update_game_start_time(sender, instance, **kwargs):
     # Check if there are no other ended plays for the same game

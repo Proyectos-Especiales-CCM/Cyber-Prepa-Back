@@ -1,9 +1,11 @@
 @import 'settings/variables'
 @import 'settings/fonts'
+@import 'settings/colors'
 @import 'layouts/header'
 @import 'layouts/footer'
 @import 'pages/index'
-@import 'pages/_login'
+@import 'pages/base'
+@import 'pages/login'
 @import 'pages/admin'
 @import 'pages/regulations'
 @import 'components/buttons'
@@ -14,17 +16,33 @@
   box-sizing: border-box
 
 *, *:before, *:after
-    box-sizing: inherit
+  box-sizing: inherit
 
-html
-    box-sizing: border-box
+\:root
+  --color-header-bg-default: #0D1116
+  --color-border-default: #2B2F35 // Color de border negro default
+  --color-border-mode: #b9b9b9 // Color de border blanco toggled
+  --global-font: 'Roboto', sans-serif
+  --base-text-weight-light: 300
+  --base-text-weight-normal: 400
+  --base-text-weight-medium: 500
+  --base-text-weight-semibold: 600
+  --transition-duration: 0.3s
+  --primary-shadow: hsla(var(--color-bg-default), 90%, 55%, 0)
 
 html, body
-    height: 100%
+  background-color: $color-bg-default
+  color: $color-fg-default
+  font-family: $global-font
+  height: 100%
+  min-height: 100vh
+  margin: 0
+  padding: 0rem
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
 
-body
-    background-color: $color-canvas-default
-    padding: 1rem
-    // overflow: hidden Aqui se oculta el scroll, usar con cuidado para el responsive
-    color: white
-    font-family: $global-font
+.dark-light-mode
+    background-color: $color-bg-toggle
+    color: $color-fg-toggle
+ 

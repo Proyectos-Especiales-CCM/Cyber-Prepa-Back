@@ -1,34 +1,117 @@
 # Views (Logic) for API calls.
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from datetime import timedelta
+from api.serializers import UserSerializer
 from rental.models import Game, Plays, Student, Log, Sanction
 from django.contrib.auth.models import User, Group
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from json import loads
 import json
 from datetime import datetime
 
 # Index calls
+def get_games(request):
+    if request.method == 'GET':
+        try:
+            games = Game.objects.filter(show=True).values('id', 'name', 'displayName', 'available', 'file_route')
+            # Get the number of players for each game
+            for game in games:
+                game['players'] = Plays.objects.filter(game__name=game['name'], ended=False).count()
+
+            # If the user is authenticated, add the plays data to the games
+            # Plays data is the student id and the start time of the plays that are not ended for each game
+            if request.user.is_authenticated:
+                for game in games:
+
+                    plays = Plays.objects.filter(game__name=game['name'], ended=False)
+                    game_data_list = []
+
+                    for play in plays:
+                        student_id = play.student.id
+                        play_time = play.time
+
+                        play_data = {
+                            'student_id': student_id,
+                            'start_time': play_time
+                        }
+
+                        game_data_list.append(play_data)
+
+                    game['plays_data'] = game_data_list
+            
+            # Convert the QuerySet to a list so it can be serialized and inserted into the context
+            games = list(games)
+            context = {
+                'games': games
+            }
+            return JsonResponse(context, safe=False)
+        except Exception as e:
+            return JsonResponse({'status': 'Internal error'})
+
 def get_start_times(request):
     if request.method == 'GET':
         try:
-            games = Game.objects.filter(show=True).values('start_time')
-            data = []
+            games = Game.objects.filter(show=True).values('id', 'start_time')
+            times = []
             for game in games:
                 original_time = game['start_time']
                 # For new created games start_time is None, handle it by adding a default time
-                # for displaying the game in the frontend; cards.js line 30
                 if original_time is None:
-                    data.append({'time': 'Jan 1, 2000 00:00:00'})
+                    times.append({'time': 'Jan 1, 2000 00:00:00'})
                     continue
                 subtracted_time = original_time - timedelta(hours=5, minutes=5)
                 formatted_time = subtracted_time.strftime('%b %d, %Y %H:%M:%S')
-                data.append({'time': formatted_time})
-            return JsonResponse(data, safe=False)
-        except:
+                times.append({
+                    'time': formatted_time,
+                    'game_id': game['id'],
+                    })
+            return JsonResponse(times, safe=False)
+        except Exception as e:
             return JsonResponse({'status': 'error'})
-    
+
+def get_players(request):
+    """
+    Retrieve the players for a game; returns for each play in the specified game:
+    - student_id
+    - start_time
+    - game_id
+    - game_name
+    """
+
+    if request.method == 'GET':
+        game_id = request.GET.get('game-id')
+        if game_id is not None:
+            try:
+                game = get_object_or_404(Game, pk=game_id)
+                plays = Plays.objects.filter(game=game, ended=False)
+                game_data_list = []
+
+                for play in plays:
+                    student_id = play.student.id
+                    play_time = play.time
+
+                    play_data = {
+                        'student_id': student_id,
+                        'start_time': play_time,
+                        'game_id': game.pk,
+                        'game_name': game.name,
+                    }
+
+                    game_data_list.append(play_data)
+                
+                context = {
+                    'status': 'success',
+                    'players': game_data_list
+                }
+                return JsonResponse(context, safe=False)
+            except:
+                return JsonResponse({'status': 'error'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'game-id parameter missing'})
+
 def get_available_games(request):
     if request.method == 'GET':
         try:
@@ -45,6 +128,8 @@ def set_play_ended(request):
         student_id = request.POST.get('student_id')
         try:
             play = Plays.objects.filter(student__id=student_id).latest('time')
+            if play.ended:
+                return JsonResponse({'status': 'error', 'message': 'Play already ended'})
             play.ended = True
             play.save()
             log = Log.objects.create(actionPerformed=f' Termina sesión de juego de: {student_id}', user=request.user)
@@ -107,7 +192,7 @@ def add_student_to_game(request):
                 log.save()
                 return JsonResponse({'status': 'success', 'message': 'Student added to the game'})
             else:
-                return JsonResponse({'status': 'error', 'message': 'Student has active sanctions'})
+                return JsonResponse({'status': 'error', 'message': 'El alumno no cumple con las condiciones para jugar, ya sea que jugó hoy, tres veces en la semana o tiene sanciones activas.'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
@@ -449,3 +534,23 @@ def user(request):
             return JsonResponse({'status': 'error', 'message': 'User not found'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
+        
+
+def userSettings(request):
+	user, created = User.objects.get_or_create(id=1)
+	setting = user.setting
+
+	seralizer = UserSerializer(setting, many=False)
+
+	return JsonResponse(seralizer.data, safe=False)
+
+
+def updateTheme(request):
+	data = json.loads(request.body)
+	theme = data['theme']
+	
+	user, created = User.objects.get_or_create(id=1)
+	user.setting.value = theme
+	user.setting.save()
+	print('Request:', theme)
+	return JsonResponse('Updated..', safe=False)
