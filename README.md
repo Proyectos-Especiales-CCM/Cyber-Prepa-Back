@@ -94,7 +94,7 @@ sudo apt install nginx
 # Create a new configuration file > This will create a new file called 
 # myapp.conf in /etc/nginx/sites-available thourgh a curl request to a
 # gist file located at the url below. 
-curl -L https://gist.githubusercontent.com/Djmr5/19e2c8dd2480992500d12fd54a10913c/raw/e85561a2a65247aea28992558052a748da7aa6c7/myapp.conf -o /etc/nginx/sites-available/myapp.conf
+sudo curl -L https://gist.githubusercontent.com/Djmr5/19e2c8dd2480992500d12fd54a10913c/raw/e85561a2a65247aea28992558052a748da7aa6c7/myapp.conf -o /etc/nginx/sites-available/myapp.conf
 
 # Create a symbolic link to sites-enabled
 sudo ln -s /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
