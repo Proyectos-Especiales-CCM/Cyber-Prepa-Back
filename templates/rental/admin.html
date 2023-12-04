@@ -6,6 +6,14 @@
 Rental Admin CRUD
 {% endblock %}
 
+{% block nav-container %}
+<div id="nav-container">
+{% endblock %}
+
+{% block header-title %}
+Administrador CyberTec
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.2.3-dist/css/bootstrap.min.css' %}">
 <link rel="stylesheet" href="{% static 'vendor/DataTables/datatables.min.css' %}">
@@ -13,8 +21,6 @@ Rental Admin CRUD
 {% endblock %}
 
 {% block content %}
-<h1>Bienvenido a Ciber Tec</h1>
-<p>This is the admin page</p>
 <div class="crud-tables container">
     <div class="row">
         <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">

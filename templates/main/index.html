@@ -5,6 +5,18 @@
 Index
 {% endblock %}
 
+{% block nav-container %}
+<div id="nav-container">
+{% endblock %}
+
+{% block header-logo %}
+<img width=50 src="../../static/assets/CyberTecLogo.svg"/>
+{% endblock %}
+
+{% block header-title %}
+Bienvenido a CyberTec
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.2.3-dist/css/bootstrap.min.css' %}">
 <link rel="stylesheet" href="{% static 'vendor/fontawesome-free-6.4.2-web/css/all.min.css' %}">
@@ -12,10 +24,7 @@ Index
 {% endblock %}
 
 {% block content %}
-<h1>Bienvenido a Ciber Tec</h1>
-{% if user.is_authenticated %}
-<h3 id="user-info" data-username="{{ user.username }}">Usuario: {{ user.username }}</h3>
-{% endif %}
+
 <div class="cyber__wrapper">
 
   <!-- CSRF Token created to be used by forms -->

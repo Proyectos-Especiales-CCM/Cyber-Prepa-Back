@@ -18,6 +18,7 @@ class Admin(View):
             
         }
         return render(request, 'rental/admin.html', context=context)
+
     
 # View for biometrics page, where the user is registered through face recognition API
 @csrf_exempt

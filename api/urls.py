@@ -27,4 +27,6 @@ urlpatterns = [
     path('play', login_required(play), name='play'),
     path('user', user_passes_test(_is_admin)(user), name='user'),
     #path('upload-game-image', login_required(upload_game_image), name='upload_game_image'),
+    path('user_settings/', login_required(userSettings), name='user_settings'),
+    path('update_theme/', login_required(updateTheme), name='update_theme'),
 ]
