@@ -12,7 +12,7 @@
     <link id="mystylesheet" rel="stylesheet" type="text/css" href="{% static 'css/main.min.css' %}">
 </head>
 
-<body class>
+<body class >
     <header style="z-index: 100;" class="position-sticky top-0">
         {% block nav-container %}{% endblock %}
             <div id="nav-overlay"></div>
@@ -122,11 +122,10 @@
     
     {% include 'layout/footer.html' %}
     <script src="{% static 'js/jquery.min.js' %}"></script>
-    {% block js %}{% endblock %}
+    {% block js %}<script src="{% static 'js/drag_drop.js' %}"></script>{% endblock %}
     <script src="{% static 'js/main.js' %}"></script>
     <!-- <script src="{% static 'js/dark_light_mode.js' %}"></script> -->
     <script>
-
         function getCookie(name) {
 		    var cookieValue = null;
 		    if (document.cookie && document.cookie !== '') {
