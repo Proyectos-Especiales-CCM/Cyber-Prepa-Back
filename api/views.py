@@ -3,7 +3,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from datetime import timedelta
 from api.serializers import UserSerializer
-from rental.models import Game, Plays, Student, Log, Sanction
+from rental.models import Game, Plays, Student, Log, Sanction, Setting
 from django.contrib.auth.models import User, Group
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
@@ -537,12 +537,15 @@ def user(request):
         
 
 def userSettings(request):
-	user, created = User.objects.get_or_create(id=1)
-	setting = user.setting
+    try:
+        user = request.user
+        setting = user.setting
 
-	seralizer = UserSerializer(setting, many=False)
+        seralizer = UserSerializer(setting, many=False)
 
-	return JsonResponse(seralizer.data, safe=False)
+        return JsonResponse(seralizer.data, safe=False)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 def updateTheme(request):

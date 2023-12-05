@@ -11,7 +11,7 @@ document.getElementById("sancionarBtn").addEventListener("click", function() {
 
   var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
-  fetch('api/add-student-to-sanctioned', {
+  fetch('api/add-student-to-sanctioned/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,19 +1,13 @@
 /* Required variables for AJAX requests */
 // CSRF token
 const CSRFTOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-// Get current IP for AJAX requests
-let currentIP = window.location.hostname;
-if (currentIP === "127.0.0.1" || currentIP === "localhost") {
-    currentIP = currentIP + ":8000";
-}
-const BASEURL = "http://" + currentIP;
-
+// base url of the server to make requests to the API
+const baseUrl = window.location.origin;
 /* Definition of functions that are used on call by the event listeners */
 // Fetches data from the backend
 const fetchData = async (endpoint) => {
     try {
-        const res = await fetch(`${BASEURL}/api/${endpoint}`);
+        const res = await fetch(`${baseUrl}/api/${endpoint}`);
         return await res.json();
     } catch (err) {
         alert(err);
@@ -86,12 +80,12 @@ const sanctionsTemplate = (sanction) => `
 `;
 
 const listPlays = async () => {
-    const data = await fetchData("get-plays-list");
+    const data = await fetchData("get-plays-list/");
     populateTable(data.plays, document.getElementById("tableBody_plays"), playsTemplate);
 };
 
 const listSanctions = async () => {
-    const data = await fetchData("get-sanctions-list");
+    const data = await fetchData("get-sanctions-list/");
     populateTable(data.sanctions, document.getElementById("tableBody_sanctions"), sanctionsTemplate);
 };
 
@@ -106,7 +100,7 @@ function confirmAndDelete(endpoint, id, message) {
     if (confirm(message)) {
         $.ajax({
             type: 'DELETE',
-            url: `${BASEURL}/api/${endpoint}`,
+            url: `${baseUrl}/api/${endpoint}`,
             data: JSON.stringify({ id }),
             headers: {
                 'X-CSRFToken': CSRFTOKEN
@@ -141,5 +135,5 @@ window.addEventListener('load', async () => {
 $(document).on('click', '.delete-play', function () {
     const playId = $(this).data('id');
     const message = '¿Seguro que quieres borrar la partida?';
-    confirmAndDelete('play', playId, message);
+    confirmAndDelete('play/', playId, message);
 });

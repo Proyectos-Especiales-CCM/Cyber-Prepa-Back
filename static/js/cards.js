@@ -171,7 +171,7 @@ async function fetchGameStartTimes() {
         isFetchingGameStartTimes = true;
         clearInterval(countdownInterval);
         try {
-            let response = await fetch(baseUrl + "/api/get-games-start-time");
+            let response = await fetch(baseUrl + "/api/get-games-start-time/");
             let obj = await response.json();
 
             const gameStartTimes = obj.map(item => ({

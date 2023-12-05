@@ -104,7 +104,7 @@ function overrideEndPlayFormSubmit() {
 
         $.ajax({
             type: "POST",
-            url: "/api/set-play-ended",
+            url: "/api/set-play-ended/",
             data: form.serialize(),
             headers: {
                 'X-CSRFToken': csrftoken
@@ -170,7 +170,7 @@ function overrideAddStudentFormSubmit() {
 
         $.ajax({
             type: "POST",
-            url: "/api/add-student-to-game",
+            url: "/api/add-student-to-game/",
             data: form.serialize(),
             headers: {
                 'X-CSRFToken': csrftoken
