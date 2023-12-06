@@ -154,7 +154,6 @@ Bienvenido a CyberTec
         if (draggable) {
           cardContainer.style.backgroundColor = '#007bff'
         }
-        // console.log(e)
       })
 
       cardContainer.addEventListener('dragleave', () => {
@@ -167,7 +166,7 @@ Bienvenido a CyberTec
         var studentId = draggable.id
         var gameId = draggable.getAttribute('data-gameid');
         console.log(gameId)
-        var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        var csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
 
         const desiredClassName = 'cyber__card';
         const newGameId = findDesiredParentByClass(e.target, desiredClassName);
@@ -203,26 +202,6 @@ Bienvenido a CyberTec
           console.error('Error:', error);
         });
         
-        fetch('api/remove-student-from-game/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
-            },
-            body: JSON.stringify(data_remove),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
 
         cardContainer.style.backgroundColor = ''
       })
