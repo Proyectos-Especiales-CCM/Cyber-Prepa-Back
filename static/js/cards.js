@@ -7,8 +7,18 @@ const userInfoElement = $('#user-info')[0];
 var user_username = '';
 // div containing all the cards that will be populated with the games fetched from the server
 const cyberCardsContainer = document.getElementById('cyberCards');
-// dict to store the number of players in each game like {game_id (key): players_count (value)}
-var playersCountList = {};
+/* dict to store the number of players in each game like
+    {
+        game_id (key):
+            players_count (value)
+            players_ids (list of values)
+    }
+*/
+const template = {
+    players_count: 0,
+    players: []
+};
+var games_data = {};
 // boolean to check if fetchGameStartTimes() has been called, to avoid more than one interval running at the same time
 var isFetchingGameStartTimes = false;
 // If the user is authenticated, retrieve the username
@@ -47,13 +57,11 @@ async function initCountdowns(gameStartTimes) {
 
             // Display the result in the element with id="demo"
             var id = "cyber__countdown__" + (item.game_id);
-            //console.log(id);
-            //console.log("playersCountList[item.game_id]: " + playersCountList[item.game_id])
 
             // If the count down is finished, write some text
-            if (distance < 0 && playersCountList[item.game_id] > 0) {
+            if (distance < 0 && games_data[item.game_id].players_count > 0) {
                 document.getElementById(id).innerHTML = "AGOTADO";
-            } else if (playersCountList[item.game_id] == 0) {
+            } else if (games_data[item.game_id].players_count === 0) {
                 document.getElementById(id).innerHTML = "LIBRE";
             } else {
                 document.getElementById(id).innerHTML = timeTextDisplay;
@@ -62,30 +70,76 @@ async function initCountdowns(gameStartTimes) {
     }, 1000);
 }
 
+// Find and return the game_id (int) where the student_id (string) is playing
+function findGameIdByPlayerId(playerId) {
+    for (const gameId in games_data) {
+        if (games_data.hasOwnProperty(gameId)) {
+            const playersList = games_data[gameId].players;
+            if (Array.isArray(playersList) && playersList.includes(playerId)) {
+                // Return the game_id if the player is found in the players list
+                return gameId;
+            }
+        }
+    }
+    // Return null if the player is not found in any game
+    return null;
+}
+
+// Change a student from one game to another into the games_data dict
+function changeToGame(playerId, newGameId) {
+    // Check if the current game exists in games_data
+    const currentGameId = findGameIdByPlayerId(playerId);
+
+    if (games_data.hasOwnProperty(currentGameId)) {
+        // Remove playerId from current game's players list if it exists
+        const playerIndex = games_data[currentGameId].players.indexOf(playerId);
+        if (playerIndex !== -1) {
+            games_data[currentGameId].players.splice(playerIndex, 1);
+        }
+    }
+
+    // Check if the new game exists in games_data
+    if (games_data.hasOwnProperty(newGameId)) {
+        // Add playerId to the new game's players list if it doesn't already exist
+        if (!games_data[newGameId].players.includes(playerId)) {
+            games_data[newGameId].players.push(playerId);
+        }
+    }
+}
+
 // Create the cards games from scratch
 async function setGamesCards() {
     // Delete the previous cards and data
     cyberCardsContainer.innerHTML = '';
-    playersCountList = [];
+    games_data = {};
     // Fetch the games info from the server
     const data = await fetchGames(baseUrl);
     const games = data.games;
 
     // Create the cards
     games.forEach(game => {
+        // Create the game_data with the game id as key using the template
+        games_data[game.id] = { ...template };
+
         const card = document.createElement('div');
         card.className = 'cyber__card [ is-collapsed ]';
     
         const cardInner = document.createElement('div');
         cardInner.id = game.name;
         cardInner.className = 'cyber__card__inner [ js-expander ]';
-
+        
         let playersCount = ``;
         if (game.players > 0) {
             playersCount = `<span>${game.players} jugadores</span><br>`;
-            playersCountList[game.id] = game.players;
-        } else {
-            playersCountList[game.id] = 0;
+            games_data[game.id].players_count = game.players;
+        }
+
+        if (user_username !== '' && game.plays_data !== undefined) {
+            let ids_to_add = [];
+            game.plays_data.forEach(player => {
+                ids_to_add.push(player.student_id);
+            });
+            games_data[game.id].players = ids_to_add;
         }
 
         cardInner.innerHTML = `
