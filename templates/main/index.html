@@ -152,8 +152,9 @@ Bienvenido a CyberTec
         e.preventDefault()
         const draggable = document.querySelector('.dragging')
         if (draggable) {
-                  cardContainer.style.backgroundColor = '#007bff'
-              }
+          cardContainer.style.backgroundColor = '#007bff'
+        }
+        // console.log(e)
       })
 
       cardContainer.addEventListener('dragleave', () => {
@@ -162,48 +163,80 @@ Bienvenido a CyberTec
 
       cardContainer.addEventListener('drop', e => {
         e.preventDefault()
-              const draggable = document.querySelector('.dragging')
-        const closestContainer = e.target.closest('[data-gameName]');
-        if (closestContainer) {
-          const gameName = closestContainer.getAttribute('data-gameName');
-          console.log('Game Name:', gameName);
-        
-          $('#changeUserPlayModal').find('#id_usuario').attr('placeholder', draggable.id);
-          $('#changeUserPlayModal').find('#actual_play').attr('placeholder', gameName);
-          // $('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', cardContainer.id);
-          $('#changeUserPlayModal').find('#nuevo_play').attr('placeholder', closestContainer.id);
-          $('#changeUserPlayModal').modal('show');
-
-                cardContainer.style.backgroundColor = ''
-        }
-      })
-    })
-
-    containers.forEach(container => {
-      container.addEventListener('dragover', e => {
-        e.preventDefault()
-        const afterElement = getDragAfterElement(container, e.clientY)
         const draggable = document.querySelector('.dragging')
-        if (afterElement == null) {
-          container.appendChild(draggable)
-        } else {
-          container.insertBefore(draggable, afterElement)
-        }
+        var studentId = draggable.id
+        var gameId = draggable.getAttribute('data-gameid');
+        console.log(gameId)
+        var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        const desiredClassName = 'cyber__card';
+        const newGameId = findDesiredParentByClass(e.target, desiredClassName);
+        console.log(newGameId)
+        
+        const data_add = {
+            'student_id': studentId,
+            'game_id': newGameId,
+            csrfmiddlewaretoken: csrftoken,
+        };
+        const data_remove = {
+            'student_id': studentId,
+            'game_id': gameId,
+            csrfmiddlewaretoken: csrftoken,
+        };
+        
+        fetch('api/add-student-to-game', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify(data_add)
+        })
+        .then(response => {
+          if (response.ok) {
+            console.log()
+          } else {
+            console.error('Error:', response);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+        
+        fetch('api/remove-student-from-game/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(data_remove),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        cardContainer.style.backgroundColor = ''
       })
     })
 
-    function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')]
-
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect()
-        const offset = y - box.top - box.height / 2
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child }
-        } else {
-          return closest
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element
+    function findDesiredParentByClass(element, desiredClassName) {
+      let currentElement = element;
+      while (currentElement !== null) {
+          if (currentElement.classList.contains(desiredClassName)) {
+              return currentElement.id;
+          }
+          currentElement = currentElement.parentNode;
+      }
+      return null;
     }
   }
 </script>
@@ -216,7 +249,6 @@ Bienvenido a CyberTec
 {% if user.is_authenticated %}
 <script src="{% static 'js/auth_cards.js' %}"></script>
 <script src="{% static 'js/scroll_left_right.js' %}"></script>
-<!-- <script src="{% static 'js/drag_drop.js' %}"></script> -->
 <script src="{% static 'js/sanction_modal.js' %}"></script>
 <script src="{% static 'js/sanctions.js' %}"></script>
 {% endif %}

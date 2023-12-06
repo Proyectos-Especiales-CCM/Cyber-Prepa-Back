@@ -181,24 +181,7 @@ def add_student_to_game(request):
 
             if created:
                 student.save()
-
-            if Plays.objects.filter(student__id=student_id, ended=False).exists():
-                # Get the latest play for the student that is not ended, meaning the student is currently playing
-                play = Plays.objects.filter(student__id=student_id, ended=False).latest('time')
-                
-                # Save the corresponding game start_time before changing the game of the play
-                old_game_time = play.game.start_time
-                
-                # Change the game of the play to the new game_id and save it
-                play.game = game
-                play.save()
-                log = Log.objects.create(actionPerformed=f' Cambia juego de: {student_id}', user=request.user)
-                log.save()
-                game.start_time = old_game_time
-                game.save()
-
-                return JsonResponse({'status': 'success', 'message': 'Alumno cambiado de juego'})
-
+            
             if condiciones_para_juego(student_id):
                 play = Plays.objects.create(game=game, student=student)
                 play.save()
@@ -209,8 +192,6 @@ def add_student_to_game(request):
                 return JsonResponse({'status': 'error', 'message': 'El alumno no cumple con las condiciones para jugar, ya sea que jugó hoy, tres veces en la semana o tiene sanciones activas.'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
-
-
 
 def add_student_to_sanctioned(request):
     if request.method == 'POST':

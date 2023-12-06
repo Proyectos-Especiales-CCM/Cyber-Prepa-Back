@@ -122,6 +122,7 @@ async function setGamesCards() {
         games_data[game.id] = { ...template };
 
         const card = document.createElement('div');
+        
         card.className = 'cyber__card [ is-collapsed ]';
     
         const cardInner = document.createElement('div');
