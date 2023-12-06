@@ -162,47 +162,53 @@ Bienvenido a CyberTec
 
       cardContainer.addEventListener('drop', e => {
         e.preventDefault()
-        const draggable = document.querySelector('.dragging')
-        var studentId = draggable.id
-        var gameId = draggable.getAttribute('data-gameid');
-        console.log(gameId)
-        var csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
-
-        const desiredClassName = 'cyber__card';
-        const newGameId = findDesiredParentByClass(e.target, desiredClassName);
-        console.log(newGameId)
+        var csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value; // get the csrf token
+        const draggable = document.querySelector('.dragging') // get the element that's being dragged
+        var studentId = draggable.id // get the dragged student id
+        var studentElement = document.getElementById(draggable.id) // get the complete html element
+        // svar gameId = draggable.getAttribute('data-gameid'); // get the old-game id
         
+        const desiredClassName = 'cyber__card';
+        const newGame = findDesiredParentByClass(e.target, desiredClassName); // get the new game card
+        const newGameId = newGame.id // get the id of the new-game
+        var newStudentPlay = document.getElementById('cyber__student__list__' + newGameId);  // get the new element to append the student
+        
+      
         const data_add = {
             'student_id': studentId,
             'game_id': newGameId,
             csrfmiddlewaretoken: csrftoken,
         };
-        const data_remove = {
-            'student_id': studentId,
-            'game_id': gameId,
-            csrfmiddlewaretoken: csrftoken,
-        };
-        
-        fetch('api/add-student-to-game', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-          },
-          body: JSON.stringify(data_add)
-        })
-        .then(response => {
-          if (response.ok) {
-            console.log()
-          } else {
-            console.error('Error:', response);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
-        
 
+        $.ajax({
+            type: "POST",
+            url: "/api/add-student-to-game/",
+            data: data_add,
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            dataType: "json",
+            success: async function (data) {
+                // Handle successful response
+                if (data.status === "success") {
+                  // Update the UI to reflect the changed student
+                  if (studentElement && newStudentPlay) { // Check if both elements exist
+                      studentElement.parentNode.removeChild(studentElement);
+                      newStudentPlay.appendChild(studentElement);
+                  } else {
+                      console.error("Either the element to remove or the parent element does not exist.");
+                  }
+                  $("#success-alert").text(data.message);
+                  $("#success-alert").removeClass("d-none");
+                  setTimeout(function () {
+                        $("#success-alert").addClass("d-none");
+                  }, 3000);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX request failed:", status, error);
+            },
+          })
         cardContainer.style.backgroundColor = ''
       })
     })
@@ -211,7 +217,7 @@ Bienvenido a CyberTec
       let currentElement = element;
       while (currentElement !== null) {
           if (currentElement.classList.contains(desiredClassName)) {
-              return currentElement.id;
+              return currentElement;
           }
           currentElement = currentElement.parentNode;
       }
