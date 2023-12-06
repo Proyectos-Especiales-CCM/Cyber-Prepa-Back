@@ -72,7 +72,7 @@ function refreshStudentList(gameId) {
                 if (data.players.length > 0) {
                     playersCount.append(`<span>${data.players.length} jugadores</span><br>`);
                 }
-                playersCountList[gameId] = data.players.length;
+                games_data[gameId].players_count = data.players.length;
 
                 // Update the UI
                 overrideEndPlayFormSubmit();
@@ -104,7 +104,7 @@ function overrideEndPlayFormSubmit() {
 
         $.ajax({
             type: "POST",
-            url: "/api/set-play-ended",
+            url: "/api/set-play-ended/",
             data: form.serialize(),
             headers: {
                 'X-CSRFToken': csrftoken
@@ -130,11 +130,11 @@ function overrideEndPlayFormSubmit() {
                     }));
 
                     // Update the players counter in the UI
-                    playersCountList[gameId] -= 1;
+                    games_data[gameId].players_count -= 1;
                     const playersCount = $(`#cyber__game__players__count__${gameId}`);
                     playersCount.empty();
-                    if (playersCountList[gameId] > 0) {
-                        playersCount.append(`<span>${playersCountList[gameId]} jugadores</span><br>`);
+                    if (games_data[gameId].players_count > 0) {
+                        playersCount.append(`<span>${games_data[gameId].players_count} jugadores</span><br>`);
                     }
 
                 } else {
@@ -170,7 +170,7 @@ function overrideAddStudentFormSubmit() {
 
         $.ajax({
             type: "POST",
-            url: "/api/add-student-to-game",
+            url: "/api/add-student-to-game/",
             data: form.serialize(),
             headers: {
                 'X-CSRFToken': csrftoken
@@ -185,9 +185,7 @@ function overrideAddStudentFormSubmit() {
             success: async function (data) {
                 // Handle successful response
                 if (data.status === "success") {
-                    console.log("Student added to game successfully:", studentId);
-
-                    // Optionally, update the UI to reflect the added student
+                    // Update the UI to reflect the added student
                     const studentList = form.nextAll('.collapsed__students').first().children('ul');
                     const htmlToAppend = `
                     <div id="${studentId}" data-gameId="${gameId}" class="student draggable" draggable="true">
@@ -200,13 +198,37 @@ function overrideAddStudentFormSubmit() {
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="${studentId}" >Sancionar</button>
                     </div>
                     `;
+
+                    if (data.message === "Alumno cambiado de juego") {
+                        old_game_id = findGameIdByPlayerId(studentId);
+                        // Delete the student from the old game
+                        $(`#${studentId}`).remove();
+                        changeToGame(studentId, gameId);
+                        games_data[old_game_id].players_count -= 1;
+                        const oldPlayersCount = $(`#cyber__game__players__count__${old_game_id}`);
+                        oldPlayersCount.empty();
+                        if (games_data[old_game_id].players_count > 0) {
+                            oldPlayersCount.append(`<span>${games_data[old_game_id].players_count} jugadores</span><br>`);
+                        }
+
+                        // Send a message to the updates socket
+                        updatesSocket.send(JSON.stringify({
+                            'message': 'Plays updated',
+                            'info': old_game_id,
+                            'sender': user_username,
+                        }));
+                        console.log("Student changed to game successfully:", studentId);
+                    } else {
+                        console.log("Student added to game successfully:", studentId);
+                    }
+
                     studentList.append(htmlToAppend);
                     // Update the players counter in the UI
-                    playersCountList[gameId] += 1;
+                    games_data[gameId].players_count += 1;
                     const playersCount = $(`#cyber__game__players__count__${gameId}`);
                     playersCount.empty();
-                    if (playersCountList[gameId] > 0) {
-                        playersCount.append(`<span>${playersCountList[gameId]} jugadores</span><br>`);
+                    if (games_data[gameId].players_count > 0) {
+                        playersCount.append(`<span>${games_data[gameId].players_count} jugadores</span><br>`);
                     }
 
                     // Send a message to the updates socket
@@ -242,3 +264,18 @@ function overrideAddStudentFormSubmit() {
         });
     });
 };
+
+/* Store the players data in a dictionary to keep track of the
+    players in each game and update the UI accordingly
+*/
+async function fetchAllPlayers() {
+    // Fetch the players data
+    const data = await fetchData("get-players-list");
+    // Store the players data in a dictionary
+    data.players.forEach(play => {
+        if (playersList[play.game_id] === undefined) {
+            playersList[play.game_id] = [];
+        }
+        playersList[play.game_id].push(play);
+    });
+}

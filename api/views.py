@@ -3,7 +3,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from datetime import timedelta
 from api.serializers import UserSerializer
-from rental.models import Game, Plays, Student, Log, Sanction
+from rental.models import Game, Plays, Student, Log, Sanction, Setting
 from django.contrib.auth.models import User, Group
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
@@ -182,10 +182,24 @@ def add_student_to_game(request):
             if created:
                 student.save()
 
+            if Plays.objects.filter(student__id=student_id, ended=False).exists():
+                # Get the latest play for the student that is not ended, meaning the student is currently playing
+                play = Plays.objects.filter(student__id=student_id, ended=False).latest('time')
+                
+                # Save the corresponding game start_time before changing the game of the play
+                old_game_time = play.game.start_time
+                
+                # Change the game of the play to the new game_id and save it
+                play.game = game
+                play.save()
+                log = Log.objects.create(actionPerformed=f' Cambia juego de: {student_id}', user=request.user)
+                log.save()
+                game.start_time = old_game_time
+                game.save()
+
+                return JsonResponse({'status': 'success', 'message': 'Alumno cambiado de juego'})
+
             if condiciones_para_juego(student_id):
-                is_playing = Plays.objects.filter(student__id=student_id, ended=False).exists()
-                if is_playing:
-                    return JsonResponse({'status': 'error', 'message': 'Student is already playing'})
                 play = Plays.objects.create(game=game, student=student)
                 play.save()
                 log = Log.objects.create(actionPerformed=f' Inicia sesión de juego para: {student_id}', user=request.user)
@@ -537,12 +551,15 @@ def user(request):
         
 
 def userSettings(request):
-	user, created = User.objects.get_or_create(id=1)
-	setting = user.setting
+    try:
+        user = request.user
+        setting = user.setting
 
-	seralizer = UserSerializer(setting, many=False)
+        seralizer = UserSerializer(setting, many=False)
 
-	return JsonResponse(seralizer.data, safe=False)
+        return JsonResponse(seralizer.data, safe=False)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 def updateTheme(request):
