@@ -58,7 +58,7 @@ function refreshStudentList(gameId) {
                         <form class="end-play-form" id="end-play-form-${play.student_id}">
                             <input type="hidden" name="student_id" value="${play.student_id}">
                             <input type="hidden" name="game_id" value="${play.game_id}">
-                            <button type="submit" class="btn btn-success">End Play</button>
+                            <button type="submit" class="btn btn-success">Terminar</button>
                         </form>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="${play.student_id}" >Sancionar</button>
                     </div>
@@ -193,7 +193,7 @@ function overrideAddStudentFormSubmit() {
                         <form class="end-play-form" id="end-play-form-${studentId}">
                             <input type="hidden" name="student_id" value="${studentId}">
                             <input type="hidden" name="game_id" value="${gameId}">
-                            <button type="submit" class="btn btn-success">End Play</button>
+                            <button type="submit" class="btn btn-success">Terminar</button>
                         </form>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="${studentId}" >Sancionar</button>
                     </div>
