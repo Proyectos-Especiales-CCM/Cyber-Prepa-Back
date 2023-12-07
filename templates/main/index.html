@@ -10,7 +10,7 @@ Index
 {% endblock %}
 
 {% block header-logo %}
-<img width=50 src="../../static/assets/CyberTecLogo.svg"/>
+<div class="logo-header"></div>
 {% endblock %}
 
 {% block header-title %}
@@ -24,7 +24,6 @@ Bienvenido a CyberTec
 {% endblock %}
 
 {% block content %}
-
 <div class="cyber__wrapper">
 
   <!-- CSRF Token created to be used by forms -->
@@ -122,6 +121,111 @@ Bienvenido a CyberTec
 {% endblock %}
 
 {% block js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(initializeDraggableItems, 1000); // Adjust the timeout value as needed
+  });
+
+  function initializeDraggableItems() {
+    const draggables = document.querySelectorAll('.draggable');
+    const containers = document.querySelectorAll('.container-dropzone');
+    const cardContainers = document.querySelectorAll('.cyber__card__inner');
+    const modal = document.getElementById('changeUserPlayModal');
+    const closeBtn = document.getElementsByClassName('close')[0];
+    const confirmBtn = document.getElementsByClassName('confirm')[0];
+    const rejectBtn = document.getElementsByClassName('reject')[0];
+
+    draggables.forEach(draggable => {
+      draggable.addEventListener('dragstart', () => {
+        draggable.classList.add('dragging')
+      });
+      draggable.addEventListener('dragend', () => {
+        draggable.classList.remove('dragging')
+      })
+    })
+
+    cardContainers.forEach(cardContainer => {
+        const cardContainerSibling = cardContainer.nextElementSibling
+        const collapsedStudents = cardContainerSibling.querySelector('.container-dropzone')
+
+      cardContainer.addEventListener('dragover', e => {
+        e.preventDefault()
+        const draggable = document.querySelector('.dragging')
+        if (draggable) {
+          cardContainer.style.backgroundColor = '#007bff'
+        }
+      })
+
+      cardContainer.addEventListener('dragleave', () => {
+        cardContainer.style.backgroundColor = ''
+      })
+
+      cardContainer.addEventListener('drop', e => {
+        e.preventDefault()
+        var csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value; // get the csrf token
+        const draggable = document.querySelector('.dragging') // get the element that's being dragged
+        var studentId = draggable.id // get the dragged student id
+        var studentElement = document.getElementById(draggable.id) // get the complete html element
+        // svar gameId = draggable.getAttribute('data-gameid'); // get the old-game id
+        
+        const desiredClassName = 'cyber__card';
+        const newGame = findDesiredParentByClass(e.target, desiredClassName); // get the new game card
+        const newGameId = newGame.id // get the id of the new-game
+        var newStudentPlay = document.getElementById('cyber__student__list__' + newGameId);  // get the new element to append the student
+        
+      
+        const data_add = {
+            'student_id': studentId,
+            'game_id': newGameId,
+            csrfmiddlewaretoken: csrftoken,
+        };
+
+        $.ajax({
+            type: "POST",
+            url: "/api/add-student-to-game/",
+            data: data_add,
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            dataType: "json",
+            success: async function (data) {
+                // Handle successful response
+                if (data.status === "success") {
+                  // Update the UI to reflect the changed student
+                  if (studentElement && newStudentPlay) { // Check if both elements exist
+                      studentElement.parentNode.removeChild(studentElement);
+                      newStudentPlay.appendChild(studentElement);
+                  } else {
+                      console.error("Either the element to remove or the parent element does not exist.");
+                  }
+                  $("#success-alert").text(data.message);
+                  $("#success-alert").removeClass("d-none");
+                  setTimeout(function () {
+                        $("#success-alert").addClass("d-none");
+                  }, 3000);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX request failed:", status, error);
+            },
+          })
+        cardContainer.style.backgroundColor = ''
+      })
+    })
+
+    function findDesiredParentByClass(element, desiredClassName) {
+      let currentElement = element;
+      while (currentElement !== null) {
+          if (currentElement.classList.contains(desiredClassName)) {
+              return currentElement;
+          }
+          currentElement = currentElement.parentNode;
+      }
+      return null;
+    }
+  }
+</script>
+
 <!-- Added Popper through CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
   integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
@@ -130,7 +234,6 @@ Bienvenido a CyberTec
 {% if user.is_authenticated %}
 <script src="{% static 'js/auth_cards.js' %}"></script>
 <script src="{% static 'js/scroll_left_right.js' %}"></script>
-<script src="{% static 'js/drag_drop.js' %}"></script>
 <script src="{% static 'js/sanction_modal.js' %}"></script>
 <script src="{% static 'js/sanctions.js' %}"></script>
 {% endif %}

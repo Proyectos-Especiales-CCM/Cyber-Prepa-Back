@@ -18,21 +18,11 @@
 *, *:before, *:after
   box-sizing: inherit
 
-\:root
-  --color-header-bg-default: #0D1116
-  --color-border-default: #2B2F35 // Color de border negro default
-  --color-border-mode: #b9b9b9 // Color de border blanco toggled
-  --global-font: 'Roboto', sans-serif
-  --base-text-weight-light: 300
-  --base-text-weight-normal: 400
-  --base-text-weight-medium: 500
-  --base-text-weight-semibold: 600
-  --transition-duration: 0.3s
-  --primary-shadow: hsla(var(--color-bg-default), 90%, 55%, 0)
-
 html, body
-  background-color: $color-bg-default
-  color: $color-fg-default
+  // background-color: $color-bg-default
+  background-color: $color-bg-toggle
+  // color: $color-fg-default
+  color: $color-fg-toggle
   font-family: $global-font
   height: 100%
   min-height: 100vh

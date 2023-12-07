@@ -1,5 +1,6 @@
 #nav-container
-    background-color: $color-header-bg-default
+    // background-color: $color-header-bg-default
+    background-color: $color-header-bg-toggle
     padding: 0.5rem 1rem 0.5rem 1rem
     margin-left: auto
     position: relative
@@ -7,9 +8,8 @@
     display: flex
     justify-content: space-between
     align-items: center
-    // border-bottom-style: outset
-    // border-bottom-width: 0.5px
-    box-shadow: #0d2727 0px 1px 11px 0px
+    // box-shadow: $box-shadow-default
+    box-shadow: $box-shadow-toggle
 
 #nav-toggle
     display: block
@@ -19,7 +19,8 @@
     transform: rotate(0deg)
 
     span
-        background-color: white
+        // background-color: $nav-lines-default
+        background-color: $nav-lines-toggle
         width: 100%
         height: $bar-size
         border-radius: calc($bar-size / 4)
@@ -113,6 +114,7 @@ li:hover
     font-family: "Roboto",sans-serif
     font-size: 1.2rem
     font-weight: 300
+    padding-left: 10px
 
 .heading-user
     letter-spacing: -0.01em
@@ -127,7 +129,8 @@ li:hover
     font-weight: 500
 
 .user-name
-    color: #a79f9f
+    color: $username-fg-color-default
+    // color: $username-fg-color-toggle
 
 .theme-container
   width: 50px
