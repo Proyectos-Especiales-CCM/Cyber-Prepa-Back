@@ -122,6 +122,7 @@ async function setGamesCards() {
         games_data[game.id] = { ...template };
 
         const card = document.createElement('div');
+        card.id = game.id;
         card.className = 'cyber__card [ is-collapsed ]';
     
         const cardInner = document.createElement('div');
@@ -176,7 +177,7 @@ async function setGamesCards() {
             }
 
             const cardExpander = document.createElement('div');
-            cardExpander.className = 'cyber__card__expander';
+            cardExpander.className = 'rounded cyber__card__expander';
             cardExpander.innerHTML = `
                 <i class="fa fa-close [ js-collapser ]"></i>
 

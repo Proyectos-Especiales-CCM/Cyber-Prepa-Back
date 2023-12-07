@@ -1,3 +1,11 @@
+.logo-header
+  width: 50px
+  height: 46px
+  background-size: cover
+  background-position: center
+  // background-image: url('../assets/CyberTecLogo-Dark-min.svg')
+  background-image: url('../assets/CyberTecLogo-Light-min.svg')
+
 ul
     list-style: none
     padding: 0
@@ -33,6 +41,7 @@ ul
         width: 100%
 
     &:hover .cyber__card__inner
+        // background-color: #1abc9c
         background-color: #1abc9c
         transform: scale(1.05)
 
@@ -41,8 +50,10 @@ ul
     padding: 30px
     position: relative
     cursor: pointer
-    background-color: #949fb0
-    color: #eceef1
+    // background-color: $cyber-card-inner-default
+    background-color: $cyber-card-inner-toggle
+    // color: $cyber-card-fg-color-default
+    color: $cyber-card-fg-color-toggle
     font-size: 1.3em
     text-align: center
     border-radius: 5px
@@ -55,7 +66,8 @@ ul
 
 .cyber__card__expander
     transition: all 0.2s ease-in-out
-    background-color: #333a45
+    // background-color: $cyber-card-expander-default
+    background-color: $cyber-card-expander-toggle
     width: 100%
     position: relative
     display: flex
@@ -117,28 +129,36 @@ ul
     display: flex
     flex-flow: row nowrap
     overflow-x: auto
-    width: 90%
+    width: 100%
 
 .container__dropzone
     display: flex
+    align-items: center
     width: 100%
+    padding-left: 30px
 
 .scroll-button
-    position: absolute
-    top: 50%
-    transform: translateY(-50%)
-    padding: 10px
     border: none
     cursor: pointer
+    position: absolute
+    height: 127px
+    bottom: 22px
+    width: 27px
+    background-color: #cdcdcd
 
 .scroll-button.left
-    left: 0
+  border-radius: 0px 5px 5px 0px
+  left: 0
 
 .scroll-button.right
-    right: 0
+  border-radius: 5px 0px 0px 5px
+  right: 0
 
 .student
-    background-color: rgba(40,46,55,.6196078431)
+    // background-color: $student-card-bg-default
+    background-color: $student-card-bg-toggle
+    // color: $color-fg-default
+    color: $color-fg-toggle
     border-radius: 5px
     display: flex
     flex-flow: column
@@ -148,8 +168,13 @@ ul
     height: 100%
     margin: 5px
 
+    li
+        list-style: none
+
 .input-group
     width: 50%
+
+.draggable
 
 .dragging
     opacity: 0.5

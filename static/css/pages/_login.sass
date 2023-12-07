@@ -1,6 +1,8 @@
 #nav-container-logo
-    background-color: $color-bg-default
-    box-shadow: $color-bg-default
+    // background-color: $color-bg-default
+    background-color: $color-bg-toggle
+    // box-shadow: $color-bg-default
+    box-shadow: $color-bg-toggle
     padding: 0.5rem 1rem 0.5rem 1rem
     margin-left: auto
     position: relative
@@ -10,14 +12,17 @@
     align-items: center
   
 .login-container
-  background-color: #161A1E
-  border-color: #1F2227
+  // background-color: $login-container-bg-default
+  background-color: $login-container-bg-toggle
+  // border-color: $login-container-border-default: #1F2227
+  border-color: $login-container-border-toggle
   border-width: 2px
   border-style: solid
 
 .form-header
-  font-size: 25p#0d272700
-  color: #f6f6f6
+  font-size: 25px
+  // color: $form-header-fg-default
+  color: $color-fg-toggle
   font-weight: $base-text-weight-light
 
 .input-block
@@ -43,7 +48,8 @@
   line-height: 20px
   color: $color-fg-default
   vertical-align: middle
-  background-color: $color-bg-default
+  // background-color: $color-bg-default
+  background-color: $color-bg-toggle
   background-repeat: no-repeat
   background-position: right 8px center
   border: 1px solid $color-border-default
@@ -59,6 +65,21 @@
 
 .form-control:focus
   border-color: #2C7579
-  background-color: $color-bg-default
+  // background-color: $color-bg-default
+  background-color: $color-bg-toggle
+  // color: $color-fg-default
+  color: $color-fg-toggle
   box-shadow: 0 0 5px #2C7579
   outline: none
+
+.logo
+  margin: auto
+  display: flex
+  justify-content: center
+  align-items: center
+  width: 160px
+  height: 160px
+  background-size: cover
+  background-position: center
+  // background-image: url('../assets/CyberTecLogo-Dark.svg')
+  background-image: url('../assets/CyberTecLogo-Light.svg')
