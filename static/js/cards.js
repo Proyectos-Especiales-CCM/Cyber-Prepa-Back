@@ -150,7 +150,7 @@ async function setGamesCards() {
             </div>
             <img class="cyber__image" src="/static/${game.file_route}" alt="${game.displayName}">
             <div class="remaining__time">
-                <p id="cyber__countdown__${game.id}">No data</p>
+                <p id="cyber__countdown__${game.id}">SIN DATOS</p>
             </div>
         `;
 
@@ -168,7 +168,7 @@ async function setGamesCards() {
                             <form class="end-play-form" id="end-play-form-${player.student_id}">
                                 <input type="hidden" name="student_id" value="${player.student_id}">
                                 <input type="hidden" name="game_id" value="${game.id}">
-                                <button type="submit" class="btn btn-success">End Play</button>
+                                <button type="submit" class="btn btn-success">Terminar</button>
                             </form>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSanciones" data-bs-matricula="${player.student_id}" >Sancionar</button>
                         </div>

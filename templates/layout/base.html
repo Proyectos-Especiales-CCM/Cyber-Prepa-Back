@@ -18,14 +18,14 @@
             <div id="nav-overlay"></div>
             <nav id="nav-fullscreen">
                 <ul>
-                    <li><a class="cool-hover" href="{% url 'index' %}">Home</a></li>
+                    <li><a class="cool-hover" href="{% url 'index' %}">Inicio</a></li>
                     <li><a class="cool-hover" href="{% url 'regulations' %}">Reglamento</a></li>
                     {% if user.is_authenticated %}
                     <!-- If the user is authenticated shows the admin CRUD page-->
                     <li><a class="cool-hover" href="{% url 'admin' %}">Admin</a></li>
-                    <li><a class="cool-hover" href="{% url 'logout' %}">Logout</a></li>
+                    <li><a class="cool-hover" href="{% url 'logout' %}">Cerrar Sesión</a></li>
                     {% else %}
-                    <li><a class="cool-hover" href="{% url 'login' %}">Login</a></li>
+                    <li><a class="cool-hover" href="{% url 'login' %}">Iniciar Sesión</a></li>
                     {% endif %}
                 </ul>
             </nav>
