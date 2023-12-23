@@ -1,29 +1,24 @@
-"""
-URL configuration for main project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.contrib import admin
 from django.urls import path, include
-from .views import *
+from rest_framework_simplejwt import views as jwt_views
+
+from .views import HealthCheck
+from user.urls import urlpatterns as user_urls
 
 urlpatterns = [
-    path('admin-django/', admin.site.urls),
-    path('', Index.as_view(), name='index'),
-    path('regulations/', Regulations.as_view(), name='regulations'),
-    path('login/', Login.as_view(), name='login'),
-    path('logout/', logout_, name='logout'),
-    path('rental/', include('rental.urls')),
-    path('api/', include('api.urls')),
+    path("admin-django/", admin.site.urls),
+    path("health-check/", HealthCheck.as_view(), name="health-check"),
+    # JWT Token Authentication
+    path("token/", jwt_views.TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"),
+    # Swagger
+    path("schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path(
+        "docs/",
+        SpectacularSwaggerView.as_view(url_name="api-schema"),
+        name="api-docs",
+    ),
+    # User
+    path("users/", include(user_urls)),
 ]
