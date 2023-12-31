@@ -5,7 +5,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 import json
 
 
-# Create your tests here.
 class UserTests(TestCase):
     def setUp(self):
         # Initialize client and sample data
@@ -23,7 +22,7 @@ class UserTests(TestCase):
         )
 
     def test_user_created(self):
-        # Test the creation of the sample users
+        # Test: Check if users were correctly created
         admin_group = Group.objects.get(name="admin")
         self.assertEqual(self.user.email, "A01656583@tec.mx")
         self.assertFalse(self.user.is_staff)
@@ -40,7 +39,7 @@ class UserTests(TestCase):
         self.assertTrue(admin_group.user_set.filter(pk=self.admin_user.pk).exists())
 
     def test_user_tokens(self):
-        # Test the token generation of the sample users
+        # Test: Get the access and refresh tokens for a user
         response = self.client.post(
             "/token/", {"email": "A01656583@tec.mx", "password": "Mypass123!"}
         )
@@ -51,7 +50,7 @@ class UserTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_users_api_read_list_success(self):
-        # Test the list of users
+        # Test: List users via an admin user
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.get(
             "/users/",
@@ -61,15 +60,15 @@ class UserTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
-    def test_users_api_read_list_failure(self):
-        # Test the list of users via a non-authenticated user
+    def test_users_api_read_list_fail(self):
+        # Test: List users via a non-authenticated user
         response = self.client.get(
             "/users/",
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 401)
 
-        # Test the list of users via a non-admin user
+        # Test: List users via a non-admin user
         access_token = AccessToken.for_user(self.user)
         response = self.client.get(
             "/users/",
@@ -78,7 +77,7 @@ class UserTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_users_api_creation_success(self):
+    def test_users_api_create_success(self):
         access_token = AccessToken.for_user(self.admin_user)
 
         # Test: Create an admin user
@@ -140,7 +139,9 @@ class UserTests(TestCase):
             Group.objects.get(name="admin").user_set.filter(pk=response["id"]).exists()
         )
 
-    def test_users_api_creation_failure(self):
+        self.assertEqual(get_user_model().objects.count(), 5)
+
+    def test_users_api_create_fail(self):
         # Test: Create a user without authentication
         response = self.client.post(
             "/users/",
@@ -259,6 +260,8 @@ class UserTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+        self.assertEqual(get_user_model().objects.count(), 2)
+
     def test_users_api_read_detail_success(self):
         # Test: Read another user's details as admin
         access_token = AccessToken.for_user(self.admin_user)
@@ -286,7 +289,7 @@ class UserTests(TestCase):
         self.assertEqual(response["id"], self.user.id)
         self.assertFalse(response["is_admin"])
 
-    def test_users_api_read_detail_failure(self):
+    def test_users_api_read_detail_fail(self):
         # Test: Read any user's details as non-authenticated
         response = self.client.get(
             f"/users/{self.user.id}/",
@@ -353,7 +356,7 @@ class UserTests(TestCase):
         )
         self.assertFalse(user.is_active)
 
-    def test_users_api_update_failure(self):
+    def test_users_api_update_fail(self):
         # Test: Update a user's data without authentication
         response = self.client.put(
             f"/users/{self.user.pk}/",
@@ -457,7 +460,7 @@ class UserTests(TestCase):
         self.assertEqual(response["theme"], "light")
         self.assertTrue(response["is_active"])
 
-    def test_users_api_me_failure(self):
+    def test_users_api_me_fail(self):
         # Test that users cannot read their own user details without authentication
         response = self.client.get("/users/me/")
         self.assertEqual(response.status_code, 401)

@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsActive(BasePermission):
@@ -54,3 +54,25 @@ class IsInAdminGroupOrStaff(BasePermission):
 
         # Allow if the user is in the admin group
         return request.user.groups.filter(name=self.group_name).exists()
+
+
+class AdminWriteUserRead(BasePermission):
+    """
+    Custom permission to only allow admin users to write and create instances, but allow all users to read.
+    """
+
+    def has_permission(self, request, view):
+        # Allow all users to read
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Allow admin users to write
+        return request.user.groups.filter(name="admin").exists()
+
+    def has_object_permission(self, request, view, obj):
+        # Allow all users to read
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Allow admin users to write
+        return request.user.groups.filter(name="admin").exists()

@@ -1,10 +1,8 @@
 from django.contrib import admin
-from .models import *
+from .models import Student, Play, Game, Sanction
 
 # Register your models here.
 admin.site.register(Student)
-admin.site.register(Plays)
+admin.site.register(Play)
 admin.site.register(Game)
 admin.site.register(Sanction)
-admin.site.register(Log)
-admin.site.register(Setting)

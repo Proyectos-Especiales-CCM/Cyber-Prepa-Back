@@ -5,6 +5,7 @@ from rest_framework_simplejwt import views as jwt_views
 
 from .views import HealthCheck
 from user.urls import urlpatterns as user_urls
+from rental.urls import urlpatterns as rental_urls
 
 urlpatterns = [
     path("admin-django/", admin.site.urls),
@@ -21,4 +22,6 @@ urlpatterns = [
     ),
     # User
     path("users/", include(user_urls)),
+    # Rental
+    path("rental/", include(rental_urls)),
 ]

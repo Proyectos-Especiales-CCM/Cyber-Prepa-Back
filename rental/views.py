@@ -1,27 +1,58 @@
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.views import View
-from .models import Student, Plays, Game, Sanction, Log
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework import generics
+from rest_framework.response import Response
+from .serializers import (
+    StudentSerializer,
+    PlaySerializer,
+    GameSerializer,
+    SanctionSerializer,
+)
+from .models import Student, Play, Game, Sanction
+from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteUserRead
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-# Create your views here.
-# View for admin page related to the rental app, CRUD operations for games, users, logs and statistics
-class Admin(View):
-    def get(self, request):
-        # add to the context all students, games, logs and sanctions
-        context = {
-            "students": Student.objects.all(),
-            "plays": Plays.objects.all(),
-            "games": Game.objects.all(),
-            "logs": Log.objects.all(),
-            "sanctions": Sanction.objects.all(),
-        }
-        return render(request, "rental/admin.html", context=context)
+class StudentListCreateView(generics.ListCreateAPIView):
+    """Create and Read Students"""
+
+    queryset = Student.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, IsInAdminGroupOrStaff]
+    serializer_class = StudentSerializer
 
 
-# View for biometrics page, where the user is registered through face recognition API
-@csrf_exempt
-def biometricsAPI(request):
-    if request.method == "POST":
-        return JsonResponse({"status": "success"})
+class StudentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Student(id)"""
+
+    queryset = Student.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, IsInAdminGroupOrStaff]
+    serializer_class = StudentSerializer
+
+
+class GameListCreateView(generics.ListCreateAPIView):
+    """Create and Read Games"""
+
+    queryset = Game.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, AdminWriteUserRead]
+    serializer_class = GameSerializer
+
+class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Game(id)"""
+
+    queryset = Game.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, AdminWriteUserRead]
+    serializer_class = GameSerializer
+
+class GameEndAllPlaysView(generics.GenericAPIView):
+    """End all plays of a game"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive]
+
+    def post(self, request, pk):
+        game = generics.get_object_or_404(Game, pk=pk)
+        game._end_all_plays()
+        return Response(GameSerializer(game).data, status=status.HTTP_200_OK)
