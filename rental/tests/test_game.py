@@ -11,7 +11,8 @@ import json
 class GameTests(TestCase):
     """
     TODO: Add tests for the following:
-    - Test: Behavior when inactive user tries to use the API
+    - Add more tests for unconsidered cases
+    - Assure behavior when inactive user tries to use the API
     """
     def setUp(self):
         # Initialize client and sample data
@@ -26,6 +27,10 @@ class GameTests(TestCase):
         self.admin_user = get_user_model().objects.create_superuser(
             email="diegoDev@tec.mx",
             password="MyStrongPass123!!!",
+        )
+
+        self.inactive_admin_user = get_user_model().objects.create_superuser(
+            email="leo@tec.mx", password="MyStrongPass123!!!", is_active=False
         )
 
         # Create sample students
@@ -90,6 +95,13 @@ class GameTests(TestCase):
         self.futbolito_1.start_time = play_1.time
         self.futbolito_1.save()
 
+    def test_setUp(self):
+        # Test: Check if users were correctly created
+        self.assertEqual(get_user_model().objects.count(), 3)
+        self.assertEqual(Game.objects.count(), 3)
+        self.assertEqual(Student.objects.count(), 3)
+        self.assertEqual(Play.objects.count(), 4)
+
     def test_game_created(self):
         # Test: Check if games were correctly created
         self.assertEqual(Game.objects.count(), 3)
@@ -109,7 +121,7 @@ class GameTests(TestCase):
 
         game = Game.objects.get(name="Futbolito 2")
         self.assertEqual(game._get_plays().count(), 0)
-        self.assertEqual(game.start_time, None)
+        self.assertIsNone(game.start_time)
 
     def test_game__get_plays(self):
         # Test: Check if _get_plays returns the correct plays
@@ -159,6 +171,13 @@ class GameTests(TestCase):
     def test_games_api_read_list_fail(self):
         # Test: List all games via an unauthenticated user
         response = self.client.get("/rental/games/")
+        self.assertEqual(response.status_code, 401)
+
+        # Test: List all games via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.get(
+            "/rental/games/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+        )
         self.assertEqual(response.status_code, 401)
 
     def test_games_api_create_success(self):
@@ -245,6 +264,22 @@ class GameTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+        # Test: Create a game via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.post(
+            "/rental/games/",
+            json.dumps(
+                {
+                    "name": "Billar 1",
+                    "show": False,
+                    "file_route": "assets/games_cards/billar_1.png",
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_games_api_read_detail_success(self):
         # Test: Read a game via an admin user
         access_token = AccessToken.for_user(self.admin_user)
@@ -295,6 +330,14 @@ class GameTests(TestCase):
             "/rental/games/100/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 404)
+
+        # Test: Read a game via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.get(
+            f"/rental/games/{self.xbox_game.pk}/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
 
     def test_games_api_update_success(self):
         # Test: Update all game fields via an admin user using PUT
@@ -374,6 +417,50 @@ class GameTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+        # Test: Update a game with an existing name
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/games/{self.xbox_game.pk}/",
+            json.dumps(
+                {
+                    "name": "Futbolito 1",
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 400)
+
+        # Test: Update a game with no name
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/games/{self.xbox_game.pk}/",
+            json.dumps(
+                {
+                    "name": "",
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 400)
+
+        # Test: Update a game via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.patch(
+            f"/rental/games/{self.xbox_game.pk}/",
+            json.dumps(
+                {
+                    "name": "Xbox 360",
+                    "show": False,
+                    "file_route": "assets/games_cards/xbox_360.png",
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_games_api_delete_success(self):
         # Test: Delete a game via an admin user
         access_token = AccessToken.for_user(self.admin_user)
@@ -396,6 +483,29 @@ class GameTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 403)
+
+        # Test: Delete a game with an invalid id
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.delete(
+            "/rental/games/100/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+        )
+        self.assertEqual(response.status_code, 404)
+
+        # Test: Delete a game via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.delete(
+            f"/rental/games/{self.futbolito_2.pk}/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # Test: Delete a game with plays
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.delete(
+            f"/rental/games/{self.xbox_game.pk}/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 400)
 
         # Confirm that the game was not deleted
         self.assertEqual(Game.objects.count(), 3)
@@ -421,3 +531,39 @@ class GameTests(TestCase):
         self.assertEqual(len(response["plays"]), 0)
         game = Game.objects.get(pk=self.xbox_game.pk)
         self.assertEqual(game._get_plays().count(), 0)
+
+        # Test: End all plays of a game via a non-admin user
+        access_token = AccessToken.for_user(self.user)
+        response = self.client.post(
+            f"/rental/games/{self.futbolito_1.pk}/end_all_plays/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertEqual(response["name"], "Futbolito 1")
+        self.assertTrue(response["show"])
+        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(
+            response["start_time"],
+            timezone.localtime(Game.objects.get(pk=self.futbolito_1.pk).start_time)
+            .astimezone(pytz.timezone(TIME_ZONE))
+            .isoformat(),
+        )
+        self.assertEqual(len(response["plays"]), 0)
+        game = Game.objects.get(pk=self.xbox_game.pk)
+        self.assertEqual(game._get_plays().count(), 0)
+
+    def test_games_api_end_all_plays_fail(self):
+        # Test: End all plays of a game via an unauthenticated user
+        response = self.client.post(
+            f"/rental/games/{self.xbox_game.pk}/end_all_plays/",
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # Test: End all plays of a game via an inactive user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.post(
+            f"/rental/games/{self.xbox_game.pk}/end_all_plays/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)

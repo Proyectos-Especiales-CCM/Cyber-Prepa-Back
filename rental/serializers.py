@@ -1,5 +1,7 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from .models import Student, Play, Game, Sanction
+from drf_spectacular.utils import extend_schema_field
+from typing import List
 
 
 class StudentSerializer(ModelSerializer):
@@ -17,12 +19,15 @@ class StudentSerializer(ModelSerializer):
             "sanctions_number": {"read_only": True},
         }
 
+    @extend_schema_field(int)
     def get_played_today(self, obj):
         return obj._get_played_today()
 
+    @extend_schema_field(int)
     def get_weekly_plays(self, obj):
         return obj._get_weekly_plays()
 
+    @extend_schema_field(int)
     def get_sanctions_number(self, obj):
         return obj._get_sanctions_number()
 
@@ -43,7 +48,8 @@ class GameSerializer(ModelSerializer):
             "plays": {"read_only": True},
         }
 
-    def get_plays(self, obj):
+    @extend_schema_field(PlaySerializer(many=True))
+    def get_plays(self, obj: Game) -> List[dict]:
         return PlaySerializer(obj._get_plays(), many=True).data
 
 

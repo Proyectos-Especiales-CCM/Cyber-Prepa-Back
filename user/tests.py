@@ -6,6 +6,12 @@ import json
 
 
 class UserTests(TestCase):
+    """
+    TODO: Improve tests:
+    - Add more tests for unconsidered cases
+    - Assure behavior when inactive user tries to use the API
+    """
+
     def setUp(self):
         # Initialize client and sample data
 
@@ -21,22 +27,42 @@ class UserTests(TestCase):
             password="MyStrongPass123!!!",
         )
 
+        self.inactive_admin_user = get_user_model().objects.create_superuser(
+            email="leo@tec.mx", password="MyStrongPass123!!!", is_active=False
+        )
+
+    def test_setUp(self):
+        # Test: Check if the setUp objects numbers are correct
+        self.assertEqual(get_user_model().objects.count(), 3)
+
     def test_user_created(self):
         # Test: Check if users were correctly created
         admin_group = Group.objects.get(name="admin")
-        self.assertEqual(self.user.email, "A01656583@tec.mx")
-        self.assertFalse(self.user.is_staff)
-        self.assertTrue(self.user.is_active)
-        self.assertFalse(self.user.is_superuser)
-        self.assertTrue(self.user.check_password("Mypass123!"))
-        self.assertFalse(admin_group.user_set.filter(pk=self.user.pk).exists())
+        user = get_user_model().objects.get(email=self.user.email)
+        self.assertEqual(user.email, "A01656583@tec.mx")
+        self.assertFalse(user.is_staff)
+        self.assertTrue(user.is_active)
+        self.assertFalse(user.is_superuser)
+        self.assertTrue(user.check_password("Mypass123!"))
+        self.assertFalse(admin_group.user_set.filter(pk=user.pk).exists())
 
-        self.assertEqual(self.admin_user.email, "diegoDev@tec.mx")
-        self.assertTrue(self.admin_user.is_staff)
-        self.assertTrue(self.admin_user.is_active)
-        self.assertTrue(self.admin_user.is_superuser)
-        self.assertTrue(self.admin_user.check_password("MyStrongPass123!!!"))
-        self.assertTrue(admin_group.user_set.filter(pk=self.admin_user.pk).exists())
+        admin_user = get_user_model().objects.get(email=self.admin_user.email)
+        self.assertEqual(admin_user.email, "diegoDev@tec.mx")
+        self.assertTrue(admin_user.is_staff)
+        self.assertTrue(admin_user.is_active)
+        self.assertTrue(admin_user.is_superuser)
+        self.assertTrue(admin_user.check_password("MyStrongPass123!!!"))
+        self.assertTrue(admin_group.user_set.filter(pk=admin_user.pk).exists())
+
+        inactive_admin_user = get_user_model().objects.get(
+            email=self.inactive_admin_user.email
+        )
+        self.assertEqual(inactive_admin_user.email, "leo@tec.mx")
+        self.assertTrue(inactive_admin_user.is_staff)
+        self.assertFalse(inactive_admin_user.is_active)
+        self.assertTrue(inactive_admin_user.is_superuser)
+        self.assertTrue(inactive_admin_user.check_password("MyStrongPass123!!!"))
+        self.assertTrue(admin_group.user_set.filter(pk=inactive_admin_user.pk).exists())
 
     def test_user_tokens(self):
         # Test: Get the access and refresh tokens for a user
@@ -49,6 +75,12 @@ class UserTests(TestCase):
         self.assertTrue("access" in response.json())
         self.assertEqual(response.status_code, 200)
 
+        # Test: Get the access and refresh tokens for an inactive user
+        response = self.client.post(
+            "/token/", {"email": "leo@tec.mx", "password": "MyStrongPass123!!!"}
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_users_api_read_list_success(self):
         # Test: List users via an admin user
         access_token = AccessToken.for_user(self.admin_user)
@@ -58,7 +90,7 @@ class UserTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(len(response.json()), 3)
 
     def test_users_api_read_list_fail(self):
         # Test: List users via a non-authenticated user
@@ -76,6 +108,15 @@ class UserTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 403)
+
+        # Test: List users via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.get(
+            "/users/",
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
 
     def test_users_api_create_success(self):
         access_token = AccessToken.for_user(self.admin_user)
@@ -139,7 +180,7 @@ class UserTests(TestCase):
             Group.objects.get(name="admin").user_set.filter(pk=response["id"]).exists()
         )
 
-        self.assertEqual(get_user_model().objects.count(), 5)
+        self.assertEqual(get_user_model().objects.count(), 6)
 
     def test_users_api_create_fail(self):
         # Test: Create a user without authentication
@@ -260,7 +301,22 @@ class UserTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-        self.assertEqual(get_user_model().objects.count(), 2)
+        # Test: Create a user via an inactive admin user
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.post(
+            "/users/",
+            json.dumps(
+                {
+                    "password": "Mypass123!",
+                    "email": "A01656700@tec.mx",
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
+
+        self.assertEqual(get_user_model().objects.count(), 3)
 
     def test_users_api_read_detail_success(self):
         # Test: Read another user's details as admin
@@ -314,6 +370,15 @@ class UserTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 403)
+
+        # Test: Read another user's details as inactive admin
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.get(
+            f"/users/{self.admin_user.id}/",
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
 
     def test_users_api_update_success(self):
         # Test: Update own data
@@ -445,6 +510,16 @@ class UserTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+        # Test: Update own user's is_active data as inactive admin
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.patch(
+            f"/users/{self.user.pk}/",
+            json.dumps({"is_active": True}),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_users_api_me_success(self):
         # Test that users can read their own user details
         access_token = AccessToken.for_user(self.user)
@@ -463,4 +538,12 @@ class UserTests(TestCase):
     def test_users_api_me_fail(self):
         # Test that users cannot read their own user details without authentication
         response = self.client.get("/users/me/")
+        self.assertEqual(response.status_code, 401)
+
+        # Test that users cannot read their own user details if they are inactive
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.get(
+            "/users/me/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
         self.assertEqual(response.status_code, 401)

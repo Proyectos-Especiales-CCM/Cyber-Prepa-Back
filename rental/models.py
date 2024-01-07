@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import RegexValidator
 from django.utils import timezone
 
 
@@ -8,31 +9,46 @@ class Student(models.Model):
     Nombre, opcional
     Booleano de si se le olvido su credencial
     Hash de biometricos
-    
+
     _get_played_today: Regresa el numero de juegos que jugo el dia de hoy
     _get_weekly_plays: Regresa el numero de juegos que jugo en la semana
     _get_sanctions_number: Regresa el numero de sanciones que tiene actualmente
     """
 
-    id = models.CharField(primary_key=True, max_length=9)
-    name = models.CharField(max_length=100, blank=True)
+    id = models.CharField(
+        primary_key=True, max_length=9, validators=[RegexValidator(r"^[A|L][0-9]{8}$")]
+    )
+    name = models.CharField(max_length=100, null=True, blank=True)
     forgoten_id = models.BooleanField(default=False)
-    hash = models.CharField(max_length=1000, null=False, blank=False)
+    hash = models.CharField(max_length=1000, null=True, blank=True)
+
+    def _is_playing(self):
+        return Play.objects.filter(student=self, ended=False).count() > 0
 
     def _get_played_today(self):
-        today = timezone.now().date()
-        return Play.objects.filter(student=self, time__date=today).count()
+        current_time = timezone.localtime(timezone.now())
+        return Play.objects.filter(student=self, time__date=current_time.date()).count()
 
     def _get_weekly_plays(self):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now())
         # Start of the week (Monday)
-        start_of_week = today - timezone.timedelta(days=today.weekday())
+        start_of_week = today.combine(
+            (today - timezone.timedelta(days=today.weekday())),
+            timezone.localtime().min.time(),
+        )
         # End of the week (Sunday)
-        end_of_week = start_of_week + timezone.timedelta(days=6)
-        return Play.objects.filter(student=self, time__date__range=[start_of_week, end_of_week]).count()
-    
+        end_of_week = today.combine(
+            (start_of_week + timezone.timedelta(days=6)),
+            timezone.localtime().max.time(),
+        )
+        return Play.objects.filter(
+            student=self, time__date__range=[start_of_week, end_of_week]
+        ).count()
+
     def _get_sanctions_number(self):
-        return Sanction.objects.filter(student=self, end_time__gte=timezone.now()).count()
+        return Sanction.objects.filter(
+            student=self, end_time__gte=timezone.now()
+        ).count()
 
     def __str__(self):
         return self.id
@@ -44,17 +60,18 @@ class Game(models.Model):
     Booleano de si se muestra en la lista de juegos (Todavía se puede jugar o no)
     Fecha y hora en que el primer estudiante comenzó a jugar
     Ruta de la imagen del juego
-    
+
     _get_plays: Regresa todos los juegos que se han jugado de este juego
     """
+
     name = models.CharField(max_length=100, null=False, blank=False, unique=True)
     show = models.BooleanField(default=True)
     start_time = models.DateTimeField(null=True, blank=True)
-    file_route = models.CharField(default='assets/games_cards/game.png', max_length=255)
+    file_route = models.CharField(default="assets/games_cards/game.png", max_length=255)
 
     def _get_plays(self):
         return Play.objects.filter(game=self, ended=False)
-    
+
     def _end_all_plays(self):
         plays = self._get_plays()
         for play in plays:
@@ -72,13 +89,16 @@ class Play(models.Model):
     Booleano de si terminó su juego y lo regresó
     Fecha y hora en que jugó
     """
-    student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)
+
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, null=False, blank=False
+    )
     game = models.ForeignKey(Game, on_delete=models.PROTECT, null=False, blank=False)
     ended = models.BooleanField(default=False)
     time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.student} - {self.game} - {self.time}"
+        return f"{self.student} - {self.game.name} - {self.time}"
 
 
 class Sanction(models.Model):
@@ -89,9 +109,12 @@ class Sanction(models.Model):
     Fecha y hora en que se inicia la sancion
     Fecha y hora en que se termina la sancion
     """
+
     cause = models.CharField(max_length=255, null=False, blank=False)
     play = models.ForeignKey(Play, on_delete=models.PROTECT, null=True, blank=True)
-    student = models.ForeignKey(Student, on_delete=models.PROTECT, null=False, blank=False)
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, null=False, blank=False
+    )
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=False, blank=False)
 
