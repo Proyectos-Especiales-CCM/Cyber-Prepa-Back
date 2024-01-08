@@ -38,6 +38,18 @@ class PlaySerializer(ModelSerializer):
         fields = "__all__"
 
 
+class GameUnauthenticatedSerializer(ModelSerializer):
+    plays = SerializerMethodField()
+    
+    class Meta:
+        model = Game
+        fields = "__all__"
+
+    @extend_schema_field(int)
+    def get_plays(self, obj: Game) -> int:
+        return obj._get_plays().count()
+
+
 class GameSerializer(ModelSerializer):
     plays = SerializerMethodField()
 

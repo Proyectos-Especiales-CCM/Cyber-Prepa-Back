@@ -56,7 +56,7 @@ class IsInAdminGroupOrStaff(BasePermission):
         return request.user.groups.filter(name=self.group_name).exists()
 
 
-class AdminWriteUserRead(BasePermission):
+class AdminWriteAllRead(BasePermission):
     """
     Custom permission to only allow admin users to write and create instances, but allow all users to read.
     """

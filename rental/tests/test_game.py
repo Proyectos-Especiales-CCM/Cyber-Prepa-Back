@@ -159,6 +159,7 @@ class GameTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 3)
+        self.assertEqual(len(response.json()[0]["plays"]), 2)
 
         # Test: List all games via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -167,12 +168,15 @@ class GameTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 3)
+        self.assertEqual(len(response.json()[0]["plays"]), 2)
 
-    def test_games_api_read_list_fail(self):
         # Test: List all games via an unauthenticated user
         response = self.client.get("/rental/games/")
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 3)
+        self.assertEqual(response.json()[0]["plays"], 2)
 
+    def test_games_api_read_list_fail(self):
         # Test: List all games via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.get(
@@ -319,11 +323,22 @@ class GameTests(TestCase):
         )
         self.assertEqual(len(response["plays"]), 2)
 
-    def test_games_api_read_detail_fail(self):
         # Test: Read a game via an unauthenticated user
         response = self.client.get(f"/rental/games/{self.xbox_game.pk}/")
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertEqual(response["name"], "Xbox")
+        self.assertTrue(response["show"])
+        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(
+            response["start_time"],
+            timezone.localtime(Game.objects.get(name="Xbox").start_time)
+            .astimezone(pytz.timezone(TIME_ZONE))
+            .isoformat(),
+        )
+        self.assertEqual(response["plays"], 2)
 
+    def test_games_api_read_detail_fail(self):
         # Test: Read a game with an invalid id
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.get(

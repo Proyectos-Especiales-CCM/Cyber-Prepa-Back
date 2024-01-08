@@ -4,12 +4,13 @@ from rest_framework.response import Response
 from .serializers import (
     StudentSerializer,
     PlaySerializer,
+    GameUnauthenticatedSerializer,
     GameSerializer,
     SanctionSerializer,
 )
 from .models import Student, Play, Game, Sanction
 from django.core.validators import RegexValidator
-from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteUserRead
+from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models.deletion import ProtectedError
 from django.utils import timezone
@@ -181,9 +182,13 @@ class GameListCreateView(generics.ListCreateAPIView):
     """Create and Read Games"""
 
     queryset = Game.objects.all()
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsActive, AdminWriteUserRead]
-    serializer_class = GameSerializer
+    permission_classes = [AdminWriteAllRead]
+
+    def get_serializer_class(self):
+        if self.request.method == "GET" and not self.request.user.is_authenticated:
+            return GameUnauthenticatedSerializer
+        else:
+            return GameSerializer
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -197,9 +202,13 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Read, Update and Delete Game(id)"""
 
     queryset = Game.objects.all()
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsActive, AdminWriteUserRead]
-    serializer_class = GameSerializer
+    permission_classes = [AdminWriteAllRead]
+    
+    def get_serializer_class(self):
+        if self.request.method == "GET" and not self.request.user.is_authenticated:
+            return GameUnauthenticatedSerializer
+        else:
+            return GameSerializer
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
