@@ -31,8 +31,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1"]
+ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "").split(",")
 
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:8000").split(",")
 
 # Application definition
 
@@ -205,6 +206,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DATETIME_INPUT_FORMATS": ['iso-8601', '%Y-%m-%dT%H:%M:%S.%fZ']
 }
 
 # Spectacular

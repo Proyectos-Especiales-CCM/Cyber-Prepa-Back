@@ -249,3 +249,25 @@ class GameEndAllPlaysView(generics.GenericAPIView):
             f"$User {request.user.email} ended all plays of game {game.name}"
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class SanctionListCreateView(generics.ListCreateAPIView):
+    """Create and Read Sanctions"""
+
+    queryset = Sanction.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive]
+    serializer_class = SanctionSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            student = Student.objects.get(pk=request.data["student"])
+        except Student.DoesNotExist:
+            return Response(
+                {"detail": "Student does not exist"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        response = super().create(request, *args, **kwargs)
+        transaction_logger.info(
+            f"$User {request.user.email} created sanction {response.data['id']} for student {response.data['student']}"
+        )
+        return response
