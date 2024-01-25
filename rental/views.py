@@ -40,9 +40,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
                 {"detail": "Invalid student id"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        student, created = Student.objects.get_or_create(
-            id=student_id
-        )
+        student, created = Student.objects.get_or_create(id=student_id)
         if created == False:
             if student._is_playing() == True:
                 return Response(
@@ -64,7 +62,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
                     {"detail": "Student has sanctions"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-        
+
         try:
             game = Game.objects.get(pk=request.data["game"])
         except Game.DoesNotExist:
@@ -89,7 +87,8 @@ class PlayListCreateView(generics.ListCreateAPIView):
             # has expired and we should not allow more plays
             if game.start_time + timezone.timedelta(minutes=50) < timezone.now():
                 return Response(
-                    {"detail": "Game time has expired"}, status=status.HTTP_400_BAD_REQUEST
+                    {"detail": "Game time has expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             else:
                 response = super().create(request, *args, **kwargs)
@@ -125,7 +124,7 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
             f"$User {request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
         )
         return super().update(request, *args, **kwargs)
-    
+
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -173,7 +172,9 @@ class StudentDetailView(generics.RetrieveDestroyAPIView):
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
             return Response(
-                {"detail": "Cannot delete student as it has plays or sanctions associated"},
+                {
+                    "detail": "Cannot delete student as it has plays or sanctions associated"
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -203,7 +204,7 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Game.objects.all()
     permission_classes = [AdminWriteAllRead]
-    
+
     def get_serializer_class(self):
         if self.request.method == "GET" and not self.request.user.is_authenticated:
             return GameUnauthenticatedSerializer
@@ -249,23 +250,54 @@ class GameEndAllPlaysView(generics.GenericAPIView):
             f"$User {request.user.email} ended all plays of game {game.name}"
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
 class SanctionListCreateView(generics.ListCreateAPIView):
     """Create and Read Sanctions"""
 
     queryset = Sanction.objects.all()
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsActive]
+    permission_classes = [IsInAdminGroupOrStaff, IsActive]
     serializer_class = SanctionSerializer
 
+    def is_valid_student_id(self, student_id):
+        # Verifica si el formato de la ID del estudiante es válido (A seguida de 8 números).
+        return (
+            len(student_id) == 9 and student_id[0] == "A" and student_id[1:].isdigit()
+        )
+
     def create(self, request, *args, **kwargs):
+        student_id = request.data.get("student")
+
+        if not student_id or not self.is_valid_student_id(student_id):
+            return Response(
+                {
+                    "detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not student_id:
+            return Response(
+                {"detail": "Student ID is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
-            student = Student.objects.get(pk=request.data["student"])
+            student = Student.objects.get(pk=student_id)
         except Student.DoesNotExist:
             return Response(
                 {"detail": "Student does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        existing_sanction = Sanction.objects.filter(student=student)
+        if existing_sanction.exists():
+            return Response(
+                {"detail": "Student is already sanctioned"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
             f"$User {request.user.email} created sanction {response.data['id']} for student {response.data['student']}"

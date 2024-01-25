@@ -11,24 +11,26 @@ class SanctionTests(TestCase):
     """
     INFO:
     - For successfully creating a sanction, there are multiple cases to consider:
-        - CASE 1: TODO
+        - CASE 1: The student must have a valid ID
+        - CASE 2: The sanction must include a proper reason
+        - CASE 3: The student must not be currently sanctioned.
 
     - An unsuccessful sanction creation should be considered when:
         RULES:
-        - CASE 1: TODO
+        - CASE 1: The student's ID is in an invalid format
+        - CASE 2:
         LOGIC:
-        - CASE X: TODO
+        - CASE 1: The student is already in the sanctioned db
 
     - For successfully updating a sanction, there are multiple cases to consider:
-        - CASE 1: TODO
+        - CASE 1: The student must have a valid ID, and must already have an active sanction
 
     - An unsuccessful sanction update should be considered when:
-        RULES:
-        - CASE 1: TODO
         LOGIC:
-        - CASE 2: TODO
+        - CASE 1: The student is not already sanctioned
 
-    TODO: Add tests
+
+    Tests
     """
 
     def setUp(self) -> None:
@@ -206,12 +208,28 @@ class SanctionTests(TestCase):
         self.plays_count = Play.objects.count()
 
     def test_sanctions_api_create_success(self):
-        access_token = AccessToken.for_user(self.user)
+        access_token = AccessToken.for_user(self.admin_user)
         response = self.client.post(
             "/rental/sanctions/",
             json.dumps(
                 {
                     "student": "A01656583",
+                    "cause": "No entregó su credencial al jugar",
+                    "end_time": "2024-02-15T12:34:56.789Z",
+                },
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_sanctions_api_create_fail(self):
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.post(
+            "/rental/sanctions/",
+            json.dumps(
+                {
+                    "student": "A01666283",
                     "cause": "No regresar el juego",
                     "end_time": "2024-01-15T12:34:56.789Z",
                 },
@@ -219,4 +237,102 @@ class SanctionTests(TestCase):
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 401)
+
+    def test_sanctions_api_create_fail_invalid_id(self):
+        # Test case for unsuccessfully creating a sanction (invalid student ID)
+        access_token = AccessToken.for_user(self.user)
+        response = self.client.post(
+            "/rental/sanctions/",
+            json.dumps(
+                {
+                    "student": "A0165627",
+                    "cause": "No entregó su credencial al jugar",
+                    "end_time": "2024-02-15T12:34:56.789Z",
+                },
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_sanctions_update_fail_no_student(self):
+        # Student updating is not already in the db
+        access_token = AccessToken.for_user(self.user)
+
+        existing_sanction = Sanction.objects.create(
+            student=Student.objects.get(id="A01656583"),
+            cause="No entregó su credencial al jugar",
+            end_time=timezone.now() + timedelta(days=1),
+        )
+
+        response = self.client.patch(
+            f"/rental/sanctions/A01656584/",
+            json.dumps({"cause": "Nueva causa para la sanción"}),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_sanctions_update_fail_no_student(self):
+        access_token = AccessToken.for_user(self.user)
+
+        existing_sanction = Sanction.objects.create(
+            student=Student.objects.get(id="A01656583"),
+            cause="No entregó su credencial al jugar",
+            end_time=timezone.now() + timedelta(days=1),
+        )
+
+        response = self.client.patch(
+            f"/rental/sanctions/{existing_sanction.id}/",
+            json.dumps({"cause": "Nueva causa para la sanción"}),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_sanction_success(self):
+        # Delete a given sanction
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.post(
+            "/rental/sanctions/",
+            json.dumps(
+                {
+                    "student": "A01656583",
+                    "cause": "No entregó su credencial al jugar",
+                    "end_time": "2024-02-15T12:34:56.789Z",
+                },
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.delete(
+            f"/rental/sanctions/A01656583/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_sanction_fail(self):
+        # Delete sanction off a student
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.post(
+            "/rental/sanctions/",
+            json.dumps(
+                {
+                    "student": "A01656583",
+                    "cause": "No entregó su credencial al jugar",
+                    "end_time": "2024-02-15T12:34:56.789Z",
+                },
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.delete(
+            f"/rental/sanctions/A01656583/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 404)
