@@ -36,7 +36,7 @@ class UserListCreateView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction_logger.info(
-            f"$User {request.user.email} created user {serializer.data['email']}"
+            f"{request.user.email} created user {serializer.data['email']}"
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -69,7 +69,7 @@ class UserDetailView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction_logger.info(
-            f"$User {request.user.email} updated user {serializer.data['email']} fields {serializer.validated_data.keys()}"
+            f"{request.user.email} updated user {serializer.data['email']} fields {serializer.validated_data.keys()}"
         )
         return Response(serializer.data)
 
@@ -79,7 +79,7 @@ class UserDetailView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction_logger.info(
-            f"$User {request.user.email} updated user {serializer.data['email']} fields {serializer.validated_data.keys()}"
+            f"{request.user.email} updated user {serializer.data['email']} fields {serializer.validated_data.keys()}"
         )
         return Response(serializer.data)
 

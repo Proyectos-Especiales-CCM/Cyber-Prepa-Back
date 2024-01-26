@@ -79,7 +79,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
             game.start_time = play.time
             game.save()
             transaction_logger.info(
-                f"$User {request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
+                f"{request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
             )
             return response
         else:
@@ -94,7 +94,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
                 response = super().create(request, *args, **kwargs)
                 play = Play.objects.get(pk=response.data["id"])
                 transaction_logger.info(
-                    f"$User {request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
+                    f"{request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
                 )
                 return response
 
@@ -121,7 +121,7 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         transaction_logger.info(
-            f"$User {request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
+            f"{request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
         )
         return super().update(request, *args, **kwargs)
 
@@ -129,7 +129,7 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         try:
             instance = self.get_object()
             transaction_logger.info(
-                f"$User {request.user.email} deleted play {instance.id}"
+                f"{request.user.email} deleted play {instance.id}"
             )
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
@@ -150,7 +150,7 @@ class StudentListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"$User {request.user.email} created student {response.data['id']}"
+            f"{request.user.email} created student {response.data['id']}"
         )
         return response
 
@@ -167,7 +167,7 @@ class StudentDetailView(generics.RetrieveDestroyAPIView):
         try:
             instance = self.get_object()
             transaction_logger.info(
-                f"$User {request.user.email} deleted student {instance.id}"
+                f"{request.user.email} deleted student {instance.id}"
             )
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
@@ -194,7 +194,7 @@ class GameListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"$User {request.user.email} created game {response.data['name']}"
+            f"{request.user.email} created game {response.data['name']}"
         )
         return response
 
@@ -217,7 +217,7 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         response = super().update(request, *args, **kwargs)
         transaction_logger.info(
-            f"$User {request.user.email} updated game {response.data['name']} fields {serializer.validated_data.keys()}"
+            f"{request.user.email} updated game {response.data['name']} fields {serializer.validated_data.keys()}"
         )
         return response
 
@@ -225,7 +225,7 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
         try:
             instance = self.get_object()
             transaction_logger.info(
-                f"$User {request.user.email} deleted game {instance.name}"
+                f"{request.user.email} deleted game {instance.name}"
             )
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
@@ -247,7 +247,7 @@ class GameEndAllPlaysView(generics.GenericAPIView):
         game._end_all_plays()
         serializer = self.get_serializer(game)
         transaction_logger.info(
-            f"$User {request.user.email} ended all plays of game {game.name}"
+            f"{request.user.email} ended all plays of game {game.name}"
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -257,49 +257,49 @@ class SanctionListCreateView(generics.ListCreateAPIView):
 
     queryset = Sanction.objects.all()
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsInAdminGroupOrStaff, IsActive]
+    permission_classes = [IsActive]
     serializer_class = SanctionSerializer
-
-    def is_valid_student_id(self, student_id):
-        # Verifica si el formato de la ID del estudiante es válido (A seguida de 8 números).
-        return (
-            len(student_id) == 9 and student_id[0] == "A" and student_id[1:].isdigit()
-        )
 
     def create(self, request, *args, **kwargs):
         student_id = request.data.get("student")
 
-        if not student_id or not self.is_valid_student_id(student_id):
-            return Response(
-                {
-                    "detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not student_id:
-            return Response(
-                {"detail": "Student ID is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         try:
-            student = Student.objects.get(pk=student_id)
-        except Student.DoesNotExist:
+            RegexValidator(r"^[A][0-9]{8}$")(student_id)
+        except:
             return Response(
-                {"detail": "Student does not exist"},
+                {"detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        existing_sanction = Sanction.objects.filter(student=student)
-        if existing_sanction.exists():
-            return Response(
-                {"detail": "Student is already sanctioned"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        student, created = Student.objects.get_or_create(id=student_id)
 
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"$User {request.user.email} created sanction {response.data['id']} for student {response.data['student']}"
+            f"{request.user.email} created sanction {response.data['id']} for student {student.id}"
         )
         return response
+
+
+class SanctionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Sanction(id)"""
+
+    queryset = Sanction.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive]
+    serializer_class = SanctionSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        transaction_logger.info(
+            f"{request.user.email} updated sanction {instance.pk} fields {serializer.validated_data.keys()}"
+        )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        transaction_logger.info(
+            f"{request.user.email} deleted sanction {instance.id} of student {instance.student.id}"
+        )
+        return super().destroy(request, *args, **kwargs)

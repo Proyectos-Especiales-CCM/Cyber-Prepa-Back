@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt import views as jwt_views
 
-from .views import HealthCheck
+from .views import HealthCheck, LogsView
 from user.urls import urlpatterns as user_urls
 from rental.urls import urlpatterns as rental_urls
 
@@ -20,6 +20,8 @@ urlpatterns = [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
+    # Logs
+    path("logs/", LogsView.as_view(), name="logs"),
     # User
     path("users/", include(user_urls)),
     # Rental

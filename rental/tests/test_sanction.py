@@ -208,6 +208,7 @@ class SanctionTests(TestCase):
         self.plays_count = Play.objects.count()
 
     def test_sanctions_api_create_success(self):
+        # Test case for successfully creating a sanction (admin user)
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.post(
             "/rental/sanctions/",
@@ -223,7 +224,38 @@ class SanctionTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
+        # Test case for successfully creating a sanction (normal user)
+        access_token = AccessToken.for_user(self.user)
+        response = self.client.post(
+            "/rental/sanctions/",
+            json.dumps(
+                {
+                    "student": "A01656584",
+                    "cause": "No entregó su credencial al jugar",
+                    "end_time": "2024-02-15T12:34:56.789Z",
+                },
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 201)
+
     def test_sanctions_api_create_fail(self):
+        # Test case for unsuccessfully creating a sanction (non-authenticated user)
+        response = self.client.post(
+            "/rental/sanctions/",
+            json.dumps(
+                {
+                    "student": "A01656583",
+                    "cause": "No entregó su credencial al jugar",
+                    "end_time": "2024-02-15T12:34:56.789Z",
+                },
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)
+        
+        # Test case for unsuccessfully creating a sanction (inactive admin)
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.post(
             "/rental/sanctions/",
@@ -239,7 +271,6 @@ class SanctionTests(TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_sanctions_api_create_fail_invalid_id(self):
         # Test case for unsuccessfully creating a sanction (invalid student ID)
         access_token = AccessToken.for_user(self.user)
         response = self.client.post(
@@ -254,13 +285,13 @@ class SanctionTests(TestCase):
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 400)
 
     def test_sanctions_update_fail_no_student(self):
         # Student updating is not already in the db
         access_token = AccessToken.for_user(self.user)
 
-        existing_sanction = Sanction.objects.create(
+        Sanction.objects.create(
             student=Student.objects.get(id="A01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
@@ -274,7 +305,7 @@ class SanctionTests(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_sanctions_update_fail_no_student(self):
+    def test_sanctions_update_success(self):
         access_token = AccessToken.for_user(self.user)
 
         existing_sanction = Sanction.objects.create(
@@ -289,7 +320,7 @@ class SanctionTests(TestCase):
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
 
     def test_delete_sanction_success(self):
         # Delete a given sanction

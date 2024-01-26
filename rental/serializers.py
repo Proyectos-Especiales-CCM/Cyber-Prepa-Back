@@ -69,3 +69,6 @@ class SanctionSerializer(ModelSerializer):
     class Meta:
         model = Sanction
         fields = "__all__"
+        extra_kwargs = {
+            "start_time": {"read_only": True},
+        }

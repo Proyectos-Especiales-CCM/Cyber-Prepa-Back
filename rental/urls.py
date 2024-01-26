@@ -8,6 +8,7 @@ from .views import (
     GameDetailView,
     GameEndAllPlaysView,
     SanctionListCreateView,
+    SanctionDetailView,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path("games/<int:pk>/", GameDetailView.as_view(), name="games-detail"),
     path("games/<int:pk>/end_all_plays/", GameEndAllPlaysView.as_view(), name="games-end-all-plays"),
     path("sanctions/", SanctionListCreateView.as_view(), name="sanctions-list-create"),
+    path("sanctions/<int:pk>/", SanctionDetailView.as_view(), name="sanctions-detail"),
 ]
