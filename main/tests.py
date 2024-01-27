@@ -1,6 +1,9 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
+import logging
+
+transaction_logger = logging.getLogger("transactions")
 
 
 class HealthCheck(TestCase):
@@ -18,11 +21,14 @@ class HealthCheck(TestCase):
 
 
 class LogsTests(TestCase):
-    """Tests for Health Chec and Logs"""
+    """Tests for Logs"""
 
     def setUp(self) -> None:
-        # Initialize client and sample users
+        # Initialize client, sample users and sample logs
         self.client = Client()
+        
+        for _ in range(10):
+            transaction_logger.info(f"example@email.com did some action")
 
         self.user = get_user_model().objects.create_user(
             email="A01656583@tec.mx",
