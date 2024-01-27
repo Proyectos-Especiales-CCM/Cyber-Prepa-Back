@@ -196,9 +196,15 @@ class SanctionTests(TestCase):
 
         # Create sample sanctions
 
-        Sanction.objects.create(
+        self.sanction_sample = Sanction.objects.create(
             student=Student.objects.get(id="A01656588"),
             cause="No regresar el juego",
+            end_time=timezone.now() + timedelta(days=1),
+        )
+
+        Sanction.objects.create(
+            student=Student.objects.get(id="A01656583"),
+            cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )
 
@@ -206,6 +212,30 @@ class SanctionTests(TestCase):
         self.games_count = Game.objects.count()
         self.students_count = Student.objects.count()
         self.plays_count = Play.objects.count()
+        self.sanctions_count = Sanction.objects.count()
+
+    def test_sanctions_api_read_list_success(self):
+        # Test: Read all sanctions
+        access_token = AccessToken.for_user(self.user)
+        response = self.client.get(
+            "/rental/sanctions/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), self.sanctions_count)
+
+    def test_sanctions_api_read_list_fail(self):
+        # Test: Try to read all sanctions without being authenticated
+        response = self.client.get("/rental/sanctions/")
+        self.assertEqual(response.status_code, 401)
+
+        # Test: Try to read all sanctions with an inactive admin
+        access_token = AccessToken.for_user(self.inactive_admin_user)
+        response = self.client.get(
+            "/rental/sanctions/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 401)
 
     def test_sanctions_api_create_success(self):
         # Test case for successfully creating a sanction (admin user)
@@ -287,7 +317,31 @@ class SanctionTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_sanctions_update_fail_no_student(self):
+    def test_sanctions_api_read_detail_success(self):
+        # Test: Read a given sanction
+        access_token = AccessToken.for_user(self.user)
+        response = self.client.get(
+            f"/rental/sanctions/{self.sanction_sample.pk}/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_sanctions_api_read_detail_fail(self):
+        # Test: Try to read a sanction without being authenticated
+        response = self.client.get(
+            f"/rental/sanctions/{self.sanction_sample.pk}/",
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # Test: Read a given sanction that does not exist
+        access_token = AccessToken.for_user(self.user)
+        response = self.client.get(
+            f"/rental/sanctions/A01656583/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_sanctions_update_fail(self):
         # Student updating is not already in the db
         access_token = AccessToken.for_user(self.user)
 
@@ -324,43 +378,22 @@ class SanctionTests(TestCase):
 
     def test_delete_sanction_success(self):
         # Delete a given sanction
-        access_token = AccessToken.for_user(self.admin_user)
-        response = self.client.post(
-            "/rental/sanctions/",
-            json.dumps(
-                {
-                    "student": "A01656583",
-                    "cause": "No entregó su credencial al jugar",
-                    "end_time": "2024-02-15T12:34:56.789Z",
-                },
-            ),
-            content_type="application/json",
-            HTTP_AUTHORIZATION=f"Bearer {access_token}",
-        )
-
-        access_token = AccessToken.for_user(self.admin_user)
+        access_token = AccessToken.for_user(self.user)
         response = self.client.delete(
-            f"/rental/sanctions/A01656583/",
+            f"/rental/sanctions/{self.sanction_sample.pk}/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Sanction.objects.count(), self.sanctions_count - 1)
 
     def test_delete_sanction_fail(self):
-        # Delete sanction off a student
-        access_token = AccessToken.for_user(self.admin_user)
-        response = self.client.post(
-            "/rental/sanctions/",
-            json.dumps(
-                {
-                    "student": "A01656583",
-                    "cause": "No entregó su credencial al jugar",
-                    "end_time": "2024-02-15T12:34:56.789Z",
-                },
-            ),
-            content_type="application/json",
-            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        # Test: Try to delete a sanction without being authenticated
+        response = self.client.delete(
+            f"/rental/sanctions/{self.sanction_sample.pk}/",
         )
-
+        self.assertEqual(response.status_code, 401)
+        
+        # Test: Delete a given sanction that does not exist
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.delete(
             f"/rental/sanctions/A01656583/",
