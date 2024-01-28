@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from ..models import Game, Student, Play
-from main.settings import TIME_ZONE
+from django.conf import settings
 from django.utils import timezone
 import pytz
 import json
@@ -299,7 +299,7 @@ class GameTests(TestCase):
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(TIME_ZONE))
+            .astimezone(pytz.timezone(settings.TIME_ZONE))
             .isoformat(),
         )
         self.assertEqual(len(response["plays"]), 2)
@@ -318,7 +318,7 @@ class GameTests(TestCase):
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(TIME_ZONE))
+            .astimezone(pytz.timezone(settings.TIME_ZONE))
             .isoformat(),
         )
         self.assertEqual(len(response["plays"]), 2)
@@ -333,7 +333,7 @@ class GameTests(TestCase):
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(TIME_ZONE))
+            .astimezone(pytz.timezone(settings.TIME_ZONE))
             .isoformat(),
         )
         self.assertEqual(response["plays"], 2)
@@ -540,7 +540,7 @@ class GameTests(TestCase):
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(TIME_ZONE))
+            .astimezone(pytz.timezone(settings.TIME_ZONE))
             .isoformat(),
         )
         self.assertEqual(len(response["plays"]), 0)
@@ -561,7 +561,7 @@ class GameTests(TestCase):
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(pk=self.futbolito_1.pk).start_time)
-            .astimezone(pytz.timezone(TIME_ZONE))
+            .astimezone(pytz.timezone(settings.TIME_ZONE))
             .isoformat(),
         )
         self.assertEqual(len(response["plays"]), 0)
