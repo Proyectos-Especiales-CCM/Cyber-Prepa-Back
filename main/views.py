@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import HealthCheckSerializer
+from .serializers import HealthCheckSerializer, LogSerializer
 from main.permissions import IsActive, IsInAdminGroupOrStaff
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
@@ -27,7 +27,13 @@ class LogsView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive, IsInAdminGroupOrStaff]
+    serializer_class = LogSerializer
 
+    @extend_schema(
+        description="Get the last N lines from the log file",
+        responses={200: LogSerializer(many=True)},
+        tags=["Logs"],
+    )
     def get(self, request):
         # Get the number of lines from the end of the file from query parameters
         try:
@@ -106,5 +112,5 @@ class LogsView(APIView):
                         "action": fields["action"],
                     }
                 )
-
-        return Response(response, status=status.HTTP_200_OK)
+        serializer = LogSerializer(response, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

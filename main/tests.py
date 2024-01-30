@@ -63,6 +63,14 @@ class LogsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 5)
 
+        """
+        Important: In case you ask for more lines than the ones that exist,
+        the endpoint will return only the existing ones.
+
+        Example: If you ask for 15 lines but there are only 10, the
+        len(response.data) will be 10.
+        """
+
     def test_logs_fail(self):
         """Test logs endpoint"""
         # Test: View logs without authentication
