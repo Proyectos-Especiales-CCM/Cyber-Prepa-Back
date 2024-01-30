@@ -6,9 +6,11 @@ from .serializers import (
     PlaySerializer,
     GameUnauthenticatedSerializer,
     GameSerializer,
+    GameSerializerImageUrl,
     SanctionSerializer,
+    ImageSerializer,
 )
-from .models import Student, Play, Game, Sanction
+from .models import Student, Play, Game, Sanction, Image
 from django.core.validators import RegexValidator
 from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -188,6 +190,8 @@ class GameListCreateView(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == "GET" and not self.request.user.is_authenticated:
             return GameUnauthenticatedSerializer
+        elif self.request.method == "GET" and self.request.user.is_authenticated:
+            return GameSerializerImageUrl
         else:
             return GameSerializer
 
@@ -208,6 +212,8 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_serializer_class(self):
         if self.request.method == "GET" and not self.request.user.is_authenticated:
             return GameUnauthenticatedSerializer
+        elif self.request.method == "GET" and self.request.user.is_authenticated:
+            return GameSerializerImageUrl
         else:
             return GameSerializer
 
@@ -301,5 +307,37 @@ class SanctionDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         transaction_logger.info(
             f"{request.user.email} deleted sanction {instance.id} of student {instance.student.id}"
+        )
+        return super().destroy(request, *args, **kwargs)
+
+
+class ImageListCreateView(generics.ListCreateAPIView):
+    """Create and Read Images"""
+
+    queryset = Image.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, IsInAdminGroupOrStaff]
+    serializer_class = ImageSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        transaction_logger.info(
+            f"{request.user.email} uploaded image {response.data['image']}"
+        )
+        return response
+
+
+class ImageDetailView(generics.RetrieveDestroyAPIView):
+    """Read and Delete Image(id)"""
+
+    queryset = Image.objects.all()
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, IsInAdminGroupOrStaff]
+    serializer_class = ImageSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        transaction_logger.info(
+            f"{request.user.email} deleted image {instance.image}"
         )
         return super().destroy(request, *args, **kwargs)

@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from .models import Student, Play, Game, Sanction
+from .models import Student, Play, Game, Sanction, Image
 from drf_spectacular.utils import extend_schema_field
 from typing import List
 
@@ -40,6 +40,7 @@ class PlaySerializer(ModelSerializer):
 
 class GameUnauthenticatedSerializer(ModelSerializer):
     plays = SerializerMethodField()
+    image = SerializerMethodField()
     
     class Meta:
         model = Game
@@ -48,6 +49,9 @@ class GameUnauthenticatedSerializer(ModelSerializer):
     @extend_schema_field(int)
     def get_plays(self, obj: Game) -> int:
         return obj._get_plays().count()
+    
+    def get_image(self, obj: Game) -> str:
+        return obj.image.image.url
 
 
 class GameSerializer(ModelSerializer):
@@ -65,6 +69,26 @@ class GameSerializer(ModelSerializer):
         return PlaySerializer(obj._get_plays(), many=True).data
 
 
+class GameSerializerImageUrl(ModelSerializer):
+    plays = SerializerMethodField()
+    image = SerializerMethodField()
+
+    class Meta:
+        model = Game
+        fields = "__all__"
+        extra_kwargs = {
+            "plays": {"read_only": True},
+            "image": {"read_only": True},
+        }
+
+    @extend_schema_field(PlaySerializer(many=True))
+    def get_plays(self, obj: Game) -> List[dict]:
+        return PlaySerializer(obj._get_plays(), many=True).data
+    
+    def get_image(self, obj: Game) -> str:
+        return obj.image.image.url
+
+
 class SanctionSerializer(ModelSerializer):
     class Meta:
         model = Sanction
@@ -72,3 +96,9 @@ class SanctionSerializer(ModelSerializer):
         extra_kwargs = {
             "start_time": {"read_only": True},
         }
+
+
+class ImageSerializer(ModelSerializer):
+    class Meta:
+        model = Image
+        fields = "__all__"

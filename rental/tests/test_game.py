@@ -1,7 +1,9 @@
+import os
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
-from ..models import Game, Student, Play
+from ..models import Game, Student, Play, Image
+from PIL import Image as PILImage
 from django.conf import settings
 from django.utils import timezone
 import pytz
@@ -52,17 +54,31 @@ class GameTests(TestCase):
             hash="1234567892",
         )
 
+        # Create sample Image
+        image_path = os.path.join(settings.MEDIA_ROOT, "images/", "game_card_image_test.png")
+        image2_path = os.path.join(settings.MEDIA_ROOT, "images/", "game_card_image_test_2.png")
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        os.makedirs(os.path.dirname(image2_path), exist_ok=True)
+        PILImage.new("RGB", (100, 100), color="red").save(image_path)
+        PILImage.new("RGB", (100, 100), color="red").save(image2_path)
+    
+        self.red_image = Image.objects.create(image=image_path)
+        self.red_image_2 = Image.objects.create(image=image2_path)
+
         # Create sample games
         self.xbox_game = Game.objects.create(
             name="Xbox",
+            image=self.red_image,
         )
 
         self.futbolito_1 = Game.objects.create(
             name="Futbolito 1",
+            image=self.red_image,
         )
 
         self.futbolito_2 = Game.objects.create(
             name="Futbolito 2",
+            image=self.red_image,
         )
 
         # Create sample plays
@@ -95,12 +111,17 @@ class GameTests(TestCase):
         self.futbolito_1.start_time = play_1.time
         self.futbolito_1.save()
 
+        self.users_count = get_user_model().objects.count()
+        self.games_count = Game.objects.count()
+        self.students_count = Student.objects.count()
+        self.plays_count = Play.objects.count()
+
     def test_setUp(self):
         # Test: Check if users were correctly created
-        self.assertEqual(get_user_model().objects.count(), 3)
-        self.assertEqual(Game.objects.count(), 3)
-        self.assertEqual(Student.objects.count(), 3)
-        self.assertEqual(Play.objects.count(), 4)
+        self.assertEqual(get_user_model().objects.count(), self.users_count)
+        self.assertEqual(Game.objects.count(), self.games_count)
+        self.assertEqual(Student.objects.count(), self.students_count)
+        self.assertEqual(Play.objects.count(), self.plays_count)
 
     def test_game_created(self):
         # Test: Check if games were correctly created
@@ -113,7 +134,7 @@ class GameTests(TestCase):
         self.assertEqual(
             game.start_time, Play.objects.filter(game=game, ended=False)[0].time
         )
-        self.assertEqual(game.file_route, "assets/games_cards/game.png")
+        self.assertEqual(game.image, self.red_image)
 
         game = Game.objects.get(name="Futbolito 1")
         self.assertEqual(game._get_plays().count(), 1)
@@ -193,7 +214,7 @@ class GameTests(TestCase):
                 {
                     "name": "Billar 1",
                     "show": False,
-                    "file_route": "assets/games_cards/billar_1.png",
+                    "image": self.red_image.pk,
                 }
             ),
             content_type="application/json",
@@ -203,7 +224,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Billar 1")
         self.assertFalse(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/billar_1.png")
+        self.assertEqual(response["image"], self.red_image.pk)
         self.assertEqual(Game.objects.count(), 4)
 
     def test_games_api_create_fail(self):
@@ -295,7 +316,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(response["image"], self.red_image.image.url)
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
@@ -314,7 +335,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(response["image"], self.red_image.image.url)
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
@@ -329,7 +350,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(response["image"], self.red_image.image.url)
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
@@ -363,7 +384,7 @@ class GameTests(TestCase):
                 {
                     "name": "Xbox 360",
                     "show": False,
-                    "file_route": "assets/games_cards/xbox_360.png",
+                    "image": self.red_image_2.pk,
                 }
             ),
             content_type="application/json",
@@ -373,7 +394,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox 360")
         self.assertFalse(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/xbox_360.png")
+        self.assertEqual(response["image"], self.red_image_2.pk)
 
         # Test: Update single game fields via an admin user using PATCH
         response = self.client.patch(
@@ -536,7 +557,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(response["image"], self.red_image.pk)
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time)
@@ -557,7 +578,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Futbolito 1")
         self.assertTrue(response["show"])
-        self.assertEqual(response["file_route"], "assets/games_cards/game.png")
+        self.assertEqual(response["image"], self.red_image.pk)
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(pk=self.futbolito_1.pk).start_time)

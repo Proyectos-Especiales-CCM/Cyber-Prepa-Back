@@ -3,6 +3,15 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 
 
+class Image(models.Model):
+    """Modelo de imagenes"""
+
+    image = models.ImageField(upload_to="images/")
+
+    def __str__(self):
+        return self.image.name
+
+
 class Student(models.Model):
     """Modelo de estudiante
     Matricula, unica
@@ -67,7 +76,9 @@ class Game(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, unique=True)
     show = models.BooleanField(default=True)
     start_time = models.DateTimeField(null=True, blank=True)
-    file_route = models.CharField(default="assets/games_cards/game.png", max_length=255)
+    image = models.ForeignKey(
+        Image, on_delete=models.SET_NULL, null=True, blank=True, default=None
+    )
 
     def _get_plays(self):
         return Play.objects.filter(game=self, ended=False)
