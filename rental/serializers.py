@@ -51,7 +51,10 @@ class GameUnauthenticatedSerializer(ModelSerializer):
         return obj._get_plays().count()
     
     def get_image(self, obj: Game) -> str:
-        return obj.image.image.url
+        image = obj.image
+        if image is None:
+            return None
+        return image.image.url
 
 
 class GameSerializer(ModelSerializer):
@@ -86,7 +89,10 @@ class GameSerializerImageUrl(ModelSerializer):
         return PlaySerializer(obj._get_plays(), many=True).data
     
     def get_image(self, obj: Game) -> str:
-        return obj.image.image.url
+        image = obj.image
+        if image is None:
+            return None
+        return image.image.url
 
 
 class SanctionSerializer(ModelSerializer):

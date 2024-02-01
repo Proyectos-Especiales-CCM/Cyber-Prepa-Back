@@ -78,7 +78,6 @@ class GameTests(TestCase):
 
         self.futbolito_2 = Game.objects.create(
             name="Futbolito 2",
-            image=self.red_image,
         )
 
         # Create sample plays
@@ -550,7 +549,7 @@ class GameTests(TestCase):
         # Test: End all plays of a game via an admin user
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.post(
-            f"/rental/games/{self.xbox_game.pk}/end_all_plays/",
+            f"/rental/games/{self.xbox_game.pk}/end-all-plays/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 200)
@@ -571,7 +570,7 @@ class GameTests(TestCase):
         # Test: End all plays of a game via a non-admin user
         access_token = AccessToken.for_user(self.user)
         response = self.client.post(
-            f"/rental/games/{self.futbolito_1.pk}/end_all_plays/",
+            f"/rental/games/{self.futbolito_1.pk}/end-all-plays/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 200)
@@ -592,14 +591,27 @@ class GameTests(TestCase):
     def test_games_api_end_all_plays_fail(self):
         # Test: End all plays of a game via an unauthenticated user
         response = self.client.post(
-            f"/rental/games/{self.xbox_game.pk}/end_all_plays/",
+            f"/rental/games/{self.xbox_game.pk}/end-all-plays/",
         )
         self.assertEqual(response.status_code, 401)
 
         # Test: End all plays of a game via an inactive user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.post(
-            f"/rental/games/{self.xbox_game.pk}/end_all_plays/",
+            f"/rental/games/{self.xbox_game.pk}/end-all-plays/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 401)
+
+    def test_games_api_read_null_image(self):
+        # Test: Read a game with no image
+        game = Game.objects.get(name="Futbolito 2")
+        self.assertIsNone(game.image)
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.get(
+            f"/rental/games/{game.pk}/",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertIsNone(response["image"])

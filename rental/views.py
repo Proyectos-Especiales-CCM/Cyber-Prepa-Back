@@ -17,6 +17,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 import logging
+from drf_spectacular.utils import extend_schema
 
 transaction_logger = logging.getLogger("transactions")
 
@@ -130,9 +131,7 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            transaction_logger.info(
-                f"{request.user.email} deleted play {instance.id}"
-            )
+            transaction_logger.info(f"{request.user.email} deleted play {instance.id}")
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
             return Response(
@@ -248,6 +247,7 @@ class GameEndAllPlaysView(generics.GenericAPIView):
     permission_classes = [IsActive]
     serializer_class = GameSerializer
 
+    @extend_schema(request=None, description="Set all plays of a game ended to True")
     def post(self, request, pk):
         game = generics.get_object_or_404(Game, pk=pk)
         game._end_all_plays()
@@ -273,7 +273,9 @@ class SanctionListCreateView(generics.ListCreateAPIView):
             RegexValidator(r"^[A][0-9]{8}$")(student_id)
         except:
             return Response(
-                {"detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."},
+                {
+                    "detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -337,7 +339,5 @@ class ImageDetailView(generics.RetrieveDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        transaction_logger.info(
-            f"{request.user.email} deleted image {instance.image}"
-        )
+        transaction_logger.info(f"{request.user.email} deleted image {instance.image}")
         return super().destroy(request, *args, **kwargs)
