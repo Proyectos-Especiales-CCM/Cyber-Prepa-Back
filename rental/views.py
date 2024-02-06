@@ -18,8 +18,29 @@ from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 import logging
 from drf_spectacular.utils import extend_schema
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 transaction_logger = logging.getLogger("transactions")
+
+
+def send_update_message(message, sender, info=None, room_group_name="updates"):
+    """Send a message to the websocket to inform about the or something else"""
+    channel_layer = get_channel_layer()
+    if message == "Plays updated":
+        data = {
+            "type": "plays_updated",
+            "message": message,
+            "info": info,
+            "sender": sender,
+        }
+    else:
+        data = {
+            "type": "update_message",
+            "message": message,
+            "sender": sender,
+        }
+    async_to_sync(channel_layer.group_send)(room_group_name, data)
 
 
 class PlayListCreateView(generics.ListCreateAPIView):
@@ -96,6 +117,14 @@ class PlayListCreateView(generics.ListCreateAPIView):
             else:
                 response = super().create(request, *args, **kwargs)
                 play = Play.objects.get(pk=response.data["id"])
+
+                # Send a message to the websocket to inform about the new play
+                send_update_message(
+                    "Plays updated",
+                    request.user.email,
+                    info=game.id,
+                )
+
                 transaction_logger.info(
                     f"{request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
                 )
@@ -123,16 +152,30 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
             )
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        response = super().update(request, *args, **kwargs)
         transaction_logger.info(
             f"{request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
         )
-        return super().update(request, *args, **kwargs)
+        # Send a message to the websocket to inform about the updated play
+        send_update_message(
+            "Plays updated",
+            request.user.email,
+            info=instance.game.id,
+        )
+        return response
 
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             transaction_logger.info(f"{request.user.email} deleted play {instance.id}")
-            return super().destroy(request, *args, **kwargs)
+            response = super().destroy(request, *args, **kwargs)
+            # Send a message to the websocket to inform about the deleted play
+            send_update_message(
+                "Plays updated",
+                request.user.email,
+                info=instance.game.id,
+            )
+            return response
         except ProtectedError:
             return Response(
                 {"detail": "Cannot delete play as it has sanctions associated"},
@@ -199,6 +242,11 @@ class GameListCreateView(generics.ListCreateAPIView):
         transaction_logger.info(
             f"{request.user.email} created game {response.data['name']}"
         )
+        # Send a message to the websocket to inform about the new game
+        send_update_message(
+            "Games updated",
+            request.user.email,
+        )
         return response
 
 
@@ -221,18 +269,31 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         response = super().update(request, *args, **kwargs)
+        # Log the transaction
         transaction_logger.info(
             f"{request.user.email} updated game {response.data['name']} fields {serializer.validated_data.keys()}"
+        )
+        # Send a message to the websocket to inform about the updated game
+        send_update_message(
+            "Games updated",
+            request.user.email,
         )
         return response
 
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            response = super().destroy(request, *args, **kwargs)
+            # Log the transaction
             transaction_logger.info(
                 f"{request.user.email} deleted game {instance.name}"
             )
-            return super().destroy(request, *args, **kwargs)
+            # Send a message to the websocket to inform about the deleted game
+            send_update_message(
+                "Games updated",
+                request.user.email,
+            )
+            return response
         except ProtectedError:
             return Response(
                 {"detail": "Cannot delete game as it has plays associated"},
@@ -252,8 +313,15 @@ class GameEndAllPlaysView(generics.GenericAPIView):
         game = generics.get_object_or_404(Game, pk=pk)
         game._end_all_plays()
         serializer = self.get_serializer(game)
+        # Log the transaction
         transaction_logger.info(
             f"{request.user.email} ended all plays of game {game.name}"
+        )
+        # Send a message to the websocket to inform about updated plays
+        send_update_message(
+            "Plays updated",
+            request.user.email,
+            info=game.id,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
