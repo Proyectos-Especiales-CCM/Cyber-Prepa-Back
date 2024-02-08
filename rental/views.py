@@ -102,6 +102,12 @@ class PlayListCreateView(generics.ListCreateAPIView):
             play = Play.objects.get(pk=response.data["id"])
             game.start_time = play.time
             game.save()
+            # Send a message to the websocket to inform about the new play
+            send_update_message(
+                "Plays updated",
+                request.user.email,
+                info=game.pk,
+            )
             transaction_logger.info(
                 f"{request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
             )
