@@ -122,7 +122,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
                 send_update_message(
                     "Plays updated",
                     request.user.email,
-                    info=game.id,
+                    info=game.pk,
                 )
 
                 transaction_logger.info(
@@ -160,20 +160,20 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         send_update_message(
             "Plays updated",
             request.user.email,
-            info=instance.game.id,
+            info=instance.game.pk,
         )
         return response
 
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            transaction_logger.info(f"{request.user.email} deleted play {instance.id}")
+            transaction_logger.info(f"{request.user.email} deleted play {instance.pk}")
             response = super().destroy(request, *args, **kwargs)
             # Send a message to the websocket to inform about the deleted play
             send_update_message(
                 "Plays updated",
                 request.user.email,
-                info=instance.game.id,
+                info=instance.game.pk,
             )
             return response
         except ProtectedError:
@@ -321,7 +321,7 @@ class GameEndAllPlaysView(generics.GenericAPIView):
         send_update_message(
             "Plays updated",
             request.user.email,
-            info=game.id,
+            info=game.pk,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -376,7 +376,7 @@ class SanctionDetailView(generics.RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         transaction_logger.info(
-            f"{request.user.email} deleted sanction {instance.id} of student {instance.student.id}"
+            f"{request.user.email} deleted sanction {instance.pk} of student {instance.student.id}"
         )
         return super().destroy(request, *args, **kwargs)
 
