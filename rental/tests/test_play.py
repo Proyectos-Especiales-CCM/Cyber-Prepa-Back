@@ -34,15 +34,17 @@ class PlayTests(TestCase):
         - CASE 1: The play game field is being updated to a game with no active plays
         - CASE 2: The play game field is being updated to a game with active
             plays and time under 50 minutes
-        - CASE : The play ended field is being updated to True
+        - CASE 3: The play hasn't ended yet, and the play time hasn't passed 50 minutes
 
     - An unsuccessful play update should be considered when:
         RULES:
         - CASE 1: The play game field is being updated to a game with active
             plays and time over 50 minutes
+        - CASE 2: The play game field is being updated from a game with time
+            over 50 minutes
+        - CASE 3: The play time has passed 50 minutes - Missing
         LOGIC:
-        - CASE 2: The play game field is being updated to a game that does not exist
-        - CASE 3: The play is being updated through PUT method
+        - CASE 4: The play is being updated through PUT method
 
     TODO: Add tests for the following:
     - Fix and document the setUp method
@@ -55,35 +57,12 @@ class PlayTests(TestCase):
     - Add tests for the update cases
     """
 
-    def setUp(self) -> None:
-        # Initialize client and sample data
+    def create_sample_students(self) -> None:
         """
-        The created objects are:
-        3 Users: 1 admin, 1 inactive admin, 1 non-admin
-        X Students
-        6 Games:
-            2 with active plays and time under 50 minutes
-            2 with active plays and expired time (50 minutes or more)
-            2 with no active plays
+        Create sample students\n
+        Do not create the student A01656590 as it's used to create plays with a student
+        that doesn't exist
         """
-
-        self.client = Client()
-
-        self.user = get_user_model().objects.create_user(
-            email="A01656583@tec.mx",
-            password="Mypass123!",
-        )
-
-        self.admin_user = get_user_model().objects.create_superuser(
-            email="diegoDev@tec.mx",
-            password="MyStrongPass123!!!",
-        )
-
-        self.inactive_admin_user = get_user_model().objects.create_superuser(
-            email="leo@tec.mx", password="MyStrongPass123!!!", is_active=False
-        )
-
-        # Create sample students
         Student.objects.create(
             id="A01656583",
             name="Diego Jacobo Martinez",
@@ -122,7 +101,8 @@ class PlayTests(TestCase):
 
         # Do not create the student A01656590 as it's used to create plays
 
-        # Create sample games
+    def create_sample_games(self) -> None:
+        """Create sample games"""
         # Games with active plays and time under 50 minutes
         self.xbox_1 = Game.objects.create(
             name="Xbox 1",
@@ -150,9 +130,10 @@ class PlayTests(TestCase):
             name="Billar 2",
         )
 
-        # Create sample plays
-
+    def create_sample_plays(self) -> None:
+        """Create sample plays"""
         self.ten_minutes_ago = timezone.now() - timedelta(minutes=10)
+        self.five_minutes_ago = timezone.now() - timedelta(minutes=5)
         play = Play.objects.create(
             student=Student.objects.get(id="A01656585"),
             game=Game.objects.get(name="Xbox 1"),
@@ -182,7 +163,7 @@ class PlayTests(TestCase):
             student=Student.objects.get(id="A01656587"),
             game=Game.objects.get(name="Xbox 2"),
         )
-        play_1.time = self.ten_minutes_ago
+        play_1.time = self.five_minutes_ago
         play_1.save()
 
         self.xbox_2.start_time = play_1.time
@@ -214,6 +195,38 @@ class PlayTests(TestCase):
             game=Game.objects.get(name="Billar 1"),
             ended=True,
         )
+
+    def setUp(self) -> None:
+        # Initialize client and sample data
+        """
+        The created objects are:
+        3 Users: 1 admin, 1 inactive admin, 1 non-admin
+        X Students
+        6 Games:
+            2 with active plays and time under 50 minutes
+            2 with active plays and expired time (50 minutes or more)
+            2 with no active plays
+        """
+
+        self.client = Client()
+
+        self.user = get_user_model().objects.create_user(
+            email="A01656583@tec.mx",
+            password="Mypass123!",
+        )
+
+        self.admin_user = get_user_model().objects.create_superuser(
+            email="diegoDev@tec.mx",
+            password="MyStrongPass123!!!",
+        )
+
+        self.inactive_admin_user = get_user_model().objects.create_superuser(
+            email="leo@tec.mx", password="MyStrongPass123!!!", is_active=False
+        )
+
+        self.create_sample_students()
+        self.create_sample_games()
+        self.create_sample_plays()
 
         # Create sample sanctions
 
@@ -248,7 +261,7 @@ class PlayTests(TestCase):
         self.assertEqual(game._get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time),
-            timezone.localtime(self.ten_minutes_ago),
+            timezone.localtime(self.five_minutes_ago),
         )
 
         # Check if futbolitos is correctly configure to test plays in a game with
@@ -464,6 +477,7 @@ class PlayTests(TestCase):
 
         # Test: Create a play via a non-admin user
         # and check all play and game data are correct
+        previous_game_start_time = Game.objects.get(pk=self.xbox_2.pk).start_time
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.post(
             "/rental/plays/",
@@ -739,6 +753,95 @@ class PlayTests(TestCase):
         # Confirm that no new plays were created
         self.assertEqual(Play.objects.count(), self.plays_count)
 
+    def test_plays_api_update_success_case_1(self):
+        """
+        CASE 1: The play game field is being updated to a game with no active plays
+        """
+        # Test: Update a play game field via an admin user using PATCH
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/plays/2/",
+            json.dumps(
+                {
+                    "game": self.billar_1.pk,
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["game"], self.billar_1.pk)
+        self.assertFalse(response["ended"])
+        self.assertIsNotNone(response["time"])
+
+        # Confirm that the game.start_time was set to the play.time
+        prev_game = Game.objects.get(pk=self.xbox_1.pk)
+        new_game = Game.objects.get(pk=self.billar_1.pk)
+        self.assertEqual(prev_game.start_time, new_game.start_time)
+
+        # Confirm that no new plays were created
+        self.assertEqual(Play.objects.count(), self.plays_count)
+
+    def test_plays_api_update_success_case_2(self):
+        """
+        CASE 2: The play game field is being updated to a game with active
+        plays and time under 50 minutes
+        """
+        # Test: Update a play game field via an admin user using PATCH
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/plays/2/",
+            json.dumps(
+                {
+                    "game": self.xbox_2.pk,
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["game"], self.xbox_2.pk)
+        self.assertFalse(response["ended"])
+        self.assertIsNotNone(response["time"])
+
+        # Confirm that the game.start_time was set to the play.time
+        prev_game = Game.objects.get(pk=self.xbox_1.pk)
+        new_game = Game.objects.get(pk=self.xbox_2.pk)
+        self.assertNotEqual(prev_game.start_time, new_game.start_time)
+
+        # Confirm that no new plays were created
+        self.assertEqual(Play.objects.count(), self.plays_count)
+
+    def test_plays_api_update_success_case_3(self):
+        """
+        CASE 3: The play hasn't ended yet, and the play time hasn't passed 50 minutes
+        """
+        # Test: Update a play game field via an admin user using PATCH
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/plays/2/",
+            json.dumps(
+                {
+                    "game": self.xbox_2.pk,
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["game"], self.xbox_2.pk)
+        self.assertFalse(response["ended"])
+        self.assertIsNotNone(response["time"])
+
+        # Confirm that no new plays were created
+        self.assertEqual(Play.objects.count(), self.plays_count)
+
     def test_plays_api_update_fail(self):
         # Test: Update a play via an unauthenticated user
         response = self.client.put(
@@ -771,9 +874,66 @@ class PlayTests(TestCase):
         # Confirm that no new plays were created
         self.assertEqual(Play.objects.count(), self.plays_count)
 
+    def test_plays_api_update_fail_case_1(self):
+        """
+        CASE 1: The play game field is being updated to a game with active
+        plays and time over 50 minutes
+        """
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/plays/2/",
+            json.dumps(
+                {
+                    "game": self.futbolito_1.pk,
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Game time has expired")
+
+    def test_plays_api_update_fail_case_2(self):
+        """
+        CASE 2: The play game field is being updated from a game with time
+        over 50 minutes
+        """
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/plays/5/",
+            json.dumps(
+                {
+                    "game": self.xbox_1.pk,
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Game time has expired")
+
     def test_plays_api_update_fail_case_3(self):
         """
-        CASE 3: The play is being updated through PUT method
+        CASE 3: The play time has passed 50 minutes
+        access_token = AccessToken.for_user(self.admin_user)
+        response = self.client.patch(
+            f"/rental/plays/5/",
+            json.dumps(
+                {
+                    "game": self.xbox_1.pk,
+                }
+            ),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Play time has expired")
+        """
+        self.skipTest("Not implemented")
+
+    def test_plays_api_update_fail_case_4(self):
+        """
+        CASE 4: The play is being updated through PUT method
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.put(

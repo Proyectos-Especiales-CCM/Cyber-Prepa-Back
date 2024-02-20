@@ -158,7 +158,29 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
             )
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        # Check if the play time has expired
+        new_game = None
+        if request.data.get("game", None) != None:
+            new_game = Game.objects.get(pk=request.data["game"])
+            if (
+                instance.game.start_time + timezone.timedelta(minutes=50) < timezone.now()
+                or new_game.start_time != None and new_game.start_time + timezone.timedelta(minutes=50) < timezone.now()
+            ):
+                return Response(
+                    {"detail": "Game time has expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            elif instance.time + timezone.timedelta(minutes=50) < timezone.now():
+                return Response(
+                    {"detail": "Play time has expired"}, status=status.HTTP_400_BAD_REQUEST
+                )
         response = super().update(request, *args, **kwargs)
+        # Change the game start_time if the play is the first one
+        if new_game != None and new_game._get_plays().count() == 1:
+            prev_game = Game.objects.get(pk=instance.game.pk)
+            new_game.start_time = prev_game.start_time
+            new_game.save()
+
         transaction_logger.info(
             f"{request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
         )
