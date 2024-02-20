@@ -1,61 +1,116 @@
-from django.contrib.auth import authenticate, login, logout
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.views import View
-from rental.models import Game, Plays
+from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import HealthCheckSerializer, LogSerializer
+from main.permissions import IsActive, IsInAdminGroupOrStaff
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.conf import settings
+import re
 
-# Views for Index Page
-class Index(View):
+
+class HealthCheck(APIView):
+    serializer_class = HealthCheckSerializer
+    authentication_classes = []
+
+    @extend_schema(
+        description="Health check endpoint",
+        responses={200: HealthCheckSerializer},
+        tags=["Health Check"],
+    )
     def get(self, request):
-        games = Game.objects.filter(show=True).values('id', 'name', 'displayName', 'available', 'file_route')
-        for game in games:
+        return Response({"healthy": True}, status=200)
 
-            plays = Plays.objects.filter(game__name=game['name'], ended=False)
-            game_data_list = []
 
-            for play in plays:
-                student_id = play.student.id
-                play_time = play.time
+class LogsView(APIView):
+    """Read logs"""
 
-                play_data = {
-                    'student_id': student_id,
-                    'start_time': play_time
-                }
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, IsInAdminGroupOrStaff]
+    serializer_class = LogSerializer
 
-                game_data_list.append(play_data)
-
-            game['plays_data'] = game_data_list
-
-        context = {
-            'games': games
-        }
-
-        return render(request, 'main/index.html', context=context)
-    
-class Regulations(View):
+    @extend_schema(
+        description="Get the last N lines from the log file",
+        responses={200: LogSerializer(many=True)},
+        tags=["Logs"],
+    )
     def get(self, request):
-        return render(request, 'main/regulations.html')
-    
-class Login(View):
-    def get(self, request):
-        return render(request, 'main/login.html')
-    
-    def post(self, request):
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        next_url = request.GET.get('next')
+        # Get the number of lines from the end of the file from query parameters
+        try:
+            # Use default value of 10 if 'lines' is not provided or not a valid integer
+            N = int(request.query_params.get("lines", 10))
+        except ValueError:
+            return Response(
+                {"detail": "'lines' parameter must be a valid integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            # Redirect to dashboard or next_url
-            if next_url:
-                return redirect(next_url)
-            else:
-                return redirect('/')
-        else:
-            return render(request, 'main/login.html', context={'error_message': "Invalid username or password"})
-        
-def logout_(request):
-    logout(request)
-    return redirect('/')
+        # Validate that N is non-negative
+        if N < 0:
+            return Response(
+                {"detail": "'lines' parameter must be non-negative."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Limit the maximum number of lines to prevent potential abuse
+        MAX_LINES = 1000  # Set a reasonable maximum limit
+        if N > MAX_LINES:
+            return Response(
+                {
+                    "detail": f"'lines' parameter exceeds the maximum limit of {MAX_LINES}."
+                },
+                status=400,
+            )
+
+        # Variable to implement exponential search
+        pos = N + 1
+        # List to store last N lines
+        lines = []
+
+        # Open the file using with() so that it gets closed automatically
+        with open(f"{settings.BASE_DIR}/logs/transactions_logs.log", "r") as f:
+            # Loop runs until the size of the list becomes equal to N
+            while len(lines) <= N:
+                # Try block to move the cursor to the pos line from the end of the file
+                try:
+                    f.seek(-pos, 2)
+
+                # Exception block to handle any runtime error (e.g., IOError)
+                except IOError:
+                    f.seek(0)
+                    break
+
+                # Finally block to add lines to the list after each iteration
+                finally:
+                    lines = list(f)
+
+                # Increase the value of the variable exponentially
+                pos *= 2
+
+        # Return the whole list which stores the last N lines
+        lines = lines[-N:]
+
+        # Strip the line into the individual fields {timestamp, user, action} using regex
+        response = []
+        log_pattern = re.compile(
+            r"(?P<level>\w+) (?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) (?P<logger>\w+) (?P<user>\S+) (?P<action>.+)$"
+        )
+
+        # Parse each line and extract the fields
+        for i, line in enumerate(lines):
+            match = log_pattern.match(line)
+            if match:
+                fields = match.groupdict()
+                response.append(
+                    {
+                        "line": i + 1,
+                        "timestamp": fields["timestamp"]
+                        .replace(" ", "T")
+                        .replace(",", ".")
+                        + "Z",
+                        "user": fields["user"],
+                        "action": fields["action"],
+                    }
+                )
+        serializer = LogSerializer(response, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
