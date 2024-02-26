@@ -42,7 +42,7 @@ class PlayTests(TestCase):
             plays and time over 50 minutes
         - CASE 2: The play game field is being updated from a game with time
             over 50 minutes
-        - CASE 3: The play time has passed 50 minutes - Missing
+        - CASE 3: The play time has passed 50 minutes
         LOGIC:
         - CASE 4: The play is being updated through PUT method
 
@@ -97,6 +97,12 @@ class PlayTests(TestCase):
             id="A01656588",
             name="Pedro Perez",
             hash="1234567895",
+        )
+
+        Student.objects.create(
+            id="A01656589",
+            name="Luis Perez",
+            hash="1234567896",
         )
 
         # Do not create the student A01656590 as it's used to create plays
@@ -195,6 +201,14 @@ class PlayTests(TestCase):
             game=Game.objects.get(name="Billar 1"),
             ended=True,
         )
+
+        play_1 = Play.objects.create(
+            student=Student.objects.get(id="A01656589"),
+            game=Game.objects.get(name="Xbox 1"),
+            ended=True,
+        )
+        play_1.time = self.one_hour_ago
+        play_1.save()
 
     def setUp(self) -> None:
         # Initialize client and sample data
@@ -341,7 +355,7 @@ class PlayTests(TestCase):
             "/rental/plays/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 7)
+        self.assertEqual(len(response.data), self.plays_count)
 
         # Test: List all plays via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -915,12 +929,13 @@ class PlayTests(TestCase):
     def test_plays_api_update_fail_case_3(self):
         """
         CASE 3: The play time has passed 50 minutes
+        """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/5/",
+            f"/rental/plays/8/",
             json.dumps(
                 {
-                    "game": self.xbox_1.pk,
+                    "game": self.xbox_2.pk,
                 }
             ),
             content_type="application/json",
@@ -928,8 +943,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["detail"], "Play time has expired")
-        """
-        self.skipTest("Not implemented")
+        #self.skipTest("Not implemented")
 
     def test_plays_api_update_fail_case_4(self):
         """

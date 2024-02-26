@@ -163,8 +163,12 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         if request.data.get("game", None) != None:
             new_game = Game.objects.get(pk=request.data["game"])
             if (
-                instance.game.start_time + timezone.timedelta(minutes=50) < timezone.now()
-                or new_game.start_time != None and new_game.start_time + timezone.timedelta(minutes=50) < timezone.now()
+                instance.game.start_time + timezone.timedelta(minutes=50)
+                < timezone.now()
+                or new_game.start_time != None
+                and new_game._get_plays().count() != 0
+                and new_game.start_time + timezone.timedelta(minutes=50)
+                < timezone.now()
             ):
                 return Response(
                     {"detail": "Game time has expired"},
@@ -172,7 +176,8 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
                 )
             elif instance.time + timezone.timedelta(minutes=50) < timezone.now():
                 return Response(
-                    {"detail": "Play time has expired"}, status=status.HTTP_400_BAD_REQUEST
+                    {"detail": "Play time has expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         response = super().update(request, *args, **kwargs)
         # Change the game start_time if the play is the first one
