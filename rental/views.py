@@ -20,6 +20,9 @@ import logging
 from drf_spectacular.utils import extend_schema
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+import csv
+from io import StringIO
+from django.http import JsonResponse
 
 transaction_logger = logging.getLogger("transactions")
 
@@ -415,3 +418,31 @@ class ImageDetailView(generics.RetrieveDestroyAPIView):
         instance = self.get_object()
         transaction_logger.info(f"{request.user.email} deleted image {instance.image}")
         return super().destroy(request, *args, **kwargs)
+
+
+class UploadStudentDB(generics.GenericAPIView):
+    """Upload and insert student database"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsActive, IsInAdminGroupOrStaff]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            csv_file = request.FILES["file"]
+            decoded_file = csv_file.read().decode("utf-8")
+            csv_data = StringIO(decoded_file)
+
+            reader = csv.reader(csv_data)
+            next(reader)
+
+            for row in reader:
+                student_id, name = row
+
+                student, created = Student.objects.update_or_create(
+                    id=student_id, defaults={"name": name}
+                )
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+        return JsonResponse({"message": "Students uploaded successfully!"}, status=200)
