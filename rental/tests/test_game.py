@@ -6,7 +6,6 @@ from ..models import Game, Student, Play, Image
 from PIL import Image as PILImage
 from django.conf import settings
 from django.utils import timezone
-import pytz
 import json
 
 
@@ -16,6 +15,7 @@ class GameTests(TestCase):
     - Add more tests for unconsidered cases
     - Assure behavior when inactive user tries to use the API
     """
+
     def setUp(self):
         # Initialize client and sample data
 
@@ -55,13 +55,17 @@ class GameTests(TestCase):
         )
 
         # Create sample Image
-        image_path = os.path.join(settings.MEDIA_ROOT, "images/", "game_card_image_test.png")
-        image2_path = os.path.join(settings.MEDIA_ROOT, "images/", "game_card_image_test_2.png")
+        image_path = os.path.join(
+            settings.MEDIA_ROOT, "images/", "game_card_image_test.png"
+        )
+        image2_path = os.path.join(
+            settings.MEDIA_ROOT, "images/", "game_card_image_test_2.png"
+        )
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         os.makedirs(os.path.dirname(image2_path), exist_ok=True)
         PILImage.new("RGB", (100, 100), color="red").save(image_path)
         PILImage.new("RGB", (100, 100), color="red").save(image2_path)
-    
+
         self.red_image = Image.objects.create(image=image_path)
         self.red_image_2 = Image.objects.create(image=image2_path)
 
@@ -318,9 +322,7 @@ class GameTests(TestCase):
         self.assertEqual(response["image"], self.red_image.image.url)
         self.assertEqual(
             response["start_time"],
-            timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(settings.TIME_ZONE))
-            .isoformat(),
+            timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
         )
         self.assertEqual(len(response["plays"]), 2)
 
@@ -337,9 +339,7 @@ class GameTests(TestCase):
         self.assertEqual(response["image"], self.red_image.image.url)
         self.assertEqual(
             response["start_time"],
-            timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(settings.TIME_ZONE))
-            .isoformat(),
+            timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
         )
         self.assertEqual(len(response["plays"]), 2)
 
@@ -352,9 +352,7 @@ class GameTests(TestCase):
         self.assertEqual(response["image"], self.red_image.image.url)
         self.assertEqual(
             response["start_time"],
-            timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(settings.TIME_ZONE))
-            .isoformat(),
+            timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
         )
         self.assertEqual(response["plays"], 2)
 
@@ -559,9 +557,7 @@ class GameTests(TestCase):
         self.assertEqual(response["image"], self.red_image.pk)
         self.assertEqual(
             response["start_time"],
-            timezone.localtime(Game.objects.get(name="Xbox").start_time)
-            .astimezone(pytz.timezone(settings.TIME_ZONE))
-            .isoformat(),
+            timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
         )
         self.assertEqual(len(response["plays"]), 0)
         game = Game.objects.get(pk=self.xbox_game.pk)
@@ -580,9 +576,7 @@ class GameTests(TestCase):
         self.assertEqual(response["image"], self.red_image.pk)
         self.assertEqual(
             response["start_time"],
-            timezone.localtime(Game.objects.get(pk=self.futbolito_1.pk).start_time)
-            .astimezone(pytz.timezone(settings.TIME_ZONE))
-            .isoformat(),
+            timezone.localtime(Game.objects.get(pk=self.futbolito_1.pk).start_time).isoformat(),
         )
         self.assertEqual(len(response["plays"]), 0)
         game = Game.objects.get(pk=self.xbox_game.pk)

@@ -71,6 +71,19 @@ SECRET_KEY=2hb40lab4)zqt0zwt=m_q^q&m11ku)9*ky0)-6hkh3@4*uuwzm
 echo "SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')" > .env
 ```
 
+Also in case you want to debug the app, set the DEBUG environment variable to True.
+
+```dotenv
+DEBUG=True
+```
+
+And in case you want to use the react frontend, add the following environment variable to the .env file. Or if you want to use the frontend on a different server, add the server's address instead localhost.
+
+```dotenv
+CORS_ALLOWED_ORIGINS=http://localhost
+ALLOWED_HOSTS=localhost
+```
+
 :exclamation: Don't push the .env file to the repository, it's already ignored in the .gitignore file & it contains sensitive data ! That's why is called SECRET_KEY :)
 
 ### Run the migrations and the server
