@@ -162,6 +162,8 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         new_game = None
         if request.data.get("game", None) != None:
             new_game = Game.objects.get(pk=request.data["game"])
+
+            # First if, checks if both the previous and the new game time has expired
             if (
                 instance.game.start_time + timezone.timedelta(minutes=50)
                 < timezone.now()
@@ -174,6 +176,7 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
                     {"detail": "Game time has expired"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            # Second if, checks if actual player has already played more than 50 minutes
             elif instance.time + timezone.timedelta(minutes=50) < timezone.now():
                 return Response(
                     {"detail": "Play time has expired"},
@@ -190,11 +193,18 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
             f"{request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
         )
         # Send a message to the websocket to inform about the updated play
+        # IMPORTANT: We need to send the info of both the previous and the new game
         send_update_message(
             "Plays updated",
             request.user.email,
             info=instance.game.pk,
         )
+        if new_game != None:
+            send_update_message(
+                "Plays updated",
+                request.user.email,
+                info=new_game.pk,
+            )
         return response
 
     def destroy(self, request, *args, **kwargs):

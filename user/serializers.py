@@ -91,7 +91,7 @@ class UserSerializer(serializers.ModelSerializer):
                 "Password must contain at least 1 number."
             )
         # Password must contain at least 1 special character
-        special_characters = "¡!\"#$%&'()*+,-./:;<=>¿?@[\]^_`{|}~"
+        special_characters = "¡!\"#$%&'()*+,-./:;<=>¿?@[\\]^_`{|}~"
         if not any(char in special_characters for char in value):
             raise serializers.ValidationError(
                 "Password must contain at least 1 special character."

@@ -219,3 +219,11 @@ Temporary Items
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/django,visualstudiocode,macos
+
+### Static files dir ###
+staticfiles/
+
+### SSL Certs ###
+certs/
+certificate.pem
+key.pem
