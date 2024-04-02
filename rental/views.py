@@ -9,6 +9,7 @@ from .serializers import (
     GameSerializerImageUrl,
     SanctionSerializer,
     ImageSerializer,
+    ImageReadSerializer,
 )
 from .models import Student, Play, Game, Sanction, Image
 from django.core.validators import RegexValidator
@@ -430,7 +431,12 @@ class ImageListCreateView(generics.ListCreateAPIView):
     queryset = Image.objects.all()
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive, IsInAdminGroupOrStaff]
-    serializer_class = ImageSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return ImageReadSerializer
+        else:
+            return ImageSerializer
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -446,7 +452,12 @@ class ImageDetailView(generics.RetrieveDestroyAPIView):
     queryset = Image.objects.all()
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive, IsInAdminGroupOrStaff]
-    serializer_class = ImageSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return ImageReadSerializer
+        else:
+            return ImageSerializer
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
