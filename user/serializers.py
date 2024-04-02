@@ -5,8 +5,32 @@ from django.contrib.auth.models import Group
 from drf_spectacular.utils import extend_schema_field
 
 
-class HealthCheckSerializer(serializers.Serializer):
-    healthy = serializers.BooleanField()
+def password_validation(value):
+    # Password must be at least 8 characters long
+    if len(value) < 8:
+        raise serializers.ValidationError(
+            "Password must be at least 8 characters long."
+        )
+    # Password must contain at least 1 uppercase letter
+    if not any(char.isupper() for char in value):
+        raise serializers.ValidationError(
+            "Password must contain at least 1 uppercase letter."
+        )
+    # Password must contain at least 1 lowercase letter
+    if not any(char.islower() for char in value):
+        raise serializers.ValidationError(
+            "Password must contain at least 1 lowercase letter."
+        )
+    # Password must contain at least 1 number
+    if not any(char.isdigit() for char in value):
+        raise serializers.ValidationError("Password must contain at least 1 number.")
+    # Password must contain at least 1 special character
+    special_characters = "¡!\"#$%&'()*+,-./:;<=>¿?@[\\]^_`{|}~"
+    if not any(char in special_characters for char in value):
+        raise serializers.ValidationError(
+            "Password must contain at least 1 special character."
+        )
+    return value
 
 
 class UserReadSerializer(serializers.ModelSerializer):
@@ -70,35 +94,17 @@ class UserSerializer(serializers.ModelSerializer):
         return super(UserSerializer, self).update(instance, validated_data)
 
     def validate_password(self, value):
-        # Password must be at least 8 characters long
-        if len(value) < 8:
-            raise serializers.ValidationError(
-                "Password must be at least 8 characters long."
-            )
-        # Password must contain at least 1 uppercase letter
-        if not any(char.isupper() for char in value):
-            raise serializers.ValidationError(
-                "Password must contain at least 1 uppercase letter."
-            )
-        # Password must contain at least 1 lowercase letter
-        if not any(char.islower() for char in value):
-            raise serializers.ValidationError(
-                "Password must contain at least 1 lowercase letter."
-            )
-        # Password must contain at least 1 number
-        if not any(char.isdigit() for char in value):
-            raise serializers.ValidationError(
-                "Password must contain at least 1 number."
-            )
-        # Password must contain at least 1 special character
-        special_characters = "¡!\"#$%&'()*+,-./:;<=>¿?@[\\]^_`{|}~"
-        if not any(char in special_characters for char in value):
-            raise serializers.ValidationError(
-                "Password must contain at least 1 special character."
-            )
-        return value
+        return password_validation(value)
 
     def validate_email(self, value):
         if not value.endswith("@tec.mx"):
             raise serializers.ValidationError("Only tec.mx emails are allowed.")
         return value
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
+
+    def validate_password(self, value):
+        return password_validation(value)
