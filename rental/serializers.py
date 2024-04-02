@@ -108,3 +108,13 @@ class ImageSerializer(ModelSerializer):
     class Meta:
         model = Image
         fields = "__all__"
+
+
+class ImageReadSerializer(ModelSerializer):
+    image = SerializerMethodField()
+    class Meta:
+        model = Image
+        fields = "__all__"
+
+    def get_image(self, obj: Image) -> str:
+        return obj.image.url

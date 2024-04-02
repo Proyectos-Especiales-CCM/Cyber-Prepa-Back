@@ -102,7 +102,7 @@ class ImageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response = response.json()
         self.assertEqual(response["id"], self.image.pk)
-        self.assertRegex(response["image"], r"^http://.*/images/test\d+.png$")
+        self.assertRegex(response["image"], self.image.image.url)
 
     def test_images_api_read_detail_fail(self):
         # Test: Read an image without an authenticated user
