@@ -1,7 +1,10 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework_simplejwt.tokens import AccessToken
+from django.core import mail
+from django.core.cache import cache
+from django.conf import settings
 import json
 
 
@@ -547,3 +550,146 @@ class UserTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 401)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_users_api_reset_password_success(self):
+        # Test: Reset own password
+        # Make a POST request to trigger password reset
+        response = self.client.post(
+            "/users/reset-password/",
+            json.dumps(
+                {
+                    "email": self.user.email,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 204)
+
+        # Check if the email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Cyberprepa Password Reset")
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
+        self.assertIn(settings.EMAIL_HOST_USER, mail.outbox[0].from_email)
+        self.assertIn(
+            f"{settings.FRONTEND_URL}/reset-password?token=", mail.outbox[0].body
+        )
+
+        # Retrieve the token from the email body
+        reset_link = mail.outbox[0].body
+        token_index = reset_link.find('token=')
+        token = reset_link[token_index + len('token='):].strip()
+
+        # Check if the token is stored in the cache
+        user_id = cache.get(f'password_reset_{token}')
+        self.assertEqual(user_id, self.user.pk)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_users_api_reset_password_fail(self):
+        # Test: Reset password for a non-existing user
+        response = self.client.post(
+            "/users/reset-password/",
+            json.dumps(
+                {
+                    "email": "doesNotExists@tec.mx",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 204)
+
+        # Test: Reset password for an inactive user
+        response = self.client.post(
+            "/users/reset-password/",
+            json.dumps(
+                {
+                    "email": self.inactive_admin_user.email,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 204)
+
+        # Test: Reset password with empty body
+        response = self.client.post(
+            "/users/reset-password/",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 204)
+
+        # Check that NO email was sent
+        self.assertEqual(len(mail.outbox), 0)        
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_users_api_reset_password_confirm_success(self):
+        # Test: Confirm password reset
+        # Make a POST request to trigger password reset
+        response = self.client.post(
+            "/users/reset-password/",
+            json.dumps(
+                {
+                    "email": self.user.email,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 204)
+
+        # Retrieve the token from the email body
+        reset_link = mail.outbox[0].body
+        token_index = reset_link.find('token=')
+        token = reset_link[token_index + len('token='):].strip()
+
+        # Make a POST request to confirm password reset
+        response = self.client.post(
+            "/users/reset-password-confirm/",
+            json.dumps(
+                {
+                    "token": token,
+                    "password": "MyNewpass123*",
+                }
+            ),
+            content_type="application/json",
+        )
+        #print(response)
+        self.assertEqual(response.status_code, 204)
+
+        # Check if the password was updated
+        user = get_user_model().objects.get(pk=self.user.pk)
+        self.assertTrue(user.check_password("MyNewpass123*"))
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_users_api_reset_password_confirm_fail(self):
+        # Test: Confirm password reset with invalid token
+        response = self.client.post(
+            "/users/reset-password-confirm/",
+            json.dumps(
+                {
+                    "token": "invalidToken",
+                    "password": "MyNewpass123*",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": "Invalid token."})
+
+        # Test: Confirm password reset with empty body
+        response = self.client.post(
+            "/users/reset-password-confirm/",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+        # Test: Confirm password reset with invalid password
+        response = self.client.post(
+            "/users/reset-password-confirm/",
+            json.dumps(
+                {
+                    "token": "invalidToken",
+                    "password": "pass",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)

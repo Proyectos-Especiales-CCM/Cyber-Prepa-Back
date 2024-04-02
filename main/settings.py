@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    "django_redis",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -193,6 +194,29 @@ LOGGING = {
     },
 }
 
+# EMAIL
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", False)
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", False)
+EMAIL_PORT = os.environ.get("EMAIL_PORT", 25)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+# CACHE
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379/',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+"""Cache timeout for password reset tokens"""
+PASSWORD_RESET_TOKEN_TIMEOUT = 60 * 15  # 15 minutes
 
 # Channels
 ASGI_APPLICATION = "main.asgi.application"
@@ -218,3 +242,6 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
 }
+
+# Frontend
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
