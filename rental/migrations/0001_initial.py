@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Student',
             fields=[
-                ('id', models.CharField(max_length=9, primary_key=True, serialize=False, validators=[django.core.validators.RegexValidator('^[A|L][0-9]{8}$')])),
+                ('id', models.CharField(max_length=9, primary_key=True, serialize=False, validators=[django.core.validators.RegexValidator('^[a|l][0-9]{8}$')])),
                 ('name', models.CharField(blank=True, max_length=100, null=True)),
                 ('forgoten_id', models.BooleanField(default=False)),
                 ('hash', models.CharField(blank=True, max_length=1000, null=True)),

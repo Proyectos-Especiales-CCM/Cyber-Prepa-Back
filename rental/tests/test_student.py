@@ -30,19 +30,19 @@ class StudentTests(TestCase):
 
         # Create sample students
         self.student_1 = Student.objects.create(
-            id="A01656583",
+            id="a01656583",
             name="Diego Jacobo Martinez",
             hash="1234567890",
         )
 
         self.student_2 = Student.objects.create(
-            id="A01656584",
+            id="a01656584",
             name="Jhon Doe",
             hash="1234567891",
         )
 
         self.student_3 = Student.objects.create(
-            id="A01656585",
+            id="a01656585",
             name="Jane Doe",
             hash="1234567892",
         )
@@ -107,12 +107,12 @@ class StudentTests(TestCase):
         # Test: Check if students were correctly created
         self.assertEqual(Student.objects.count(), 3)
 
-        student = Student.objects.get(id="A01656583")
+        student = Student.objects.get(id="a01656583")
         self.assertEqual(student.name, "Diego Jacobo Martinez")
         self.assertEqual(student.hash, "1234567890")
         self.assertFalse(student.forgoten_id)
 
-        student = Student.objects.get(id="A01656584")
+        student = Student.objects.get(id="a01656584")
         self.assertEqual(student.name, "Jhon Doe")
         self.assertEqual(student.hash, "1234567891")
         self.assertFalse(student.forgoten_id)

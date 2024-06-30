@@ -64,37 +64,37 @@ class SanctionTests(TestCase):
 
         # Create sample students
         Student.objects.create(
-            id="A01656583",
+            id="a01656583",
             name="Diego Jacobo Martinez",
             hash="1234567890",
         )
 
         Student.objects.create(
-            id="A01656584",
+            id="a01656584",
             name="Jhon Doe",
             hash="1234567891",
         )
 
         Student.objects.create(
-            id="A01656585",
+            id="a01656585",
             name="Jane Doe",
             hash="1234567892",
         )
 
         Student.objects.create(
-            id="A01656586",
+            id="a01656586",
             name="Juan Perez",
             hash="1234567893",
         )
 
         Student.objects.create(
-            id="A01656587",
+            id="a01656587",
             name="Maria Perez",
             hash="1234567894",
         )
 
         Student.objects.create(
-            id="A01656588",
+            id="a01656588",
             name="Pedro Perez",
             hash="1234567895",
         )
@@ -133,7 +133,7 @@ class SanctionTests(TestCase):
 
         self.ten_minutes_ago = timezone.now() - timedelta(minutes=10)
         play = Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Xbox 1"),
             ended=True,
         )
@@ -141,14 +141,14 @@ class SanctionTests(TestCase):
         play.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             game=Game.objects.get(name="Xbox 1"),
         )
         play_1.time = self.ten_minutes_ago
         play_1.save()
 
         play = Play.objects.create(
-            student=Student.objects.get(id="A01656584"),
+            student=Student.objects.get(id="a01656584"),
             game=Game.objects.get(name="Xbox 1"),
         )
         play.time = self.ten_minutes_ago
@@ -158,7 +158,7 @@ class SanctionTests(TestCase):
         self.xbox_1.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656587"),
+            student=Student.objects.get(id="a01656587"),
             game=Game.objects.get(name="Xbox 2"),
         )
         play_1.time = self.ten_minutes_ago
@@ -169,7 +169,7 @@ class SanctionTests(TestCase):
 
         self.one_hour_ago = timezone.now() - timedelta(hours=1)
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Futbolito 1"),
         )
         play_1.time = self.one_hour_ago
@@ -179,7 +179,7 @@ class SanctionTests(TestCase):
         self.futbolito_1.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656586"),
+            student=Student.objects.get(id="a01656586"),
             game=Game.objects.get(name="Futbolito 2"),
         )
         play_1.time = self.one_hour_ago
@@ -189,7 +189,7 @@ class SanctionTests(TestCase):
         self.futbolito_2.save()
 
         Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Billar 1"),
             ended=True,
         )
@@ -197,13 +197,13 @@ class SanctionTests(TestCase):
         # Create sample sanctions
 
         self.sanction_sample = Sanction.objects.create(
-            student=Student.objects.get(id="A01656588"),
+            student=Student.objects.get(id="a01656588"),
             cause="No regresar el juego",
             end_time=timezone.now() + timedelta(days=1),
         )
 
         Sanction.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )
@@ -346,7 +346,7 @@ class SanctionTests(TestCase):
         access_token = AccessToken.for_user(self.user)
 
         Sanction.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )
@@ -363,7 +363,7 @@ class SanctionTests(TestCase):
         access_token = AccessToken.for_user(self.user)
 
         existing_sanction = Sanction.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )

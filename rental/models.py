@@ -25,7 +25,7 @@ class Student(models.Model):
     """
 
     id = models.CharField(
-        primary_key=True, max_length=9, validators=[RegexValidator(r"^[A|L][0-9]{8}$")]
+        primary_key=True, max_length=9, validators=[RegexValidator(r"^[a|l][0-9]{8}$")]
     )
     name = models.CharField(max_length=100, null=True, blank=True)
     forgoten_id = models.BooleanField(default=False)
