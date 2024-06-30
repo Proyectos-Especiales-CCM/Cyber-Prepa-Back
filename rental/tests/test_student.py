@@ -144,7 +144,7 @@ class StudentTests(TestCase):
         response = self.client.post(
             "/rental/students/",
             {
-                "id": "A01656590",
+                "id": "a01656590",
                 "name": "Jane Doe",
                 "hash": "1234567892",
             },

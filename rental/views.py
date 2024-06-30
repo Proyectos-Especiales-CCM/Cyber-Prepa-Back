@@ -59,7 +59,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
         """
         student_id = request.data["student"]
         try:
-            RegexValidator(r"^[a|l]{8}$")(student_id)
+            RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
         except:
             return Response(
                 {"detail": "Invalid student id"},
