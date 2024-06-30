@@ -152,7 +152,7 @@ class StudentTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         response = response.json()
-        self.assertEqual(response["id"], "A01656590")
+        self.assertEqual(response["id"], "a01656590")
         self.assertEqual(response["name"], "Jane Doe")
         self.assertEqual(response["forgoten_id"], False)
         self.assertEqual(Student.objects.count(), 4)
@@ -163,7 +163,7 @@ class StudentTests(TestCase):
             "/rental/students/",
             json.dumps(
                 {
-                    "id": "A01656590",
+                    "id": "a01656590",
                     "name": "Jane Doe",
                     "hash": "1234567892",
                 }
@@ -178,7 +178,7 @@ class StudentTests(TestCase):
             "/rental/students/",
             json.dumps(
                 {
-                    "id": "A01656590",
+                    "id": "a01656590",
                     "name": "Jane Doe",
                     "hash": "1234567892",
                 }
@@ -193,15 +193,16 @@ class StudentTests(TestCase):
             "A0165659",
             "",
             "A0165659A",
+            "A01656594 ",
         ]
 
         access_token = AccessToken.for_user(self.admin_user)
-        for id in invalid_ids:
+        for invalid_id in invalid_ids:
             response = self.client.post(
                 "/rental/students/",
                 json.dumps(
                     {
-                        "id": id,
+                        "id": invalid_id,
                         "name": "Jane Doe",
                         "hash": "1234567892",
                     }
@@ -223,7 +224,7 @@ class StudentTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["id"], "A01656583")
+        self.assertEqual(response["id"], "a01656583")
         self.assertEqual(response["name"], "Diego Jacobo Martinez")
         self.assertEqual(response["forgoten_id"], False)
 

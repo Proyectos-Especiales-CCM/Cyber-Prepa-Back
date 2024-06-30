@@ -307,43 +307,43 @@ class PlayTests(TestCase):
         self.assertEqual(Play.objects.count(), self.plays_count)
 
         play_1 = Play.objects.get(pk=1)
-        self.assertEqual(play_1.student.id, "A01656585")
+        self.assertEqual(play_1.student.id, "a01656585")
         self.assertEqual(play_1.game.pk, self.xbox_1.pk)
         self.assertTrue(play_1.ended)
         self.assertIsNotNone(play_1.time)
 
         play_2 = Play.objects.get(pk=2)
-        self.assertEqual(play_2.student.id, "A01656583")
+        self.assertEqual(play_2.student.id, "a01656583")
         self.assertEqual(play_2.game.pk, self.xbox_1.pk)
         self.assertFalse(play_2.ended)
         self.assertIsNotNone(play_2.time)
 
         play_3 = Play.objects.get(pk=3)
-        self.assertEqual(play_3.student.id, "A01656584")
+        self.assertEqual(play_3.student.id, "a01656584")
         self.assertEqual(play_3.game.pk, self.xbox_1.pk)
         self.assertFalse(play_3.ended)
         self.assertIsNotNone(play_3.time)
 
         play_4 = Play.objects.get(pk=4)
-        self.assertEqual(play_4.student.id, "A01656587")
+        self.assertEqual(play_4.student.id, "a01656587")
         self.assertEqual(play_4.game.pk, self.xbox_2.pk)
         self.assertFalse(play_4.ended)
         self.assertIsNotNone(play_4.time)
 
         play_5 = Play.objects.get(pk=5)
-        self.assertEqual(play_5.student.id, "A01656585")
+        self.assertEqual(play_5.student.id, "a01656585")
         self.assertEqual(play_5.game.pk, self.futbolito_1.pk)
         self.assertFalse(play_5.ended)
         self.assertIsNotNone(play_5.time)
 
         play_6 = Play.objects.get(pk=6)
-        self.assertEqual(play_6.student.id, "A01656586")
+        self.assertEqual(play_6.student.id, "a01656586")
         self.assertEqual(play_6.game.pk, self.futbolito_2.pk)
         self.assertFalse(play_6.ended)
         self.assertIsNotNone(play_6.time)
 
         play_7 = Play.objects.get(pk=7)
-        self.assertEqual(play_7.student.id, "A01656585")
+        self.assertEqual(play_7.student.id, "a01656585")
         self.assertEqual(play_7.game.pk, self.billar_1.pk)
         self.assertTrue(play_7.ended)
         self.assertIsNotNone(play_7.time)
@@ -542,6 +542,7 @@ class PlayTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Student is already playing")
 
     def test_plays_api_create_fail_case_2(self):
         """
@@ -554,7 +555,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656585",
+                    "student": "a01656585",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -562,6 +563,7 @@ class PlayTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Student has already played today")
 
     def test_plays_api_create_fail_case_3(self):
         """
@@ -580,7 +582,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656588",
+                    "student": "a01656588",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -600,7 +602,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": self.futbolito_1.pk,
                 }
             ),
@@ -620,7 +622,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": 100,
                 }
             ),
@@ -640,7 +642,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A0165658O",
+                    "student": "a0165658O",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -661,7 +663,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -679,7 +681,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -696,7 +698,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656585")
+        self.assertEqual(response["student"], "a01656585")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertTrue(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -708,7 +710,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656585")
+        self.assertEqual(response["student"], "a01656585")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertTrue(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -740,7 +742,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -759,7 +761,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertTrue(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -785,7 +787,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.billar_1.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -817,7 +819,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_2.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -848,7 +850,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_2.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -954,7 +956,7 @@ class PlayTests(TestCase):
             f"/rental/plays/1/",
             json.dumps(
                 {
-                    "student": "A01656583",
+                    "student": "a01656583",
                     "game": self.xbox_2.pk,
                     "ended": False,
                 }
