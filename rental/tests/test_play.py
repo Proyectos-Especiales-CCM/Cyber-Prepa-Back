@@ -547,7 +547,7 @@ class PlayTests(TestCase):
     def test_plays_api_create_fail_case_2(self):
         """
         CASE 2: The student has already played today
-        - Example: Student A01656585 has already played today in the Xbox 1
+        - Example: Student a01656589 has already played today in the Xbox 1
         """
         # Test: Create a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -555,7 +555,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "a01656585",
+                    "student": "a01656589",
                     "game": self.xbox_1.pk,
                 }
             ),
