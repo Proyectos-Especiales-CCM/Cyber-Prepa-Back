@@ -133,47 +133,47 @@ class GameTests(TestCase):
         game = Game.objects.get(name="Xbox")
         self.assertEqual(game.name, "Xbox")
         self.assertTrue(game.show)
-        self.assertEqual(game._get_plays().count(), 2)
+        self.assertEqual(game.get_plays().count(), 2)
         self.assertEqual(
             game.start_time, Play.objects.filter(game=game, ended=False)[0].time
         )
         self.assertEqual(game.image, self.red_image)
 
         game = Game.objects.get(name="Futbolito 1")
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(game.start_time, Play.objects.filter(game=game)[0].time)
 
         game = Game.objects.get(name="Futbolito 2")
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
         self.assertIsNone(game.start_time)
 
     def test_game__get_plays(self):
         # Test: Check if _get_plays returns the correct plays
         game = Game.objects.get(name="Xbox")
-        self.assertEqual(game._get_plays().count(), 2)
+        self.assertEqual(game.get_plays().count(), 2)
 
         game = Game.objects.get(name="Futbolito 1")
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
 
         game = Game.objects.get(name="Futbolito 2")
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
 
     def test_game__end_all_plays(self):
         # Test: Check if _end_all_plays ends all plays
         game = Game.objects.get(name="Xbox")
-        self.assertEqual(game._get_plays().count(), 2)
-        game._end_all_plays()
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 2)
+        game.end_all_plays()
+        self.assertEqual(game.get_plays().count(), 0)
 
         game = Game.objects.get(name="Futbolito 1")
-        self.assertEqual(game._get_plays().count(), 1)
-        game._end_all_plays()
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 1)
+        game.end_all_plays()
+        self.assertEqual(game.get_plays().count(), 0)
 
         game = Game.objects.get(name="Futbolito 2")
-        self.assertEqual(game._get_plays().count(), 0)
-        game._end_all_plays()
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
+        game.end_all_plays()
+        self.assertEqual(game.get_plays().count(), 0)
 
     def test_games_api_read_list_success(self):
         # Test: List all games via an admin user
@@ -561,7 +561,7 @@ class GameTests(TestCase):
         )
         self.assertEqual(len(response["plays"]), 0)
         game = Game.objects.get(pk=self.xbox_game.pk)
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
 
         # Test: End all plays of a game via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -580,7 +580,7 @@ class GameTests(TestCase):
         )
         self.assertEqual(len(response["plays"]), 0)
         game = Game.objects.get(pk=self.xbox_game.pk)
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
 
     def test_games_api_end_all_plays_fail(self):
         # Test: End all plays of a game via an unauthenticated user

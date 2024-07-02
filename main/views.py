@@ -1,12 +1,12 @@
+import re
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import HealthCheckSerializer, LogSerializer
-from main.permissions import IsActive, IsInAdminGroupOrStaff
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.conf import settings
-import re
+from main.permissions import IsActive, IsInAdminGroupOrStaff
+from .serializers import HealthCheckSerializer, LogSerializer
 
 
 class HealthCheck(APIView):
@@ -68,7 +68,9 @@ class LogsView(APIView):
         lines = []
 
         # Open the file using with() so that it gets closed automatically
-        with open(f"{settings.BASE_DIR}/logs/transactions_logs.log", "r") as f:
+        with open(
+            f"{settings.BASE_DIR}/logs/transactions_logs.log", "r", encoding="utf-8"
+        ) as f:
             # Loop runs until the size of the list becomes equal to N
             while len(lines) <= N:
                 # Try block to move the cursor to the pos line from the end of the file

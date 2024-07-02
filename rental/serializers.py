@@ -21,15 +21,15 @@ class StudentSerializer(ModelSerializer):
 
     @extend_schema_field(int)
     def get_played_today(self, obj):
-        return obj._get_played_today()
+        return obj.get_played_today()
 
     @extend_schema_field(int)
     def get_weekly_plays(self, obj):
-        return obj._get_weekly_plays()
+        return obj.get_weekly_plays()
 
     @extend_schema_field(int)
     def get_sanctions_number(self, obj):
-        return obj._get_sanctions_number()
+        return obj.get_sanctions_number()
 
 
 class PlaySerializer(ModelSerializer):
@@ -48,7 +48,7 @@ class GameUnauthenticatedSerializer(ModelSerializer):
 
     @extend_schema_field(int)
     def get_plays(self, obj: Game) -> int:
-        return obj._get_plays().count()
+        return obj.get_plays().count()
     
     def get_image(self, obj: Game) -> str:
         image = obj.image
@@ -69,7 +69,7 @@ class GameSerializer(ModelSerializer):
 
     @extend_schema_field(PlaySerializer(many=True))
     def get_plays(self, obj: Game) -> List[dict]:
-        return PlaySerializer(obj._get_plays(), many=True).data
+        return PlaySerializer(obj.get_plays(), many=True).data
 
 
 class GameSerializerImageUrl(ModelSerializer):
@@ -86,7 +86,7 @@ class GameSerializerImageUrl(ModelSerializer):
 
     @extend_schema_field(PlaySerializer(many=True))
     def get_plays(self, obj: Game) -> List[dict]:
-        return PlaySerializer(obj._get_plays(), many=True).data
+        return PlaySerializer(obj.get_plays(), many=True).data
     
     def get_image(self, obj: Game) -> str:
         image = obj.image

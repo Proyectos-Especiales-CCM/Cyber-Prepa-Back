@@ -81,27 +81,27 @@ class StudentTests(TestCase):
 
     def test_student__is_playing(self):
         # Test: Check if _is_playing() works correctly
-        self.assertTrue(self.student_1._is_playing())
-        self.assertFalse(self.student_2._is_playing())
-        self.assertFalse(self.student_3._is_playing())
+        self.assertTrue(self.student_1.is_playing())
+        self.assertFalse(self.student_2.is_playing())
+        self.assertFalse(self.student_3.is_playing())
 
     def test_student__get_played_today(self):
         # Test: Check if _get_played_today() works correctly
-        self.assertEqual(self.student_1._get_played_today(), 1)
-        self.assertEqual(self.student_2._get_played_today(), 0)
-        self.assertEqual(self.student_3._get_played_today(), 1)
+        self.assertEqual(self.student_1.get_played_today(), 1)
+        self.assertEqual(self.student_2.get_played_today(), 0)
+        self.assertEqual(self.student_3.get_played_today(), 1)
 
     def test_student__get_weekly_plays(self):
         # Test: Check if _get_weekly_plays() works correctly
-        self.assertEqual(self.student_1._get_weekly_plays(), 1)
-        self.assertEqual(self.student_2._get_weekly_plays(), 0)
-        self.assertEqual(self.student_3._get_weekly_plays(), 1)
+        self.assertEqual(self.student_1.get_weekly_plays(), 1)
+        self.assertEqual(self.student_2.get_weekly_plays(), 0)
+        self.assertEqual(self.student_3.get_weekly_plays(), 1)
 
     def test_student__get_sanctions_number(self):
         # Test: Check if _get_sanctions_number() works correctly
-        self.assertEqual(self.student_1._get_sanctions_number(), 0)
-        self.assertEqual(self.student_2._get_sanctions_number(), 0)
-        self.assertEqual(self.student_3._get_sanctions_number(), 1)
+        self.assertEqual(self.student_1.get_sanctions_number(), 0)
+        self.assertEqual(self.student_2.get_sanctions_number(), 0)
+        self.assertEqual(self.student_3.get_sanctions_number(), 1)
 
     def test_student_created(self):
         # Test: Check if students were correctly created

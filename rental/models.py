@@ -31,14 +31,14 @@ class Student(models.Model):
     forgoten_id = models.BooleanField(default=False)
     hash = models.CharField(max_length=1000, null=True, blank=True)
 
-    def _is_playing(self):
+    def is_playing(self):
         return Play.objects.filter(student=self, ended=False).count() > 0
 
-    def _get_played_today(self):
+    def get_played_today(self):
         current_time = timezone.localtime(timezone.now())
         return Play.objects.filter(student=self, time__date=current_time.date()).count()
 
-    def _get_weekly_plays(self):
+    def get_weekly_plays(self):
         today = timezone.localtime(timezone.now())
         # Start of the week (Monday)
         start_of_week = today.combine(
@@ -54,13 +54,13 @@ class Student(models.Model):
             student=self, time__date__range=[start_of_week, end_of_week]
         ).count()
 
-    def _get_sanctions_number(self):
+    def get_sanctions_number(self):
         return Sanction.objects.filter(
             student=self, end_time__gte=timezone.now()
         ).count()
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class Game(models.Model):
@@ -80,11 +80,11 @@ class Game(models.Model):
         Image, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
 
-    def _get_plays(self):
+    def get_plays(self):
         return Play.objects.filter(game=self, ended=False)
 
-    def _end_all_plays(self):
-        plays = self._get_plays()
+    def end_all_plays(self):
+        plays = self.get_plays()
         for play in plays:
             play.ended = True
             play.save()

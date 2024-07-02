@@ -13,7 +13,12 @@ from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from main.permissions import IsActive, IsSameUserOrStaff, IsInAdminGroupOrStaff
 from .models import User
-from .serializers import UserSerializer, UserReadSerializer, ResetPasswordSerializer
+from .serializers import (
+    UserSerializer,
+    UserReadSerializer,
+    ResetPasswordRequestSerializer,
+    ResetPasswordSerializer,
+)
 
 transaction_logger = logging.getLogger("transactions")
 
@@ -119,11 +124,20 @@ class UserMeDetails(generics.RetrieveAPIView):
 
 
 class UserResetPassword(generics.GenericAPIView):
-    """Reset Password"""
+    """Reset Password via Email"""
+
+    serializer_class = ResetPasswordRequestSerializer
 
     def post(self, request):
+        """Send password reset to the given email."""
         try:
-            user = User.objects.get(email=request.data.get("email"))
+            # Validate request data through serializer
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            # Get token and password from serializer
+            request_email = serializer.validated_data.get("email")
+            user = User.objects.get(email=request_email)
 
             # Check if user is active
             if not user.is_active:
@@ -156,7 +170,7 @@ class UserResetPassword(generics.GenericAPIView):
             transaction_logger.critical(
                 "An error occurred while trying to reset a password: %s", e
             )
-            pass
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -166,6 +180,7 @@ class UserResetPasswordConfirm(generics.GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
     def post(self, request):
+        """Reset password with the given token."""
         try:
             # Validate request data through serializer
             serializer = self.get_serializer(data=request.data)

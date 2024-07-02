@@ -130,12 +130,6 @@ class ResetPasswordRequestSerializer(serializers.Serializer):
 
     email = serializers.EmailField(required=True)
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
 
 class ResetPasswordSerializer(serializers.Serializer):
     """Serializer for resetting a password with a token."""
@@ -146,9 +140,3 @@ class ResetPasswordSerializer(serializers.Serializer):
     def validate_password(self, value):
         """Validate password meets complexity requirements."""
         return password_validation(value)
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass

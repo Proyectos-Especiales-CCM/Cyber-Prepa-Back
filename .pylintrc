@@ -1,0 +1,108 @@
+[MASTER]
+# A comma-separated list of package or module names from where C extensions
+# may be loaded. Extensions are loading into the active Python interpreter and
+# may run arbitrary code.
+extension-pkg-whitelist=
+# Add files or directories to the blacklist. They should be base names, not
+# paths.
+ignore=CVS
+ignore-patterns=
+# Python code to execute, usually for sys.path manipulation such as
+# pygtk.require().
+init-hook=
+# Use multiple processes to speed up Pylint.
+jobs=1
+# List of plugins (as comma separated values of python module names) to load,
+# usually to register additional checkers.
+load-plugins=pylint_django
+# Pickle collected data for later comparisons.
+persistent=yes
+# Allow loading of arbitrary C extensions. Extensions are imported into the
+# active Python interpreter and may run arbitrary code.
+unsafe-load-any-extension=no
+
+[MESSAGES CONTROL]
+# Only show warnings with the listed confidence levels. Leave empty to show
+# all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
+confidence=
+# Enable the message, report, category or checker with the given id(s). You can
+# either give multiple identifiers separated by comma (,) or put this option
+# multiple times (only on the command line, not in the configuration file
+# where it should appear only once). See also the "--disable" option for
+# examples.
+#enable=all
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifiers separated by comma (,) or put this
+# option multiple times (only on the command line, not in the configuration
+# file where it should appear only once). You can also use "--disable=all" to
+# disable everything first and then reenable specific checks. For example, if
+# you want to run only the similarities checker, you can use "--disable=all
+# --enable=similarities". If you want to run only the classes checker, but have
+# no Warning level messages displayed, use "--disable=all --enable=classes
+# --disable=W".
+disable=missing-docstring,invalid-name
+
+[REPORTS]
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio). You can also give a reporter class, e.g.
+# mypackage.mymodule.MyReporterClass.
+output-format=text
+# Tells whether to display a full report or only the messages.
+reports=no
+# Python expression which should return a score less than or equal to 10 (10 is
+# the highest score possible) when run. It will be used to display a global
+# evaluation score for the current run. Example: score = min(10,
+# 2.5 + 0.5 * 0.5 * 10 ** 0.5 * 2.0 / 3.0)
+evaluation=
+# Template used to display messages. This is a python new-style format string
+# used to format the message information. See docstring of
+# pylint.reporters.BaseReporter for details.
+msg-template=
+
+[BASIC]
+# Good variable names which should always be accepted, separated by a comma.
+good-names=i,j,k,ex,Run,_
+# Bad variable names which should always be refused, separated by a comma.
+bad-names=foo,bar,baz,toto,tutu,tata
+# Colon-delimited sets of names that determine each other's naming style when
+# the name regexes allow several styles.
+name-group=
+# Include a hint for the correct naming format with invalid-name?
+include-naming-hint=no
+# Regular expression which should only match function or method names that do
+# not require a docstring.
+no-docstring-rgx=^_
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=100
+# Regexp for a line that is allowed to be longer than the limit.
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+# Allow the body of a class to be on the same line as the declaration if body
+# contains single statement.
+single-line-class-stmt=no
+
+[SIMILARITIES]
+# Minimum lines number of a similarity.
+min-similarity-lines=4
+
+[IMPORTS]
+# Allow wildcard imports from modules that define __all__.
+allow-wildcard-with-all=no
+# Analyse import fallback blocks. This can be used to support both Python 2 and
+# 3 compatible code, which means that the block might have code that exists
+# only in one or another interpreter, leading to false positives when analysed.
+analyse-fallback-blocks=no
+
+[CLASSES]
+# List of method names used to declare (i.e. assign) instance attributes.
+defining-attr-methods=__init__,__new__,setUp
+# List of valid names for the first argument in a class method.
+valid-classmethod-first-arg=cls
+# List of valid names for the first argument in a method.
+valid-metaclass-classmethod-first-arg=mcs
+
+[EXCEPTIONS]
+# Exceptions that will emit a warning when being caught. Defaults to
+# "Exception"
+overgeneral-exceptions=Exception

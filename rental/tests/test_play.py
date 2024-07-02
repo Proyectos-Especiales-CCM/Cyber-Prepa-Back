@@ -265,14 +265,14 @@ class PlayTests(TestCase):
         # Check if xboxs is correctly configure to test plays in a game with
         # - Simulated usage: Ended plays, 2 active plays where players are still on time
         game = Game.objects.get(pk=self.xbox_1.pk)
-        self.assertEqual(game._get_plays().count(), 2)
+        self.assertEqual(game.get_plays().count(), 2)
         self.assertEqual(
             timezone.localtime(game.start_time),
             timezone.localtime(self.ten_minutes_ago),
         )
 
         game = Game.objects.get(pk=self.xbox_2.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time),
             timezone.localtime(self.five_minutes_ago),
@@ -281,13 +281,13 @@ class PlayTests(TestCase):
         # Check if futbolitos is correctly configure to test plays in a game with
         # - Simulated usage: Ended plays, 1 active plays where players time is expired
         game = Game.objects.get(pk=self.futbolito_1.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time), timezone.localtime(self.one_hour_ago)
         )
 
         game = Game.objects.get(pk=self.futbolito_2.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time), timezone.localtime(self.one_hour_ago)
         )
@@ -295,11 +295,11 @@ class PlayTests(TestCase):
         # Check if billars is correctly configure to test plays in a game with
         # - Simulated newly created game:
         game = Game.objects.get(pk=self.billar_1.pk)
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
         self.assertIsNone(game.start_time)
 
         game = Game.objects.get(pk=self.billar_2.pk)
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
         self.assertIsNone(game.start_time)
 
     def test_play_created(self):
@@ -408,7 +408,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play to be created
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.billar_1.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertNotEqual(game.start_time, previous_game_start_time)
         self.assertAlmostEqual(
             timezone.localtime(game.start_time),
@@ -442,7 +442,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play to be created
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.billar_2.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertNotEqual(game.start_time, previous_game_start_time)
         self.assertAlmostEqual(
             timezone.localtime(game.start_time),
@@ -485,7 +485,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play to be created
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.xbox_1.pk)
-        self.assertEqual(game._get_plays().count(), 3)
+        self.assertEqual(game.get_plays().count(), 3)
         self.assertNotEqual(game.start_time, play.time)
         self.assertEqual(game.start_time, previous_game_start_time)
 
@@ -515,7 +515,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.xbox_2.pk)
-        self.assertEqual(game._get_plays().count(), 2)
+        self.assertEqual(game.get_plays().count(), 2)
         self.assertNotEqual(game.start_time, play.time)
         self.assertEqual(game.start_time, previous_game_start_time)
 
