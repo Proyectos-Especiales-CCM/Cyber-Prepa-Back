@@ -6,13 +6,13 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
 from .models import Student, Play, Game, Sanction, Image

@@ -4,12 +4,12 @@ import logging
 import secrets
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from main.permissions import IsActive, IsSameUserOrStaff, IsInAdminGroupOrStaff
 from .models import User
@@ -211,7 +211,7 @@ class UserResetPasswordConfirm(generics.GenericAPIView):
                 )
 
         except ValidationError as e:
-            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             transaction_logger.critical(
