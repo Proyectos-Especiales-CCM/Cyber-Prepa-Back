@@ -14,8 +14,6 @@ jobs:
       - name: Auto Author Assign
         if: github.event_name == 'pull_request_target'
         uses: toshimaru/auto-author-assign@v2.1.1
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
   pr-labeler:
     permissions:
       contents: read
