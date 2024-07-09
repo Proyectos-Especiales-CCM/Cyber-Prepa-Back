@@ -1,17 +1,26 @@
+"""
+User views for CRUD operations and password reset.
+"""
+import logging
+import secrets
 from django.conf import settings
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
+from rest_framework.exceptions import ValidationError as RestValidationError
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .serializers import UserSerializer, UserReadSerializer, ResetPasswordSerializer
 from main.permissions import IsActive, IsSameUserOrStaff, IsInAdminGroupOrStaff
 from .models import User
-from drf_spectacular.utils import extend_schema
-from django.core.cache import cache
-import secrets
-from django.core.mail import send_mail
-import logging
+from .serializers import (
+    UserSerializer,
+    UserReadSerializer,
+    ResetPasswordRequestSerializer,
+    ResetPasswordSerializer,
+)
 
 transaction_logger = logging.getLogger("transactions")
 
@@ -30,18 +39,20 @@ class UserListCreateView(generics.GenericAPIView):
 
     @extend_schema(operation_id="list_users")
     def get(self, request):
+        """List all users."""
         users = self.get_queryset()
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(users, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+        """Create a new user."""
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction_logger.info(
-            f"{request.user.email} created user {serializer.data['email']}"
+            "%s created user %s", request.user.email, serializer.data["email"]
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -64,27 +75,36 @@ class UserDetailView(generics.GenericAPIView):
         return obj
 
     def get(self, request, *args, **kwargs):
+        """Read user."""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
+        """Update user."""
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction_logger.info(
-            f"{request.user.email} updated user {serializer.data['email']} fields {serializer.validated_data.keys()}"
+            "%s updated user %s fields %s",
+            request.user.email,
+            serializer.data["email"],
+            serializer.validated_data.keys(),
         )
         return Response(serializer.data)
 
     def patch(self, request, *args, **kwargs):
+        """Update user partially."""
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction_logger.info(
-            f"{request.user.email} updated user {serializer.data['email']} fields {serializer.validated_data.keys()}"
+            "%s updated user %s fields %s",
+            request.user.email,
+            serializer.data["email"],
+            serializer.validated_data.keys(),
         )
         return Response(serializer.data)
 
@@ -106,15 +126,24 @@ class UserMeDetails(generics.RetrieveAPIView):
 
 
 class UserResetPassword(generics.GenericAPIView):
-    """Reset Password"""
+    """Reset Password via Email"""
+
+    serializer_class = ResetPasswordRequestSerializer
 
     def post(self, request):
+        """Send password reset to the given email."""
         try:
-            user = User.objects.get(email=request.data.get("email"))
+            # Validate request data through serializer
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            # Get token and password from serializer
+            request_email = serializer.validated_data.get("email")
+            user = User.objects.get(email=request_email)
 
             # Check if user is active
             if not user.is_active:
-                raise User.DoesNotExist
+                raise ValidationError({"detail": "User is not active."})
 
             # Generate a random token and store it in Redis
             token = secrets.token_urlsafe(nbytes=32)
@@ -135,15 +164,21 @@ class UserResetPassword(generics.GenericAPIView):
             )
 
             # Log transaction
-            transaction_logger.info(f"{user.email} requested a password reset")
+            transaction_logger.info("%s requested a password reset", user.email)
+        except ValidationError:
+            # Do not expose if user does not exist
+            pass
+        except RestValidationError:
+            # Do not expose if user does not exist
+            pass
         except User.DoesNotExist:
             # Do not expose if user does not exist
             pass
         except Exception as e:
             transaction_logger.critical(
-                f"An error occurred while trying to reset a password: {e}"
+                "An error occurred while trying to reset a password: %s", e
             )
-            pass
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -153,6 +188,7 @@ class UserResetPasswordConfirm(generics.GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
     def post(self, request):
+        """Reset password with the given token."""
         try:
             # Validate request data through serializer
             serializer = self.get_serializer(data=request.data)
@@ -171,7 +207,7 @@ class UserResetPasswordConfirm(generics.GenericAPIView):
                 user.save()
 
                 # Log transaction
-                transaction_logger.info(f"{user.email} reset their password")
+                transaction_logger.info("%s reset their password", user.email)
 
                 # Delete token from cache
                 cache.delete(f"password_reset_{token}")
@@ -183,11 +219,14 @@ class UserResetPasswordConfirm(generics.GenericAPIView):
                 )
 
         except ValidationError as e:
+            return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
+
+        except RestValidationError as e:
             return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             transaction_logger.critical(
-                f"An error occurred while trying to confirm reset a password: {e}"
+                "An error occurred while trying to confirm reset a password: %s", e
             )
             return Response(
                 {"detail": "An error occurred."},

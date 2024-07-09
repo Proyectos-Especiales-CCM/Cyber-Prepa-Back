@@ -1,10 +1,10 @@
+import json
+from datetime import timedelta
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
 from ..models import Game, Student, Play, Sanction
-from django.utils import timezone
-from datetime import timedelta
-import json
 
 
 class SanctionTests(TestCase):
@@ -64,37 +64,37 @@ class SanctionTests(TestCase):
 
         # Create sample students
         Student.objects.create(
-            id="A01656583",
+            id="a01656583",
             name="Diego Jacobo Martinez",
             hash="1234567890",
         )
 
         Student.objects.create(
-            id="A01656584",
+            id="a01656584",
             name="Jhon Doe",
             hash="1234567891",
         )
 
         Student.objects.create(
-            id="A01656585",
+            id="a01656585",
             name="Jane Doe",
             hash="1234567892",
         )
 
         Student.objects.create(
-            id="A01656586",
+            id="a01656586",
             name="Juan Perez",
             hash="1234567893",
         )
 
         Student.objects.create(
-            id="A01656587",
+            id="a01656587",
             name="Maria Perez",
             hash="1234567894",
         )
 
         Student.objects.create(
-            id="A01656588",
+            id="a01656588",
             name="Pedro Perez",
             hash="1234567895",
         )
@@ -133,7 +133,7 @@ class SanctionTests(TestCase):
 
         self.ten_minutes_ago = timezone.now() - timedelta(minutes=10)
         play = Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Xbox 1"),
             ended=True,
         )
@@ -141,14 +141,14 @@ class SanctionTests(TestCase):
         play.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             game=Game.objects.get(name="Xbox 1"),
         )
         play_1.time = self.ten_minutes_ago
         play_1.save()
 
         play = Play.objects.create(
-            student=Student.objects.get(id="A01656584"),
+            student=Student.objects.get(id="a01656584"),
             game=Game.objects.get(name="Xbox 1"),
         )
         play.time = self.ten_minutes_ago
@@ -158,7 +158,7 @@ class SanctionTests(TestCase):
         self.xbox_1.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656587"),
+            student=Student.objects.get(id="a01656587"),
             game=Game.objects.get(name="Xbox 2"),
         )
         play_1.time = self.ten_minutes_ago
@@ -169,7 +169,7 @@ class SanctionTests(TestCase):
 
         self.one_hour_ago = timezone.now() - timedelta(hours=1)
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Futbolito 1"),
         )
         play_1.time = self.one_hour_ago
@@ -179,7 +179,7 @@ class SanctionTests(TestCase):
         self.futbolito_1.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656586"),
+            student=Student.objects.get(id="a01656586"),
             game=Game.objects.get(name="Futbolito 2"),
         )
         play_1.time = self.one_hour_ago
@@ -189,7 +189,7 @@ class SanctionTests(TestCase):
         self.futbolito_2.save()
 
         Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Billar 1"),
             ended=True,
         )
@@ -197,13 +197,13 @@ class SanctionTests(TestCase):
         # Create sample sanctions
 
         self.sanction_sample = Sanction.objects.create(
-            student=Student.objects.get(id="A01656588"),
+            student=Student.objects.get(id="a01656588"),
             cause="No regresar el juego",
             end_time=timezone.now() + timedelta(days=1),
         )
 
         Sanction.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )
@@ -244,7 +244,7 @@ class SanctionTests(TestCase):
             "/rental/sanctions/",
             json.dumps(
                 {
-                    "student": "A01656583",
+                    "student": "a01656583",
                     "cause": "No entregó su credencial al jugar",
                     "end_time": "2024-02-15T12:34:56.789Z",
                 },
@@ -260,7 +260,7 @@ class SanctionTests(TestCase):
             "/rental/sanctions/",
             json.dumps(
                 {
-                    "student": "A01656584",
+                    "student": "a01656584",
                     "cause": "No entregó su credencial al jugar",
                     "end_time": "2024-02-15T12:34:56.789Z",
                 },
@@ -276,7 +276,7 @@ class SanctionTests(TestCase):
             "/rental/sanctions/",
             json.dumps(
                 {
-                    "student": "A01656583",
+                    "student": "a01656583",
                     "cause": "No entregó su credencial al jugar",
                     "end_time": "2024-02-15T12:34:56.789Z",
                 },
@@ -284,14 +284,14 @@ class SanctionTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 401)
-        
+
         # Test case for unsuccessfully creating a sanction (inactive admin)
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.post(
             "/rental/sanctions/",
             json.dumps(
                 {
-                    "student": "A01666283",
+                    "student": "a01666283",
                     "cause": "No regresar el juego",
                     "end_time": "2024-01-15T12:34:56.789Z",
                 },
@@ -307,7 +307,7 @@ class SanctionTests(TestCase):
             "/rental/sanctions/",
             json.dumps(
                 {
-                    "student": "A0165627",
+                    "student": "a0165627",
                     "cause": "No entregó su credencial al jugar",
                     "end_time": "2024-02-15T12:34:56.789Z",
                 },
@@ -336,7 +336,7 @@ class SanctionTests(TestCase):
         # Test: Read a given sanction that does not exist
         access_token = AccessToken.for_user(self.user)
         response = self.client.get(
-            f"/rental/sanctions/A01656583/",
+            "/rental/sanctions/a01656583/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 404)
@@ -346,13 +346,13 @@ class SanctionTests(TestCase):
         access_token = AccessToken.for_user(self.user)
 
         Sanction.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )
 
         response = self.client.patch(
-            f"/rental/sanctions/A01656584/",
+            "/rental/sanctions/a01656584/",
             json.dumps({"cause": "Nueva causa para la sanción"}),
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
@@ -363,7 +363,7 @@ class SanctionTests(TestCase):
         access_token = AccessToken.for_user(self.user)
 
         existing_sanction = Sanction.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             cause="No entregó su credencial al jugar",
             end_time=timezone.now() + timedelta(days=1),
         )
@@ -392,11 +392,11 @@ class SanctionTests(TestCase):
             f"/rental/sanctions/{self.sanction_sample.pk}/",
         )
         self.assertEqual(response.status_code, 401)
-        
+
         # Test: Delete a given sanction that does not exist
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.delete(
-            f"/rental/sanctions/A01656583/",
+            "/rental/sanctions/a01656583/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 404)

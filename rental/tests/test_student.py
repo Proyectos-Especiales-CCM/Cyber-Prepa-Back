@@ -30,19 +30,19 @@ class StudentTests(TestCase):
 
         # Create sample students
         self.student_1 = Student.objects.create(
-            id="A01656583",
+            id="a01656583",
             name="Diego Jacobo Martinez",
             hash="1234567890",
         )
 
         self.student_2 = Student.objects.create(
-            id="A01656584",
+            id="a01656584",
             name="Jhon Doe",
             hash="1234567891",
         )
 
         self.student_3 = Student.objects.create(
-            id="A01656585",
+            id="a01656585",
             name="Jane Doe",
             hash="1234567892",
         )
@@ -81,38 +81,38 @@ class StudentTests(TestCase):
 
     def test_student__is_playing(self):
         # Test: Check if _is_playing() works correctly
-        self.assertTrue(self.student_1._is_playing())
-        self.assertFalse(self.student_2._is_playing())
-        self.assertFalse(self.student_3._is_playing())
+        self.assertTrue(self.student_1.is_playing())
+        self.assertFalse(self.student_2.is_playing())
+        self.assertFalse(self.student_3.is_playing())
 
     def test_student__get_played_today(self):
         # Test: Check if _get_played_today() works correctly
-        self.assertEqual(self.student_1._get_played_today(), 1)
-        self.assertEqual(self.student_2._get_played_today(), 0)
-        self.assertEqual(self.student_3._get_played_today(), 1)
+        self.assertEqual(self.student_1.get_played_today(), 1)
+        self.assertEqual(self.student_2.get_played_today(), 0)
+        self.assertEqual(self.student_3.get_played_today(), 1)
 
     def test_student__get_weekly_plays(self):
         # Test: Check if _get_weekly_plays() works correctly
-        self.assertEqual(self.student_1._get_weekly_plays(), 1)
-        self.assertEqual(self.student_2._get_weekly_plays(), 0)
-        self.assertEqual(self.student_3._get_weekly_plays(), 1)
+        self.assertEqual(self.student_1.get_weekly_plays(), 1)
+        self.assertEqual(self.student_2.get_weekly_plays(), 0)
+        self.assertEqual(self.student_3.get_weekly_plays(), 1)
 
     def test_student__get_sanctions_number(self):
         # Test: Check if _get_sanctions_number() works correctly
-        self.assertEqual(self.student_1._get_sanctions_number(), 0)
-        self.assertEqual(self.student_2._get_sanctions_number(), 0)
-        self.assertEqual(self.student_3._get_sanctions_number(), 1)
+        self.assertEqual(self.student_1.get_sanctions_number(), 0)
+        self.assertEqual(self.student_2.get_sanctions_number(), 0)
+        self.assertEqual(self.student_3.get_sanctions_number(), 1)
 
     def test_student_created(self):
         # Test: Check if students were correctly created
         self.assertEqual(Student.objects.count(), 3)
 
-        student = Student.objects.get(id="A01656583")
+        student = Student.objects.get(id="a01656583")
         self.assertEqual(student.name, "Diego Jacobo Martinez")
         self.assertEqual(student.hash, "1234567890")
         self.assertFalse(student.forgoten_id)
 
-        student = Student.objects.get(id="A01656584")
+        student = Student.objects.get(id="a01656584")
         self.assertEqual(student.name, "Jhon Doe")
         self.assertEqual(student.hash, "1234567891")
         self.assertFalse(student.forgoten_id)
@@ -144,7 +144,7 @@ class StudentTests(TestCase):
         response = self.client.post(
             "/rental/students/",
             {
-                "id": "A01656590",
+                "id": "a01656590",
                 "name": "Jane Doe",
                 "hash": "1234567892",
             },
@@ -152,7 +152,7 @@ class StudentTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         response = response.json()
-        self.assertEqual(response["id"], "A01656590")
+        self.assertEqual(response["id"], "a01656590")
         self.assertEqual(response["name"], "Jane Doe")
         self.assertEqual(response["forgoten_id"], False)
         self.assertEqual(Student.objects.count(), 4)
@@ -163,7 +163,7 @@ class StudentTests(TestCase):
             "/rental/students/",
             json.dumps(
                 {
-                    "id": "A01656590",
+                    "id": "a01656590",
                     "name": "Jane Doe",
                     "hash": "1234567892",
                 }
@@ -178,7 +178,7 @@ class StudentTests(TestCase):
             "/rental/students/",
             json.dumps(
                 {
-                    "id": "A01656590",
+                    "id": "a01656590",
                     "name": "Jane Doe",
                     "hash": "1234567892",
                 }
@@ -193,15 +193,16 @@ class StudentTests(TestCase):
             "A0165659",
             "",
             "A0165659A",
+            "A01656594 ",
         ]
 
         access_token = AccessToken.for_user(self.admin_user)
-        for id in invalid_ids:
+        for invalid_id in invalid_ids:
             response = self.client.post(
                 "/rental/students/",
                 json.dumps(
                     {
-                        "id": id,
+                        "id": invalid_id,
                         "name": "Jane Doe",
                         "hash": "1234567892",
                     }
@@ -223,7 +224,7 @@ class StudentTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["id"], "A01656583")
+        self.assertEqual(response["id"], "a01656583")
         self.assertEqual(response["name"], "Diego Jacobo Martinez")
         self.assertEqual(response["forgoten_id"], False)
 

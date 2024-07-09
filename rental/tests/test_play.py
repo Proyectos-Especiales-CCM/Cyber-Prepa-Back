@@ -1,10 +1,10 @@
+import json
+from datetime import timedelta
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
 from ..models import Game, Student, Play, Sanction
-from django.utils import timezone
-from datetime import timedelta
-import json
 
 
 class PlayTests(TestCase):
@@ -26,7 +26,7 @@ class PlayTests(TestCase):
         - CASE 5: The game has expired (50 minutes or more)
         LOGIC:
         - CASE 6: The game does not exist
-        - CASE 7: The student id doesn't match the regex [A|L][0-9]{8}
+        - CASE 7: The student id doesn't match the regex [a|l]{8}
         - CASE 8: The play is being created by an unauthenticated user
         - CASE 9: The play is being created by an inactive user
 
@@ -64,43 +64,43 @@ class PlayTests(TestCase):
         that doesn't exist
         """
         Student.objects.create(
-            id="A01656583",
+            id="a01656583",
             name="Diego Jacobo Martinez",
             hash="1234567890",
         )
 
         Student.objects.create(
-            id="A01656584",
+            id="a01656584",
             name="Jhon Doe",
             hash="1234567891",
         )
 
         Student.objects.create(
-            id="A01656585",
+            id="a01656585",
             name="Jane Doe",
             hash="1234567892",
         )
 
         Student.objects.create(
-            id="A01656586",
+            id="a01656586",
             name="Juan Perez",
             hash="1234567893",
         )
 
         Student.objects.create(
-            id="A01656587",
+            id="a01656587",
             name="Maria Perez",
             hash="1234567894",
         )
 
         Student.objects.create(
-            id="A01656588",
+            id="a01656588",
             name="Pedro Perez",
             hash="1234567895",
         )
 
         Student.objects.create(
-            id="A01656589",
+            id="a01656589",
             name="Luis Perez",
             hash="1234567896",
         )
@@ -141,7 +141,7 @@ class PlayTests(TestCase):
         self.ten_minutes_ago = timezone.now() - timedelta(minutes=10)
         self.five_minutes_ago = timezone.now() - timedelta(minutes=5)
         play = Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Xbox 1"),
             ended=True,
         )
@@ -149,14 +149,14 @@ class PlayTests(TestCase):
         play.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656583"),
+            student=Student.objects.get(id="a01656583"),
             game=Game.objects.get(name="Xbox 1"),
         )
         play_1.time = self.ten_minutes_ago
         play_1.save()
 
         play = Play.objects.create(
-            student=Student.objects.get(id="A01656584"),
+            student=Student.objects.get(id="a01656584"),
             game=Game.objects.get(name="Xbox 1"),
         )
         play.time = self.ten_minutes_ago
@@ -166,7 +166,7 @@ class PlayTests(TestCase):
         self.xbox_1.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656587"),
+            student=Student.objects.get(id="a01656587"),
             game=Game.objects.get(name="Xbox 2"),
         )
         play_1.time = self.five_minutes_ago
@@ -177,7 +177,7 @@ class PlayTests(TestCase):
 
         self.one_hour_ago = timezone.now() - timedelta(hours=1)
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Futbolito 1"),
         )
         play_1.time = self.one_hour_ago
@@ -187,7 +187,7 @@ class PlayTests(TestCase):
         self.futbolito_1.save()
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656586"),
+            student=Student.objects.get(id="a01656586"),
             game=Game.objects.get(name="Futbolito 2"),
         )
         play_1.time = self.one_hour_ago
@@ -197,13 +197,13 @@ class PlayTests(TestCase):
         self.futbolito_2.save()
 
         Play.objects.create(
-            student=Student.objects.get(id="A01656585"),
+            student=Student.objects.get(id="a01656585"),
             game=Game.objects.get(name="Billar 1"),
             ended=True,
         )
 
         play_1 = Play.objects.create(
-            student=Student.objects.get(id="A01656589"),
+            student=Student.objects.get(id="a01656589"),
             game=Game.objects.get(name="Xbox 1"),
             ended=True,
         )
@@ -245,7 +245,7 @@ class PlayTests(TestCase):
         # Create sample sanctions
 
         Sanction.objects.create(
-            student=Student.objects.get(id="A01656588"),
+            student=Student.objects.get(id="a01656588"),
             cause="No regresar el juego",
             end_time=timezone.now() + timedelta(days=1),
         )
@@ -265,14 +265,14 @@ class PlayTests(TestCase):
         # Check if xboxs is correctly configure to test plays in a game with
         # - Simulated usage: Ended plays, 2 active plays where players are still on time
         game = Game.objects.get(pk=self.xbox_1.pk)
-        self.assertEqual(game._get_plays().count(), 2)
+        self.assertEqual(game.get_plays().count(), 2)
         self.assertEqual(
             timezone.localtime(game.start_time),
             timezone.localtime(self.ten_minutes_ago),
         )
 
         game = Game.objects.get(pk=self.xbox_2.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time),
             timezone.localtime(self.five_minutes_ago),
@@ -281,13 +281,13 @@ class PlayTests(TestCase):
         # Check if futbolitos is correctly configure to test plays in a game with
         # - Simulated usage: Ended plays, 1 active plays where players time is expired
         game = Game.objects.get(pk=self.futbolito_1.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time), timezone.localtime(self.one_hour_ago)
         )
 
         game = Game.objects.get(pk=self.futbolito_2.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertEqual(
             timezone.localtime(game.start_time), timezone.localtime(self.one_hour_ago)
         )
@@ -295,11 +295,11 @@ class PlayTests(TestCase):
         # Check if billars is correctly configure to test plays in a game with
         # - Simulated newly created game:
         game = Game.objects.get(pk=self.billar_1.pk)
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
         self.assertIsNone(game.start_time)
 
         game = Game.objects.get(pk=self.billar_2.pk)
-        self.assertEqual(game._get_plays().count(), 0)
+        self.assertEqual(game.get_plays().count(), 0)
         self.assertIsNone(game.start_time)
 
     def test_play_created(self):
@@ -307,43 +307,43 @@ class PlayTests(TestCase):
         self.assertEqual(Play.objects.count(), self.plays_count)
 
         play_1 = Play.objects.get(pk=1)
-        self.assertEqual(play_1.student.id, "A01656585")
+        self.assertEqual(play_1.student.id, "a01656585")
         self.assertEqual(play_1.game.pk, self.xbox_1.pk)
         self.assertTrue(play_1.ended)
         self.assertIsNotNone(play_1.time)
 
         play_2 = Play.objects.get(pk=2)
-        self.assertEqual(play_2.student.id, "A01656583")
+        self.assertEqual(play_2.student.id, "a01656583")
         self.assertEqual(play_2.game.pk, self.xbox_1.pk)
         self.assertFalse(play_2.ended)
         self.assertIsNotNone(play_2.time)
 
         play_3 = Play.objects.get(pk=3)
-        self.assertEqual(play_3.student.id, "A01656584")
+        self.assertEqual(play_3.student.id, "a01656584")
         self.assertEqual(play_3.game.pk, self.xbox_1.pk)
         self.assertFalse(play_3.ended)
         self.assertIsNotNone(play_3.time)
 
         play_4 = Play.objects.get(pk=4)
-        self.assertEqual(play_4.student.id, "A01656587")
+        self.assertEqual(play_4.student.id, "a01656587")
         self.assertEqual(play_4.game.pk, self.xbox_2.pk)
         self.assertFalse(play_4.ended)
         self.assertIsNotNone(play_4.time)
 
         play_5 = Play.objects.get(pk=5)
-        self.assertEqual(play_5.student.id, "A01656585")
+        self.assertEqual(play_5.student.id, "a01656585")
         self.assertEqual(play_5.game.pk, self.futbolito_1.pk)
         self.assertFalse(play_5.ended)
         self.assertIsNotNone(play_5.time)
 
         play_6 = Play.objects.get(pk=6)
-        self.assertEqual(play_6.student.id, "A01656586")
+        self.assertEqual(play_6.student.id, "a01656586")
         self.assertEqual(play_6.game.pk, self.futbolito_2.pk)
         self.assertFalse(play_6.ended)
         self.assertIsNotNone(play_6.time)
 
         play_7 = Play.objects.get(pk=7)
-        self.assertEqual(play_7.student.id, "A01656585")
+        self.assertEqual(play_7.student.id, "a01656585")
         self.assertEqual(play_7.game.pk, self.billar_1.pk)
         self.assertTrue(play_7.ended)
         self.assertIsNotNone(play_7.time)
@@ -390,7 +390,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01606060",
+                    "student": "a01606060",
                     "game": self.billar_1.pk,
                 }
             ),
@@ -399,7 +399,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         response = response.json()
-        self.assertEqual(response["student"], "A01606060")
+        self.assertEqual(response["student"], "a01606060")
         self.assertEqual(response["game"], self.billar_1.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -408,7 +408,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play to be created
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.billar_1.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertNotEqual(game.start_time, previous_game_start_time)
         self.assertAlmostEqual(
             timezone.localtime(game.start_time),
@@ -424,7 +424,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01606061",
+                    "student": "a01606061",
                     "game": self.billar_2.pk,
                 }
             ),
@@ -433,7 +433,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         response = response.json()
-        self.assertEqual(response["student"], "A01606061")
+        self.assertEqual(response["student"], "a01606061")
         self.assertEqual(response["game"], self.billar_2.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -442,7 +442,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play to be created
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.billar_2.pk)
-        self.assertEqual(game._get_plays().count(), 1)
+        self.assertEqual(game.get_plays().count(), 1)
         self.assertNotEqual(game.start_time, previous_game_start_time)
         self.assertAlmostEqual(
             timezone.localtime(game.start_time),
@@ -467,7 +467,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01606062",
+                    "student": "a01606062",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -476,7 +476,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         response = response.json()
-        self.assertEqual(response["student"], "A01606062")
+        self.assertEqual(response["student"], "a01606062")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -485,7 +485,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play to be created
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.xbox_1.pk)
-        self.assertEqual(game._get_plays().count(), 3)
+        self.assertEqual(game.get_plays().count(), 3)
         self.assertNotEqual(game.start_time, play.time)
         self.assertEqual(game.start_time, previous_game_start_time)
 
@@ -497,7 +497,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01606063",
+                    "student": "a01606063",
                     "game": self.xbox_2.pk,
                 }
             ),
@@ -506,7 +506,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         response = response.json()
-        self.assertEqual(response["student"], "A01606063")
+        self.assertEqual(response["student"], "a01606063")
         self.assertEqual(response["game"], self.xbox_2.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -515,7 +515,7 @@ class PlayTests(TestCase):
         # was set to the play.time of the first play
         play = Play.objects.get(pk=response["id"])
         game = Game.objects.get(pk=self.xbox_2.pk)
-        self.assertEqual(game._get_plays().count(), 2)
+        self.assertEqual(game.get_plays().count(), 2)
         self.assertNotEqual(game.start_time, play.time)
         self.assertEqual(game.start_time, previous_game_start_time)
 
@@ -534,7 +534,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656583",
+                    "student": "a01656583",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -542,11 +542,12 @@ class PlayTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Student is already playing")
 
     def test_plays_api_create_fail_case_2(self):
         """
         CASE 2: The student has already played today
-        - Example: Student A01656585 has already played today in the Xbox 1
+        - Example: Student a01656589 has already played today in the Xbox 1
         """
         # Test: Create a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -554,7 +555,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656585",
+                    "student": "a01656589",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -562,6 +563,7 @@ class PlayTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Student has already played today")
 
     def test_plays_api_create_fail_case_3(self):
         """
@@ -580,7 +582,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656588",
+                    "student": "a01656588",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -600,7 +602,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": self.futbolito_1.pk,
                 }
             ),
@@ -620,7 +622,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": 100,
                 }
             ),
@@ -632,7 +634,7 @@ class PlayTests(TestCase):
 
     def test_plays_api_create_fail_case_7(self):
         """
-        CASE 7: The student id doesn't match the regex [A|L][0-9]{8}
+        CASE 7: The student id doesn't match the regex [a|l]{8}
         """
         # Test: Create a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -640,7 +642,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A0165658O",
+                    "student": "a0165658O",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -661,7 +663,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -679,7 +681,7 @@ class PlayTests(TestCase):
             "/rental/plays/",
             json.dumps(
                 {
-                    "student": "A01656590",
+                    "student": "a01656590",
                     "game": self.xbox_1.pk,
                 }
             ),
@@ -692,11 +694,11 @@ class PlayTests(TestCase):
         # Test: Read a play via an admin user
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.get(
-            f"/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656585")
+        self.assertEqual(response["student"], "a01656585")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertTrue(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -704,24 +706,24 @@ class PlayTests(TestCase):
         # Test: Read a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
         response = self.client.get(
-            f"/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656585")
+        self.assertEqual(response["student"], "a01656585")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertTrue(response["ended"])
         self.assertIsNotNone(response["time"])
 
     def test_plays_api_read_detail_fail(self):
         # Test: Read a play via an unauthenticated user
-        response = self.client.get(f"/rental/plays/1/")
+        response = self.client.get("/rental/plays/1/")
         self.assertEqual(response.status_code, 401)
 
         # Test: Read a play via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.get(
-            f"/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 401)
 
@@ -729,7 +731,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.xbox_1.pk,
@@ -740,7 +742,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -748,7 +750,7 @@ class PlayTests(TestCase):
         # Test: Update a play ended field via a non-admin user using PATCH
         access_token = AccessToken.for_user(self.user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "ended": True,
@@ -759,7 +761,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_1.pk)
         self.assertTrue(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -774,7 +776,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.billar_1.pk,
@@ -785,7 +787,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.billar_1.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -806,7 +808,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.xbox_2.pk,
@@ -817,7 +819,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_2.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -837,7 +839,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.xbox_2.pk,
@@ -848,7 +850,7 @@ class PlayTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
-        self.assertEqual(response["student"], "A01656583")
+        self.assertEqual(response["student"], "a01656583")
         self.assertEqual(response["game"], self.xbox_2.pk)
         self.assertFalse(response["ended"])
         self.assertIsNotNone(response["time"])
@@ -859,7 +861,7 @@ class PlayTests(TestCase):
     def test_plays_api_update_fail(self):
         # Test: Update a play via an unauthenticated user
         response = self.client.put(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             json.dumps(
                 {
                     "student": "A01656583",
@@ -874,7 +876,7 @@ class PlayTests(TestCase):
         # Test: Update a play via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "ended": True,
@@ -895,7 +897,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.futbolito_1.pk,
@@ -914,7 +916,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/5/",
+            "/rental/plays/5/",
             json.dumps(
                 {
                     "game": self.xbox_1.pk,
@@ -932,7 +934,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/8/",
+            "/rental/plays/8/",
             json.dumps(
                 {
                     "game": self.xbox_2.pk,
@@ -951,10 +953,10 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.put(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             json.dumps(
                 {
-                    "student": "A01656583",
+                    "student": "a01656583",
                     "game": self.xbox_2.pk,
                     "ended": False,
                 }
@@ -970,7 +972,7 @@ class PlayTests(TestCase):
         # Test: Delete a play via an admin user
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.delete(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 204)
@@ -978,7 +980,7 @@ class PlayTests(TestCase):
         # Test: Delete a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
         response = self.client.delete(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 204)
@@ -988,13 +990,13 @@ class PlayTests(TestCase):
 
     def test_plays_api_delete_fail(self):
         # Test: Delete a play via an unauthenticated user
-        response = self.client.delete(f"/rental/plays/1/")
+        response = self.client.delete("/rental/plays/1/")
         self.assertEqual(response.status_code, 401)
 
         # Test: Delete a play via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.delete(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 401)

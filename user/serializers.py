@@ -1,11 +1,21 @@
+"""Serializers for the user app (User management)."""
+
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import User
 from django.contrib.auth.models import Group
 from drf_spectacular.utils import extend_schema_field
+from .models import User
 
 
 def password_validation(value):
+    """
+    Validate password meets complexity requirements.
+    - At least 8 characters long
+    - At least 1 uppercase letter
+    - At least 1 lowercase letter
+    - At least 1 number
+    - At least 1 special character
+    """
     # Password must be at least 8 characters long
     if len(value) < 8:
         raise serializers.ValidationError(
@@ -34,9 +44,13 @@ def password_validation(value):
 
 
 class UserReadSerializer(serializers.ModelSerializer):
+    """Serializer for reading users but not updating them nor creating them."""
+
     is_admin = serializers.SerializerMethodField()
 
     class Meta:
+        """Meta class for UserReadSerializer with the required fields as read_only."""
+
         model = User
         fields = ("id", "email", "is_admin", "theme", "is_active")
         extra_kwargs = {
@@ -49,13 +63,20 @@ class UserReadSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(bool)
     def get_is_admin(self, obj):
+        """Return True if user is in the admin group, False otherwise."""
         return obj.groups.filter(name="admin").exists()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Serializer for creating and updating users."""
+
     is_admin = serializers.BooleanField(required=False, write_only=True)
 
     class Meta:
+        """
+        Meta class with the required fields and password and is_active as write_only.
+        """
+
         model = User
         fields = ("id", "email", "password", "is_admin", "theme", "is_active")
         extra_kwargs = {
@@ -94,17 +115,28 @@ class UserSerializer(serializers.ModelSerializer):
         return super(UserSerializer, self).update(instance, validated_data)
 
     def validate_password(self, value):
+        """Validate password meets complexity requirements."""
         return password_validation(value)
 
     def validate_email(self, value):
+        """Validate email is a tec.mx email."""
         if not value.endswith("@tec.mx"):
             raise serializers.ValidationError("Only tec.mx emails are allowed.")
         return value
 
 
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    """Serializer for requesting a password reset via email."""
+
+    email = serializers.EmailField(required=True)
+
+
 class ResetPasswordSerializer(serializers.Serializer):
+    """Serializer for resetting a password with a token."""
+
     token = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
 
     def validate_password(self, value):
+        """Validate password meets complexity requirements."""
         return password_validation(value)

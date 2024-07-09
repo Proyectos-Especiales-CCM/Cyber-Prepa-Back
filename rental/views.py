@@ -1,6 +1,21 @@
+"""
+Views for handling the Cyber rental API and the websocket updates.
+"""
+
+import logging
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+from django.db.models.deletion import ProtectedError
+from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
+from .models import Student, Play, Game, Sanction, Image
 from .serializers import (
     StudentSerializer,
     PlaySerializer,
@@ -11,37 +26,30 @@ from .serializers import (
     ImageSerializer,
     ImageReadSerializer,
 )
-from .models import Student, Play, Game, Sanction, Image
-from django.core.validators import RegexValidator
-from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.db.models.deletion import ProtectedError
-from django.utils import timezone
-import logging
-from drf_spectacular.utils import extend_schema
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
 transaction_logger = logging.getLogger("transactions")
 
 
 def send_update_message(message, sender, info=None, room_group_name="updates"):
     """Send a message to the websocket to inform about the or something else"""
-    channel_layer = get_channel_layer()
-    if message == "Plays updated":
-        data = {
-            "type": "plays_updated",
-            "message": message,
-            "info": info,
-            "sender": sender,
-        }
-    else:
-        data = {
-            "type": "update_message",
-            "message": message,
-            "sender": sender,
-        }
-    async_to_sync(channel_layer.group_send)(room_group_name, data)
+    try:
+        channel_layer = get_channel_layer()
+        if message == "Plays updated":
+            data = {
+                "type": "plays_updated",
+                "message": message,
+                "info": info,
+                "sender": sender,
+            }
+        else:
+            data = {
+                "type": "update_message",
+                "message": message,
+                "sender": sender,
+            }
+        async_to_sync(channel_layer.group_send)(room_group_name, data)
+    except Exception as e:
+        transaction_logger.error("Error sending message to websocket: %s", e)
 
 
 class PlayListCreateView(generics.ListCreateAPIView):
@@ -59,30 +67,30 @@ class PlayListCreateView(generics.ListCreateAPIView):
         """
         student_id = request.data["student"]
         try:
-            RegexValidator(r"^[A|L][0-9]{8}$")(student_id)
-        except:
+            RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
+        except ValidationError:
             return Response(
                 {"detail": "Invalid student id"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         student, created = Student.objects.get_or_create(id=student_id)
-        if created == False:
-            if student._is_playing() == True:
+        if created is False:
+            if student.is_playing() is True:
                 return Response(
                     {"detail": "Student is already playing"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if student._get_played_today() >= 1:
+            if student.get_played_today() >= 1:
                 return Response(
                     {"detail": "Student has already played today"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if student._get_weekly_plays() >= 3:
+            if student.get_weekly_plays() >= 3:
                 return Response(
                     {"detail": "Student has already played 3 times this week"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if student._get_sanctions_number() > 0:
+            if student.get_sanctions_number() > 0:
                 return Response(
                     {"detail": "Student has sanctions"},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -98,7 +106,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
 
         # If game has no plays, then this is the first play, and we should set
         # the game start_time to the play time to start counting the 50 minutes
-        if game._get_plays().count() == 0:
+        if game.get_plays().count() == 0:
             response = super().create(request, *args, **kwargs)
             play = Play.objects.get(pk=response.data["id"])
             game.start_time = play.time
@@ -110,7 +118,11 @@ class PlayListCreateView(generics.ListCreateAPIView):
                 info=game.pk,
             )
             transaction_logger.info(
-                f"{request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
+                "%s initiated play %s for student %s at game %s",
+                request.user.email,
+                play.pk,
+                play.student.id,
+                play.game.name,
             )
             return response
         else:
@@ -133,7 +145,11 @@ class PlayListCreateView(generics.ListCreateAPIView):
                 )
 
                 transaction_logger.info(
-                    f"{request.user.email} initiated play {play.pk} for student {play.student.id} at game {play.game.name}"
+                    "%s initiated play %s for student %s at game %s",
+                    request.user.email,
+                    play.pk,
+                    play.student.id,
+                    play.game.name,
                 )
                 return response
 
@@ -149,11 +165,11 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if request.data.get("student", None) != None:
+        if request.data.get("student", None) is not None:
             return Response(
                 {"detail": "Cannot change student"}, status=status.HTTP_400_BAD_REQUEST
             )
-        elif request.data.get("time", None) != None:
+        elif request.data.get("time", None) is not None:
             return Response(
                 {"detail": "Cannot change time"}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -161,15 +177,15 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         # Check if the play time has expired
         new_game = None
-        if request.data.get("game", None) != None:
+        if request.data.get("game", None) is not None:
             new_game = Game.objects.get(pk=request.data["game"])
 
             # First if, checks if both the previous and the new game time has expired
             if (
                 instance.game.start_time + timezone.timedelta(minutes=50)
                 < timezone.now()
-                or new_game.start_time != None
-                and new_game._get_plays().count() != 0
+                or new_game.start_time is not None
+                and new_game.get_plays().count() != 0
                 and new_game.start_time + timezone.timedelta(minutes=50)
                 < timezone.now()
             ):
@@ -185,13 +201,16 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
                 )
         response = super().update(request, *args, **kwargs)
         # Change the game start_time if the play is the first one
-        if new_game != None and new_game._get_plays().count() == 1:
+        if new_game is not None and new_game.get_plays().count() == 1:
             prev_game = Game.objects.get(pk=instance.game.pk)
             new_game.start_time = prev_game.start_time
             new_game.save()
 
         transaction_logger.info(
-            f"{request.user.email} updated play {instance.pk} fields {serializer.validated_data.keys()}"
+            "%s updated play %s fields %s",
+            request.user.email,
+            instance.pk,
+            serializer.validated_data.keys(),
         )
         # Send a message to the websocket to inform about the updated play
         # IMPORTANT: We need to send the info of both the previous and the new game
@@ -200,7 +219,7 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
             request.user.email,
             info=instance.game.pk,
         )
-        if new_game != None:
+        if new_game is not None:
             send_update_message(
                 "Plays updated",
                 request.user.email,
@@ -211,7 +230,9 @@ class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            transaction_logger.info(f"{request.user.email} deleted play {instance.pk}")
+            transaction_logger.info(
+                "%s deleted play %s", request.user.email, instance.pk
+            )
             response = super().destroy(request, *args, **kwargs)
             # Send a message to the websocket to inform about the deleted play
             send_update_message(
@@ -238,7 +259,7 @@ class StudentListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"{request.user.email} created student {response.data['id']}"
+            "%s created student %s", request.user.email, response.data["id"]
         )
         return response
 
@@ -255,7 +276,7 @@ class StudentDetailView(generics.RetrieveDestroyAPIView):
         try:
             instance = self.get_object()
             transaction_logger.info(
-                f"{request.user.email} deleted student {instance.id}"
+                "%s deleted student %s", request.user.email, instance.id
             )
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
@@ -284,7 +305,7 @@ class GameListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"{request.user.email} created game {response.data['name']}"
+            "%s created game %s", request.user.email, response.data["name"]
         )
         # Send a message to the websocket to inform about the new game
         send_update_message(
@@ -315,7 +336,10 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
         response = super().update(request, *args, **kwargs)
         # Log the transaction
         transaction_logger.info(
-            f"{request.user.email} updated game {response.data['name']} fields {serializer.validated_data.keys()}"
+            "%s updated game %s fields %s",
+            request.user.email,
+            response.data["name"],
+            serializer.validated_data.keys(),
         )
         # Send a message to the websocket to inform about the updated game
         send_update_message(
@@ -330,7 +354,7 @@ class GameDetailView(generics.RetrieveUpdateDestroyAPIView):
             response = super().destroy(request, *args, **kwargs)
             # Log the transaction
             transaction_logger.info(
-                f"{request.user.email} deleted game {instance.name}"
+                "%s deleted game %s", request.user.email, instance.name
             )
             # Send a message to the websocket to inform about the deleted game
             send_update_message(
@@ -355,11 +379,11 @@ class GameEndAllPlaysView(generics.GenericAPIView):
     @extend_schema(request=None, description="Set all plays of a game ended to True")
     def post(self, request, pk):
         game = generics.get_object_or_404(Game, pk=pk)
-        game._end_all_plays()
+        game.end_all_plays()
         serializer = self.get_serializer(game)
         # Log the transaction
         transaction_logger.info(
-            f"{request.user.email} ended all plays of game {game.name}"
+            "%s ended all plays of game %s", request.user.email, game.name
         )
         # Send a message to the websocket to inform about updated plays
         send_update_message(
@@ -382,8 +406,8 @@ class SanctionListCreateView(generics.ListCreateAPIView):
         student_id = request.data.get("student")
 
         try:
-            RegexValidator(r"^[A][0-9]{8}$")(student_id)
-        except:
+            RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
+        except ValidationError:
             return Response(
                 {
                     "detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."
@@ -395,7 +419,10 @@ class SanctionListCreateView(generics.ListCreateAPIView):
 
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"{request.user.email} created sanction {response.data['id']} for student {student.id}"
+            "%s created sanction %s for student %s",
+            request.user.email,
+            response.data["id"],
+            student.id,
         )
         return response
 
@@ -413,14 +440,20 @@ class SanctionDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         transaction_logger.info(
-            f"{request.user.email} updated sanction {instance.pk} fields {serializer.validated_data.keys()}"
+            "%s updated sanction %s fields %s",
+            request.user.email,
+            instance.pk,
+            serializer.validated_data.keys(),
         )
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         transaction_logger.info(
-            f"{request.user.email} deleted sanction {instance.pk} of student {instance.student.id}"
+            "%s deleted sanction %s of student %s",
+            request.user.email,
+            instance.pk,
+            instance.student.id,
         )
         return super().destroy(request, *args, **kwargs)
 
@@ -441,7 +474,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
-            f"{request.user.email} uploaded image {response.data['image']}"
+            "%s uploaded image %s", request.user.email, response.data["image"]
         )
         return response
 
@@ -461,5 +494,7 @@ class ImageDetailView(generics.RetrieveDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        transaction_logger.info(f"{request.user.email} deleted image {instance.image}")
+        transaction_logger.info(
+            "%s deleted image %s", request.user.email, instance.image
+        )
         return super().destroy(request, *args, **kwargs)
