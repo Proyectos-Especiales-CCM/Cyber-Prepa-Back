@@ -9,6 +9,24 @@ from main.permissions import IsActive, IsInAdminGroupOrStaff
 from .serializers import HealthCheckSerializer, LogSerializer
 
 
+def read_last_lines_from_file(file_path, n):
+    # Initialize the initial minimum b
+    pos = n + 1
+    lines = []
+    with open(file_path, "r", encoding="utf-8") as f:
+        while len(lines) <= n:
+            try:
+                f.seek(-pos, 2)
+            except IOError:
+                f.seek(0)
+                break
+            finally:
+                lines = list(f)
+            pos *= 2
+    lines = lines[-n:]
+    return lines
+
+
 class HealthCheck(APIView):
     serializer_class = HealthCheckSerializer
     authentication_classes = []
@@ -62,35 +80,7 @@ class LogsView(APIView):
                 status=400,
             )
 
-        # Variable to implement exponential search
-        pos = N + 1
-        # List to store last N lines
-        lines = []
-
-        # Open the file using with() so that it gets closed automatically
-        with open(
-            f"{settings.BASE_DIR}/logs/transactions_logs.log", "r", encoding="utf-8"
-        ) as f:
-            # Loop runs until the size of the list becomes equal to N
-            while len(lines) <= N:
-                # Try block to move the cursor to the pos line from the end of the file
-                try:
-                    f.seek(-pos, 2)
-
-                # Exception block to handle any runtime error (e.g., IOError)
-                except IOError:
-                    f.seek(0)
-                    break
-
-                # Finally block to add lines to the list after each iteration
-                finally:
-                    lines = list(f)
-
-                # Increase the value of the variable exponentially
-                pos *= 2
-
-        # Return the whole list which stores the last N lines
-        lines = lines[-N:]
+        lines = read_last_lines_from_file(f"{settings.BASE_DIR}/logs/transactions_logs.log", N)
 
         # Strip the line into the individual fields {timestamp, user, action} using regex
         response = []

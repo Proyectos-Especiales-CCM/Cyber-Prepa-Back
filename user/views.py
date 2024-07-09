@@ -1,5 +1,6 @@
-"""User views for CRUD operations and password reset."""
-
+"""
+User views for CRUD operations and password reset.
+"""
 import logging
 import secrets
 from django.conf import settings
@@ -10,6 +11,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError as RestValidationError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from main.permissions import IsActive, IsSameUserOrStaff, IsInAdminGroupOrStaff
 from .models import User
@@ -166,6 +168,12 @@ class UserResetPassword(generics.GenericAPIView):
         except ValidationError:
             # Do not expose if user does not exist
             pass
+        except RestValidationError:
+            # Do not expose if user does not exist
+            pass
+        except User.DoesNotExist:
+            # Do not expose if user does not exist
+            pass
         except Exception as e:
             transaction_logger.critical(
                 "An error occurred while trying to reset a password: %s", e
@@ -211,7 +219,10 @@ class UserResetPasswordConfirm(generics.GenericAPIView):
                 )
 
         except ValidationError as e:
-            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+            return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
+
+        except RestValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             transaction_logger.critical(

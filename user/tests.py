@@ -1,11 +1,11 @@
+import json
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from rest_framework_simplejwt.tokens import AccessToken
 from django.core import mail
 from django.core.cache import cache
 from django.conf import settings
-import json
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 class UserTests(TestCase):
@@ -230,10 +230,13 @@ class UserTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
         # Test: Create a user with invalid passwords
-        # Valid passwords should be at least 8 characters long, contain at least 1 digit, 2 letters, 1 uppercase letter, 1 lowercase letter, and 1 special character
+        # Valid passwords should be at least 8 characters long, contain at least 1 digit,
+        # 2 letters, 1 uppercase letter, 1 lowercase letter, and 1 special character
         invalid_passwords = [
             "",
-            "123" "!" "password",
+            "123",
+            "!",
+            "password",
             "password123",
             "Password",
             "Password123",
@@ -359,7 +362,7 @@ class UserTests(TestCase):
         # Test: Read non-existing user's details as admin
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.get(
-            f"/users/999/",
+            "/users/999/",
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
@@ -442,7 +445,7 @@ class UserTests(TestCase):
         # Test: Update a non-existing user's data
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/users/999/",
+            "/users/999/",
             json.dumps({"password": "Mypass123*"}),
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
@@ -618,7 +621,7 @@ class UserTests(TestCase):
         self.assertEqual(response.status_code, 204)
 
         # Check that NO email was sent
-        self.assertEqual(len(mail.outbox), 0)        
+        self.assertEqual(len(mail.outbox), 0)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_users_api_reset_password_confirm_success(self):

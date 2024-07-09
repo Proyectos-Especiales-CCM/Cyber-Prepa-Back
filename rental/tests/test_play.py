@@ -1,10 +1,10 @@
+import json
+from datetime import timedelta
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
 from ..models import Game, Student, Play, Sanction
-from django.utils import timezone
-from datetime import timedelta
-import json
 
 
 class PlayTests(TestCase):
@@ -694,7 +694,7 @@ class PlayTests(TestCase):
         # Test: Read a play via an admin user
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.get(
-            f"/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
@@ -706,7 +706,7 @@ class PlayTests(TestCase):
         # Test: Read a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
         response = self.client.get(
-            f"/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
         response = response.json()
@@ -717,13 +717,13 @@ class PlayTests(TestCase):
 
     def test_plays_api_read_detail_fail(self):
         # Test: Read a play via an unauthenticated user
-        response = self.client.get(f"/rental/plays/1/")
+        response = self.client.get("/rental/plays/1/")
         self.assertEqual(response.status_code, 401)
 
         # Test: Read a play via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.get(
-            f"/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/rental/plays/1/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 401)
 
@@ -731,7 +731,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.xbox_1.pk,
@@ -750,7 +750,7 @@ class PlayTests(TestCase):
         # Test: Update a play ended field via a non-admin user using PATCH
         access_token = AccessToken.for_user(self.user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "ended": True,
@@ -776,7 +776,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.billar_1.pk,
@@ -808,7 +808,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.xbox_2.pk,
@@ -839,7 +839,7 @@ class PlayTests(TestCase):
         # Test: Update a play game field via an admin user using PATCH
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.xbox_2.pk,
@@ -861,7 +861,7 @@ class PlayTests(TestCase):
     def test_plays_api_update_fail(self):
         # Test: Update a play via an unauthenticated user
         response = self.client.put(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             json.dumps(
                 {
                     "student": "A01656583",
@@ -876,7 +876,7 @@ class PlayTests(TestCase):
         # Test: Update a play via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "ended": True,
@@ -897,7 +897,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             json.dumps(
                 {
                     "game": self.futbolito_1.pk,
@@ -916,7 +916,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/5/",
+            "/rental/plays/5/",
             json.dumps(
                 {
                     "game": self.xbox_1.pk,
@@ -934,7 +934,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.patch(
-            f"/rental/plays/8/",
+            "/rental/plays/8/",
             json.dumps(
                 {
                     "game": self.xbox_2.pk,
@@ -953,7 +953,7 @@ class PlayTests(TestCase):
         """
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.put(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             json.dumps(
                 {
                     "student": "a01656583",
@@ -972,7 +972,7 @@ class PlayTests(TestCase):
         # Test: Delete a play via an admin user
         access_token = AccessToken.for_user(self.admin_user)
         response = self.client.delete(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 204)
@@ -980,7 +980,7 @@ class PlayTests(TestCase):
         # Test: Delete a play via a non-admin user
         access_token = AccessToken.for_user(self.user)
         response = self.client.delete(
-            f"/rental/plays/2/",
+            "/rental/plays/2/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 204)
@@ -990,13 +990,13 @@ class PlayTests(TestCase):
 
     def test_plays_api_delete_fail(self):
         # Test: Delete a play via an unauthenticated user
-        response = self.client.delete(f"/rental/plays/1/")
+        response = self.client.delete("/rental/plays/1/")
         self.assertEqual(response.status_code, 401)
 
         # Test: Delete a play via an inactive admin user
         access_token = AccessToken.for_user(self.inactive_admin_user)
         response = self.client.delete(
-            f"/rental/plays/1/",
+            "/rental/plays/1/",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 401)
