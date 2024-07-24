@@ -68,6 +68,7 @@ class Game(models.Model):
     Nombre, unico
     Booleano de si se muestra en la lista de juegos (Todavía se puede jugar o no)
     Fecha y hora en que el primer estudiante comenzó a jugar
+    Categoría del juego
     Ruta de la imagen del juego
 
     _get_plays: Regresa todos los juegos que se han jugado de este juego
@@ -76,6 +77,7 @@ class Game(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, unique=True)
     show = models.BooleanField(default=True)
     start_time = models.DateTimeField(null=True, blank=True)
+    category = models.CharField(max_length=100, null=True, blank=True)
     image = models.ForeignKey(
         Image, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
