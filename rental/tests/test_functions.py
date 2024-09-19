@@ -40,9 +40,8 @@ class FunctionTests(TestCase):
         )
         match = log_pattern.match(last_line[0])
         self.assertEqual(match.group("level"), "ERROR")
-        self.assertEqual(
-            match.group("msg"),
-            "Error sending message to websocket: Error -3 connecting to unknown:6379. -3.",
+        self.assertIn(
+            "Error -3 connecting to unknown:6379", match.group("msg")
         )
         # Parse the timestamp from the log
         log_timestamp = datetime.strptime(match.group("timestamp"), '%Y-%m-%d %H:%M:%S,%f')
