@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py checksuperuserexists && python manage.py runserver 0.0.0.0:8000 & daphne -b 0.0.0.0 -p 8001 main.asgi:application"
+    ports:
+      - "8000:8000"  # Django development server
+      - "8001:8001"  # Daphne (WebSockets)
+    depends_on:
+      redis:
+        condition: service_started
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"

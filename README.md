@@ -6,7 +6,8 @@
 2. [Requirements](#requirements)
 3. [To clone & setup the project](#to-clone--setup-the-project)
 4. [Deployment (Windows)](#deployment-windows)
-5. [To contribute to the project](#to-contribute-to-the-project)
+5. [Run as container (Linux Ubuntu)](#run-as-container-linux-ubuntu)
+6. [To contribute to the project](#to-contribute-to-the-project)
 
 ## App resume and guide
 
@@ -119,7 +120,7 @@ redis-server --port 6380
 :bangbang: - If you're running the redis server on a docker container, you can:
 
 ```bash
-docker run --rm -p 6379:6379 redis:7
+docker run --rm -p 6379:6379 redis:alpine
 ```
 
 ### Configure nginx
@@ -166,6 +167,18 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+### Install postgresql database
+
+Install postgresql to host machine or Set a postgresql database on Cloud
+
+```sql
+CREATE DATABASE cyberprepa;
+\c cyberprepa
+CREATE USER cyberprepadbuser WITH PASSWORD 'cyberprepadbuserpassword';
+GRANT ALL PRIVILEGES ON DATABASE cyberprepa TO cyberprepadbuser;
+GRANT ALL PRIVILEGES ON SCHEMA public TO cyberprepadbuser;
+```
+
 ### Generate the required environment variables and set DEBUG to False
 
 In the settings.py file, set DEBUG to False.
@@ -196,7 +209,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### Deply using daphne
+### Deploy using daphne
 
 ```bash
 daphne -b 0.0.0.0 -p 8001 main.asgi:application
@@ -205,7 +218,7 @@ daphne -b 0.0.0.0 -p 8001 main.asgi:application
 ### Initialize redis server or use a docker container
 
 ```bash
-docker run --rm -p 6379:6379 redis:7
+docker run --rm -p 6379:6379 redis:alpine
 ```
 
 ### Install IIS
@@ -240,6 +253,76 @@ Then run the server with SSL
 
 ```bash
 daphne -e ssl:8001:privateKey=key.pem:certKey=certificate.pem main.asgi:application
+```
+
+## Run as container (Linux Ubuntu)
+
+### Requirements for container
+
+Install postgresql to host machine or Set a postgresql database on Cloud
+
+- **IN CASE YOU DON'T WANT THE POSTGRESQL** setup and better want to use the sqlite3 ephemeral version, you may create a copy of the `.env.demo` and name it as `.env`, then uncomment the `#TESTING=true`. Then skip to the [ENV vars for container section](#update-env-vars-for-container)
+
+- After install change to **postgres user** and get into the psql command line
+
+```bash
+sudo apt install postgresql
+sudo -i -u postgres
+psql
+```
+
+Execute the following to create the database and give access to an user to the database and public schema.
+
+```sql
+CREATE DATABASE cyberprepa;
+\c cyberprepa
+CREATE USER cyberprepadbuser WITH PASSWORD 'cyberprepadbuserpassword';
+GRANT ALL PRIVILEGES ON DATABASE cyberprepa TO cyberprepadbuser;
+GRANT ALL PRIVILEGES ON SCHEMA public TO cyberprepadbuser;
+```
+
+You might as well configure postgresql to accept connections from the docker subnet in the `pg_hba.conf` file:
+
+```bash
+sudo nano /etc/postgresql/16/main/pg_hba.conf
+```
+
+Add the following line:
+
+```bash
+host    all             all             172.17.0.0/16          md5
+```
+
+Change the configuration on `postgresql.conf`
+
+```bash
+sudo nano /etc/postgresql/16/main/postgresql.conf
+```
+
+Uncomment the line and change its value.
+
+```bash
+listen_addresses = '*'
+```
+
+Then restart the service
+
+```bash
+sudo systemctl restart postgresql
+```
+
+:heavy_exclamation_mark: You may change the `16` directory to your available postgresql version installed.:heavy_exclamation_mark:
+
+### Update ENV vars for container
+
+Look at the `.env.demo` file and update the environment values to your database configuration. The current configuration is not suitable for a local Postgresql instance, you must change the `DB_HOST` to your docker gateway `172.17.0.1` so your container can connect to the database on the host machine. Finally uncomment the `#REDIS_HOST=redis` and if necessary uncomment and change the value of `#REDIS_PORT=6379`.
+
+### Compoase build and run the container
+
+Run the following command in terminal.
+
+```bash
+sudo docker compose up --build
 ```
 
 ## To contribute to the project
