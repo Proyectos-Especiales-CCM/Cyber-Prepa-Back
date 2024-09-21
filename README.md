@@ -6,7 +6,8 @@
 2. [Requirements](#requirements)
 3. [To clone & setup the project](#to-clone--setup-the-project)
 4. [Deployment (Windows)](#deployment-windows)
-5. [To contribute to the project](#to-contribute-to-the-project)
+5. [Run as container (Linux Ubuntu)](#run-as-container-linux-ubuntu)
+6. [To contribute to the project](#to-contribute-to-the-project)
 
 ## App resume and guide
 
@@ -254,11 +255,13 @@ Then run the server with SSL
 daphne -e ssl:8001:privateKey=key.pem:certKey=certificate.pem main.asgi:application
 ```
 
-## Run as container (Linux / Ubuntu)
+## Run as container (Linux Ubuntu)
 
 ### Requirements for container
 
 Install postgresql to host machine or Set a postgresql database on Cloud
+
+- **IN CASE YOU DON'T WANT THE POSTGRESQL** setup and better want to use the sqlite3 ephemeral version, you may create a copy of the `.env.demo` and name it as `.env`, then uncomment the `#TESTING=true`. Then skip to the [ENV vars for container section](#update-env-vars-for-container)
 
 - After install change to **postgres user** and get into the psql command line
 
@@ -313,6 +316,14 @@ sudo systemctl restart postgresql
 ### Update ENV vars for container
 
 Look at the `.env.demo` file and update the environment values to your database configuration. The current configuration is not suitable for a local Postgresql instance, you must change the `DB_HOST` to your docker gateway `172.17.0.1` so your container can connect to the database on the host machine. Finally uncomment the `#REDIS_HOST=redis` and if necessary uncomment and change the value of `#REDIS_PORT=6379`.
+
+### Compoase build and run the container
+
+Run the following command in terminal.
+
+```bash
+sudo docker compose up --build
+```
 
 ## To contribute to the project
 
