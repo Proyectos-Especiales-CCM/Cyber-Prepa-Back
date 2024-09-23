@@ -55,7 +55,7 @@ class GameUnauthenticatedSerializer(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return image.image.url
+        return supabase.storage.from_('Cyberprepa').get_public_url(image.image.name)
 
 
 class GameSerializer(ModelSerializer):
