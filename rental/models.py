@@ -36,10 +36,7 @@ class Image(models.Model):
                 if response.status_code != 200:
                     raise Exception(f"Upload failed with status code: {response.status_code}")
 
-                print(f"Upload status: {response.status_code}")
-
         except Exception as e:
-            print(f"Error during upload: {e}")
             # Rollback will happen automatically due to transaction.atomic()
             raise  # Re-raise the exception to propagate the error
 
@@ -57,13 +54,10 @@ class Image(models.Model):
                 if response["status_code"] != 200:
                     raise Exception(f"Failed to delete image {image_path} from Supabase.")
 
-                print(f"Image {image_path} deleted from Supabase successfully.")
-
                 # Call the parent class's delete method to delete the record from the database
                 super().delete(*args, **kwargs)
 
         except Exception as e:
-            print(f"Error during delete operation: {e}")
             # Rollback will happen automatically if an exception occurs
             raise  # Re-raise the exception to propagate the error
 
