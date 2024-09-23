@@ -72,7 +72,7 @@ SECRET_KEY=2hb40lab4)zqt0zwt=m_q^q&m11ku)9*ky0)-6hkh3@4*uuwzm
 echo "SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')" > .env
 ```
 
-Also in case you want to debug the app, set the DEBUG environment variable to True.
+Also in case you want to debug the app, set the DEBUG environment variable to True :bangbang:This will run the application with sqlite3 and a mocked supabase client:bangbang:
 
 ```dotenv
 DEBUG=True
@@ -261,7 +261,7 @@ daphne -e ssl:8001:privateKey=key.pem:certKey=certificate.pem main.asgi:applicat
 
 Install postgresql to host machine or Set a postgresql database on Cloud
 
-- **IN CASE YOU DON'T WANT THE POSTGRESQL** setup and better want to use the sqlite3 ephemeral version, you may create a copy of the `.env.demo` and name it as `.env`, then uncomment the `#TESTING=true`. Then skip to the [ENV vars for container section](#update-env-vars-for-container)
+- **IN CASE YOU DON'T WANT THE POSTGRESQL** setup and better want to use the sqlite3 ephemeral version, you may create a copy of the `.env.demo` and name it as `.env`, then uncomment the `#DEBUG=true`. Then skip to the [ENV vars for container section](#update-env-vars-for-container). :heavy_exclamation_mark: This may also run the overall application in debug mode, as consequence the **supabase** client will initialize as a Mock, to change this behavior you may change the validation in [client.py](supabasecon/client.py).
 
 - After install change to **postgres user** and get into the psql command line
 

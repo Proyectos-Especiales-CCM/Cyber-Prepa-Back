@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get("DEBUG", "True") == "True" else False
+DEBUG = True if os.environ.get("DEBUG", "False") == "True" else False
 
 ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "").split(",")
 
@@ -91,7 +91,7 @@ WSGI_APPLICATION = "main.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-if os.environ.get('TESTING') == 'true':
+if DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -264,3 +264,7 @@ SPECTACULAR_SETTINGS = {
 
 # Frontend
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+# Supabase
+SUPABASE_URL = os.environ.get("SUPABASE_URL", None)
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", None)
