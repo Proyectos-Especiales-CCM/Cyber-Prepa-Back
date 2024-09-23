@@ -92,7 +92,7 @@ class GameSerializerImageUrl(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return image.image.url
+        return image.image.name
 
 
 class SanctionSerializer(ModelSerializer):
@@ -117,4 +117,4 @@ class ImageReadSerializer(ModelSerializer):
         fields = "__all__"
 
     def get_image(self, obj: Image) -> str:
-        return obj.image.url
+        return obj.image.name
