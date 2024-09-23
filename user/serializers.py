@@ -131,7 +131,7 @@ class ResetPasswordRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
 
-class ResetPasswordSerializer(serializers.Serializer):
+class ResetPasswordConfirmSerializer(serializers.Serializer):
     """Serializer for resetting a password with a token."""
 
     token = serializers.CharField(required=True)

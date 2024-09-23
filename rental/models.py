@@ -1,6 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from supabasecon.client import supabase
 
 
 class Image(models.Model):
@@ -11,6 +12,60 @@ class Image(models.Model):
     def __str__(self):
         return self.image.name
 
+    def save(self, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                # First, save the image to a temporary location using Django's default storage
+                super().save(*args, **kwargs)
+
+                # Now, get the image file
+                image_path = self.image.path
+
+                # Determine the content type based on the file extension
+                _, ext = self.image.name.rsplit('.', 1) if '.' in self.image.name else (self.image.name, None)
+
+                # Upload the file to Supabase
+                with open(image_path, 'rb') as f:
+                    response = supabase.storage.from_("Cyberprepa").upload(
+                        file=f,
+                        path=self.image.name,
+                        file_options={"content-type": f"image/{ext}"}
+                    )
+
+                # Check the upload status code
+                if response.status_code != 200:
+                    raise Exception(f"Upload failed with status code: {response.status_code}")
+
+                print(f"Upload status: {response.status_code}")
+
+        except Exception as e:
+            print(f"Error during upload: {e}")
+            # Rollback will happen automatically due to transaction.atomic()
+            raise  # Re-raise the exception to propagate the error
+
+    def delete(self, *args, **kwargs):
+        try:
+            # Use atomic transaction to ensure consistency
+            with transaction.atomic():
+                # Extract image path from the image field
+                image_path = self.image.name
+
+                # Delete image from Supabase storage
+                response = supabase.storage.from_("Cyberprepa").remove([image_path])
+
+                # Validate the deletion status
+                if response["status_code"] != 200:
+                    raise Exception(f"Failed to delete image {image_path} from Supabase.")
+
+                print(f"Image {image_path} deleted from Supabase successfully.")
+
+                # Call the parent class's delete method to delete the record from the database
+                super().delete(*args, **kwargs)
+
+        except Exception as e:
+            print(f"Error during delete operation: {e}")
+            # Rollback will happen automatically if an exception occurs
+            raise  # Re-raise the exception to propagate the error
 
 class Student(models.Model):
     """Modelo de estudiante
