@@ -29,7 +29,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get("DEBUG", "False") == "True" else False
+print("This is the Env DEBUG value: ", os.environ.get("DEBUG"))
+DEBUG = True if os.environ.get("DEBUG", "False").lower() == "true" else False
 print("This is the debug value: ", DEBUG)
 
 ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "").split(",")
@@ -220,34 +221,53 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # CACHE
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', 6379)}/",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+if DEBUG:
+    # In-memory caching for development when DEBUG is True
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
     }
-}
+else:
+    # Redis caching for production or when DEBUG is False
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', 6379)}/",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
 
 """Cache timeout for password reset tokens"""
 PASSWORD_RESET_TOKEN_TIMEOUT = 60 * 15  # 15 minutes
 
 # Channels
 ASGI_APPLICATION = "main.asgi.application"
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [
-                (
-                    os.environ.get("REDIS_HOST", "127.0.0.1"),
-                    int(os.environ.get("REDIS_PORT", 6379)),
-                )
-            ],
+if DEBUG:
+    # Use in-memory channel layer in development
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+else:
+    # Use Redis channel layer in production
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [
+                    (
+                        os.environ.get("REDIS_HOST", "127.0.0.1"),
+                        int(os.environ.get("REDIS_PORT", 6379)),
+                    )
+                ],
+            },
         },
-    },
-}
+    }
 
 # REST Framework
 REST_FRAMEWORK = {

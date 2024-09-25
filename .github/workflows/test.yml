@@ -10,13 +10,6 @@ jobs:
     env:
       DEBUG: True
 
-    services:
-      redis:
-        image: "redis:latest"
-        ports:
-          - 6379:6379
-        options: --name=django-test-redis
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
