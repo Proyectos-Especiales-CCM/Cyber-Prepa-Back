@@ -43,5 +43,3 @@ else:
             "user_metadata": {},
         }
     ]
-
-    print("Running in debug mode. Supabase client mocked.")

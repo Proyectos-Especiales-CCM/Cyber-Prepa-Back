@@ -29,9 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-print("This is the Env DEBUG value: ", os.environ.get("DEBUG"))
 DEBUG = True if os.environ.get("DEBUG", "False").lower() == "true" else False
-print("This is the debug value: ", DEBUG)
+mode = "debug" if DEBUG else "production"
+print(f"Running in {mode} mode. Using "
+    f"{'Sqlite3 database, Supabase client mock, and in-memory cache'\
+        if DEBUG else 'PostgreSQL, Supabase, and Redis'}.")
 
 ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "").split(",")
 
