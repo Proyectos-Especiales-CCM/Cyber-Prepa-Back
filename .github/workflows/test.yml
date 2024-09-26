@@ -8,14 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TESTING: true
-
-    services:
-      redis:
-        image: "redis:latest"
-        ports:
-          - 6379:6379
-        options: --name=django-test-redis
+      DEBUG: True
 
     steps:
       - name: Checkout code

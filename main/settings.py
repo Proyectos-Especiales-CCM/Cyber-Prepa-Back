@@ -29,7 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get("DEBUG", "True") == "True" else False
+DEBUG = True if os.environ.get("DEBUG", "False").lower() == "true" else False
+mode = "debug" if DEBUG else "production"
+print(f"Running in {mode} mode. Using "
+    f"{'Sqlite3 database, Supabase client mock, and in-memory cache'\
+        if DEBUG else 'PostgreSQL, Supabase, and Redis'}.")
 
 ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "").split(",")
 
@@ -91,7 +95,7 @@ WSGI_APPLICATION = "main.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-if os.environ.get('TESTING') == 'true':
+if DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -219,34 +223,53 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # CACHE
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', 6379)}/",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+if DEBUG:
+    # In-memory caching for development when DEBUG is True
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
     }
-}
+else:
+    # Redis caching for production or when DEBUG is False
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', 6379)}/",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
 
 """Cache timeout for password reset tokens"""
 PASSWORD_RESET_TOKEN_TIMEOUT = 60 * 15  # 15 minutes
 
 # Channels
 ASGI_APPLICATION = "main.asgi.application"
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [
-                (
-                    os.environ.get("REDIS_HOST", "127.0.0.1"),
-                    int(os.environ.get("REDIS_PORT", 6379)),
-                )
-            ],
+if DEBUG:
+    # Use in-memory channel layer in development
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+else:
+    # Use Redis channel layer in production
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [
+                    (
+                        os.environ.get("REDIS_HOST", "127.0.0.1"),
+                        int(os.environ.get("REDIS_PORT", 6379)),
+                    )
+                ],
+            },
         },
-    },
-}
+    }
 
 # REST Framework
 REST_FRAMEWORK = {
@@ -264,3 +287,7 @@ SPECTACULAR_SETTINGS = {
 
 # Frontend
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+# Supabase
+SUPABASE_URL = os.environ.get("SUPABASE_URL", None)
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", None)

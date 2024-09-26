@@ -319,7 +319,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["image"], self.red_image.image.url)
+        self.assertEqual(response["image"], "mocked_public_url")
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
@@ -336,7 +336,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["image"], self.red_image.image.url)
+        self.assertEqual(response["image"], "mocked_public_url")
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
@@ -349,7 +349,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["image"], self.red_image.image.url)
+        self.assertEqual(response["image"], "mocked_public_url")
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),

@@ -654,7 +654,6 @@ class UserTests(TestCase):
             ),
             content_type="application/json",
         )
-        #print(response)
         self.assertEqual(response.status_code, 204)
 
         # Check if the password was updated

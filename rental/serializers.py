@@ -2,6 +2,7 @@ from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from .models import Student, Play, Game, Sanction, Image
 from drf_spectacular.utils import extend_schema_field
 from typing import List
+from supabasecon.client import supabase
 
 
 class StudentSerializer(ModelSerializer):
@@ -54,7 +55,7 @@ class GameUnauthenticatedSerializer(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return image.image.url
+        return supabase.storage.from_('Cyberprepa').get_public_url(image.image.name)
 
 
 class GameSerializer(ModelSerializer):
@@ -92,7 +93,7 @@ class GameSerializerImageUrl(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return image.image.url
+        return supabase.storage.from_('Cyberprepa').get_public_url(image.image.name)
 
 
 class SanctionSerializer(ModelSerializer):
@@ -117,4 +118,4 @@ class ImageReadSerializer(ModelSerializer):
         fields = "__all__"
 
     def get_image(self, obj: Image) -> str:
-        return obj.image.url
+        return supabase.storage.from_('Cyberprepa').get_public_url(obj.image.name)

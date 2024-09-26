@@ -19,7 +19,7 @@ from .serializers import (
     UserSerializer,
     UserReadSerializer,
     ResetPasswordRequestSerializer,
-    ResetPasswordSerializer,
+    ResetPasswordConfirmSerializer,
 )
 
 transaction_logger = logging.getLogger("transactions")
@@ -185,7 +185,7 @@ class UserResetPassword(generics.GenericAPIView):
 class UserResetPasswordConfirm(generics.GenericAPIView):
     """Confirm Password Reset"""
 
-    serializer_class = ResetPasswordSerializer
+    serializer_class = ResetPasswordConfirmSerializer
 
     def post(self, request):
         """Reset password with the given token."""

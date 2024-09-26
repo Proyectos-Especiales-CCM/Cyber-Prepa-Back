@@ -1,6 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from supabasecon.client import supabase
 
 
 class Image(models.Model):
@@ -11,6 +12,59 @@ class Image(models.Model):
     def __str__(self):
         return self.image.name
 
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        try:
+            # First, save the image to a temporary location using Django's default storage
+            super().save(*args, **kwargs)
+
+            # Now, get the image file
+            image_path = self.image.path
+
+            # Determine the content type based on the file extension
+            _, ext = self.image.name.rsplit('.', 1) if '.' in self.image.name else (self.image.name, None)
+
+            # Upload the file to Supabase
+            with open(image_path, 'rb') as f:
+                response = supabase.storage.from_("Cyberprepa").upload(
+                    file=f,
+                    path=self.image.name,
+                    file_options={"content-type": f"image/{ext}"}
+                )
+
+            # Check the upload status code
+            if response.status_code != 200:
+                raise Exception(f"Upload failed with status code: {response.status_code}")
+
+        except Exception as e:
+            # Rollback will happen automatically due to transaction.atomic()
+            raise  # Re-raise the exception to propagate the error
+
+    @transaction.atomic
+    def delete(self, *args, **kwargs):
+        try:
+            # Extract image path from the image field
+            image_path = self.image.name
+            # Delete image from Supabase storage
+            response = supabase.storage.from_("Cyberprepa").remove([image_path])
+
+            # Check if the response contains a valid status code inside 'metadata'
+            if response and isinstance(response, list):
+                # Assume the first item in the response list contains the metadata
+                metadata = response[0].get('metadata', {})
+                status_code = metadata.get('httpStatusCode')
+
+                if status_code != 200:
+                    raise Exception(f"Failed to delete image {image_path} from Supabase. HTTP Status: {status_code}")
+            else:
+                raise Exception(f"Unexpected response format: {response}")
+
+            # Call the parent class's delete method to delete the record from the database
+            super().delete(*args, **kwargs)
+
+        except Exception as e:
+            # Rollback will be triggered automatically due to the atomic block
+            raise e
 
 class Student(models.Model):
     """Modelo de estudiante
