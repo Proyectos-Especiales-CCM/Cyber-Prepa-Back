@@ -1,8 +1,8 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from .models import Student, Play, Game, Sanction, Image
-from drf_spectacular.utils import extend_schema_field
 from typing import List
+from drf_spectacular.utils import extend_schema_field
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from supabasecon.client import supabase
+from .models import Student, Play, Game, Sanction, Image
 
 
 class StudentSerializer(ModelSerializer):
@@ -42,7 +42,7 @@ class PlaySerializer(ModelSerializer):
 class GameUnauthenticatedSerializer(ModelSerializer):
     plays = SerializerMethodField()
     image = SerializerMethodField()
-    
+
     class Meta:
         model = Game
         fields = "__all__"
@@ -50,7 +50,7 @@ class GameUnauthenticatedSerializer(ModelSerializer):
     @extend_schema_field(int)
     def get_plays(self, obj: Game) -> int:
         return obj.get_plays().count()
-    
+
     def get_image(self, obj: Game) -> str:
         image = obj.image
         if image is None:
@@ -88,7 +88,7 @@ class GameSerializerImageUrl(ModelSerializer):
     @extend_schema_field(PlaySerializer(many=True))
     def get_plays(self, obj: Game) -> List[dict]:
         return PlaySerializer(obj.get_plays(), many=True).data
-    
+
     def get_image(self, obj: Game) -> str:
         image = obj.image
         if image is None:

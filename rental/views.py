@@ -55,7 +55,7 @@ def send_update_message(message, sender, info=None, room_group_name="updates"):
 class PlayListCreateView(generics.ListCreateAPIView):
     """Create and Read Plays"""
 
-    queryset = Play.objects.all()
+    queryset = Play.objects.all().order_by("pk")
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive]
     serializer_class = PlaySerializer
@@ -291,7 +291,7 @@ class StudentDetailView(generics.RetrieveDestroyAPIView):
 class GameListCreateView(generics.ListCreateAPIView):
     """Create and Read Games"""
 
-    queryset = Game.objects.all()
+    queryset = Game.objects.all().order_by("pk")
     permission_classes = [AdminWriteAllRead]
 
     def get_serializer_class(self):
@@ -397,7 +397,7 @@ class GameEndAllPlaysView(generics.GenericAPIView):
 class SanctionListCreateView(generics.ListCreateAPIView):
     """Create and Read Sanctions"""
 
-    queryset = Sanction.objects.all()
+    queryset = Sanction.objects.all().order_by("pk")
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive]
     serializer_class = SanctionSerializer
@@ -410,7 +410,7 @@ class SanctionListCreateView(generics.ListCreateAPIView):
         except ValidationError:
             return Response(
                 {
-                    "detail": "Invalid student ID format. It should start with 'A' followed by 8 digits."
+                    "detail": "Invalid student ID. It should start with an 'A-a' followed by 8 digits."
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -461,7 +461,7 @@ class SanctionDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ImageListCreateView(generics.ListCreateAPIView):
     """Create and Read Images"""
 
-    queryset = Image.objects.all()
+    queryset = Image.objects.all().order_by("pk")
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive, IsInAdminGroupOrStaff]
 
