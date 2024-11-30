@@ -2,11 +2,11 @@ import os
 import io
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import AccessToken
-from ..models import Image
-from PIL import Image as PILImage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
+from PIL import Image as PILImage
+from rest_framework_simplejwt.tokens import AccessToken
+from rental.models import Image
 
 
 class ImageTests(TestCase):
@@ -102,7 +102,7 @@ class ImageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response = response.json()
         self.assertEqual(response["id"], self.image.pk)
-        self.assertRegex(response["image"], "mocked_public_url")
+        self.assertRegex(response["image"], "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png")
 
     def test_images_api_read_detail_fail(self):
         # Test: Read an image without an authenticated user
