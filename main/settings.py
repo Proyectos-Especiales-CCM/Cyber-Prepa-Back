@@ -243,7 +243,7 @@ else:
         }
     }
 
-"""Cache timeout for password reset tokens"""
+# Cache timeout for password reset tokens
 PASSWORD_RESET_TOKEN_TIMEOUT = 60 * 15  # 15 minutes
 
 # Channels
