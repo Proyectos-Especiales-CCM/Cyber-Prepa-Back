@@ -14,9 +14,15 @@ from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
-from .models import Student, Play, Game, Sanction, Image
+from main.permissions import (
+    IsActive,
+    IsInAdminGroupOrStaff,
+    AdminWriteAllRead,
+    UsersWriteAllRead,
+)
+from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
 from .serializers import (
+    NoticeSerializer,
     StudentSerializer,
     PlaySerializer,
     GameUnauthenticatedSerializer,
@@ -25,6 +31,7 @@ from .serializers import (
     SanctionSerializer,
     ImageSerializer,
     ImageReadSerializer,
+    MaterialSerializer,
 )
 
 transaction_logger = logging.getLogger("transactions")
@@ -498,3 +505,87 @@ class ImageDetailView(generics.RetrieveDestroyAPIView):
             "%s deleted image %s", request.user.email, instance.image
         )
         return super().destroy(request, *args, **kwargs)
+
+
+class NoticeListCreateView(generics.ListCreateAPIView):
+    """Create and Read Notices"""
+
+    queryset = Notice.objects.all().order_by("pk")
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = NoticeSerializer
+
+
+class NoticeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Notice(id)"""
+
+    queryset = Notice.objects.all()
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = NoticeSerializer
+
+
+class StudentSetForgotIdView(generics.GenericAPIView):
+    """Set a play to end and sets forgoten_id to True"""
+
+    permission_classes = [IsActive]
+    serializer_class = StudentSerializer
+
+    @extend_schema(
+        request=None,
+        description="End the requested play and the student forgoten_id to True",
+    )
+    def post(self, request, pk):
+        play = generics.get_object_or_404(Play, pk=pk)
+        student = play.student
+        student.forgoten_id = True
+        student.save()
+        serializer = self.get_serializer(student)
+        # Log the transaction
+        transaction_logger.info(
+            "%s ended play for %s and forgotten id %s",
+            request.user.email,
+            play.game.name,
+            student.pk,
+        )
+        # Send a message to the websocket to inform about the new play
+        send_update_message(
+            "Plays updated",
+            request.user.email,
+            info=play.game.pk,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StudentRemoveForgotIdView(generics.GenericAPIView):
+    """Sets forgoten_id to False"""
+
+    permission_classes = [IsActive]
+    serializer_class = StudentSerializer
+
+    @extend_schema(
+        request=None,
+        description="Set student forgoten_id to False",
+    )
+    def post(self, request, pk):
+        student = generics.get_object_or_404(Student, pk=pk)
+        student.forgoten_id = False
+        student.save()
+        serializer = self.get_serializer(student)
+        # Log the transaction
+        transaction_logger.info("%s returned id to %s", request.user.email, student.pk)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MaterialListCreateView(generics.ListCreateAPIView):
+    """Creates and reads all available material"""
+
+    queryset = Material.objects.all().order_by("pk")
+    permission_classes = [AdminWriteAllRead]
+    serializer_class = [MaterialSerializer]
+
+
+class OwedMaterialListCreateView(generics.ListCreateAPIView):
+    """Creates and reads all available material"""
+
+    queryset = OwedMaterial.objects.all().order_by("pk")
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = [MaterialSerializer]

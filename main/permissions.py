@@ -58,7 +58,8 @@ class IsInAdminGroupOrStaff(BasePermission):
 
 class AdminWriteAllRead(BasePermission):
     """
-    Custom permission to only allow admin users to write and create instances, but allow all users to read.
+    Custom permission to only allow admin users to write and create instances,
+    but allow all users to read.
     """
 
     def has_permission(self, request, view):
@@ -76,3 +77,26 @@ class AdminWriteAllRead(BasePermission):
 
         # Allow admin users to write
         return request.user.groups.filter(name="admin").exists()
+
+
+class UsersWriteAllRead(BasePermission):
+    """
+    Custom permission to only allow ACTIVE users to write and create instances,
+    but allow EVERYONE (including anonymous users) to read.
+    """
+
+    def has_permission(self, request, view):
+        # Allow everyone to read
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Allow active users to write
+        return request.user.is_active
+
+    def has_object_permission(self, request, view, obj):
+        # Allow everyone to read
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Allow active users to write
+        return request.user.is_active
