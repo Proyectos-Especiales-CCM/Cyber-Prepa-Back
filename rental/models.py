@@ -96,6 +96,9 @@ class Student(models.Model):
     def is_playing(self):
         return Play.objects.filter(student=self, ended=False).count() > 0
 
+    def get_active_play(self):
+        return Play.objects.filter(student=self, ended=False).first()
+
     def get_played_today(self):
         current_time = timezone.localtime(timezone.now())
         return Play.objects.filter(student=self, time__date=current_time.date()).count()
@@ -130,6 +133,7 @@ class Student(models.Model):
     def get_owed_material(self):
         return OwedMaterial.objects.filter(
             student=self,
+            delivered__lt=models.F("amount"),
         )
 
     def __str__(self):

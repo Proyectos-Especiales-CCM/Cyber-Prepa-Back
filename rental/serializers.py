@@ -1,6 +1,6 @@
 from typing import List
 from drf_spectacular.utils import extend_schema_field
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import ModelSerializer, SerializerMethodField, CharField
 from supabasecon.client import supabase
 from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
 
@@ -54,7 +54,7 @@ class MaterialSerializer(ModelSerializer):
 
 
 class OwedMaterialSerializer(ModelSerializer):
-
+    material_name = CharField(source="material.name", read_only=True)
     class Meta:
         model = OwedMaterial
         fields = "__all__"

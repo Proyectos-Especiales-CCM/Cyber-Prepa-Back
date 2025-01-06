@@ -15,6 +15,11 @@ from .views import (
     StudentRemoveForgotIdView,
     NoticeListCreateView,
     NoticeDetailView,
+    MaterialListCreateView,
+    MaterialDetailView,
+    OwedMaterialListCreateView,
+    OwedMaterialDetailView,
+    OwedMaterialReturnView,
 )
 
 urlpatterns = [
@@ -33,4 +38,9 @@ urlpatterns = [
     path("images/<int:pk>/", ImageDetailView.as_view(), name="images-detail"),
     path("notices/", NoticeListCreateView.as_view(), name="notices-list-create"),
     path("notices/<int:pk>/", NoticeDetailView.as_view(), name="notices-detail"),
+    path("materials/", MaterialListCreateView.as_view(), name="materials-list-create"),
+    path("materials/<int:pk>/", MaterialDetailView.as_view(), name="materials-detail"),
+    path("owed-materials/", OwedMaterialListCreateView.as_view(), name="owed-materials-list-create"),
+    path("owed-materials/<int:pk>/", OwedMaterialDetailView.as_view(), name="owed-materials-detail"),
+    path("owed-materials/<int:pk>/return/", OwedMaterialReturnView.as_view(), name="owed-materials-return"),
 ]
