@@ -424,7 +424,7 @@ class SanctionListCreateView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        student, created = Student.objects.get_or_create(id=student_id)
+        student, _ = Student.objects.get_or_create(id=student_id)
 
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
@@ -602,7 +602,13 @@ class OwedMaterialListCreateView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         # Validate request data through regex and serializer
-        student_id = request.data["student"]
+        try:
+            student_id = request.data["student"]
+        except KeyError:
+            return Response(
+                {"student": ["This field is required"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
         except ValidationError:
@@ -691,6 +697,32 @@ class OwedMaterialDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [UsersWriteAllRead]
     serializer_class = OwedMaterialSerializer
 
+    def update(self, request, *args, **kwargs):
+        # Validate request data through regex and serializer
+        try:
+            student_id = request.data["student"]
+            RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
+            _ = Student.objects.get_or_create(id=student_id)
+        except KeyError:
+            pass
+        except ValidationError:
+            return Response(
+                {"detail": "Invalid student id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        response = super().update(request, *args, **kwargs)
+        transaction_logger.info(
+            "%s updated owed material %s fields %s",
+            request.user.email,
+            response.data["id"],
+            serializer.validated_data.keys(),
+        )
+        return response
+
 
 class OwedMaterialReturnView(generics.GenericAPIView):
     """Return an OwedMaterial"""
@@ -732,7 +764,7 @@ class OwedMaterialReturnView(generics.GenericAPIView):
                 owed_material.delivered -= owed_material.amount
                 owed_material.amount = 0
                 if owed_material.delivered == 0:
-                    owed_material.delete() 
+                    owed_material.delete()
                 else:
                     owed_material.save()
             else:
