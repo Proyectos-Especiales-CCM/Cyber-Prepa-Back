@@ -355,7 +355,7 @@ class PlayTests(TestCase):
             "/rental/plays/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), self.plays_count)
+        self.assertEqual(len(response.data["results"]), self.plays_count)
 
         # Test: List all plays via a non-admin user
         access_token = AccessToken.for_user(self.user)
@@ -363,7 +363,7 @@ class PlayTests(TestCase):
             "/rental/plays/", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), self.plays_count)
+        self.assertEqual(len(response.data["results"]), self.plays_count)
 
     def test_plays_api_read_list_fail(self):
         # Test: List all plays via an unauthenticated user
