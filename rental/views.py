@@ -14,6 +14,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from main.permissions import (
     IsActive,
@@ -22,6 +23,7 @@ from main.permissions import (
     UsersWriteAllRead,
 )
 from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
+from .pagination import PlayListPagination
 from .serializers import (
     NoticeSerializer,
     StudentSerializer,
@@ -34,6 +36,7 @@ from .serializers import (
     ImageReadSerializer,
     MaterialSerializer,
     OwedMaterialSerializer,
+    PaginationMetadataSerializer,
 )
 
 transaction_logger = logging.getLogger("transactions")
@@ -68,6 +71,7 @@ class PlayListCreateView(generics.ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive]
     serializer_class = PlaySerializer
+    pagination_class = PlayListPagination
 
     def create(self, request, *args, **kwargs):
         """
@@ -161,6 +165,29 @@ class PlayListCreateView(generics.ListCreateAPIView):
                     play.game.name,
                 )
                 return response
+
+
+class PlayPaginationMetadataView(APIView):
+    """View to return pagination metadata for Play objects."""
+
+    def get(self, request, *args, **kwargs):
+        # Pagination details
+        page_size = request.query_params.get("page_size", 100)
+        total_count = Play.objects.count()
+        num_pages = (total_count // int(page_size)) + (
+            1 if total_count % int(page_size) > 0 else 0
+        )
+
+        pagination_data = {
+            "count": total_count,
+            "num_pages": num_pages,
+            "page_size": int(page_size),
+        }
+
+        serializer = PaginationMetadataSerializer(data=pagination_data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.data)
 
 
 class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):

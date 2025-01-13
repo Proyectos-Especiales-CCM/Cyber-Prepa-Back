@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     PlayListCreateView,
+    PlayPaginationMetadataView,
     PlayDetailView,
     StudentListCreateView,
     StudentDetailView,
@@ -24,6 +25,7 @@ from .views import (
 
 urlpatterns = [
     path("plays/", PlayListCreateView.as_view(), name="plays-list-create"),
+    path("plays/pagination/", PlayPaginationMetadataView.as_view(), name="plays-pagination"),
     path("plays/<int:pk>/", PlayDetailView.as_view(), name="plays-detail"),
     path("plays/<int:pk>/forgot-id", StudentSetForgotIdView.as_view(), name="plays-forgotten-id"),
     path("students/", StudentListCreateView.as_view(), name="students-list-create"),

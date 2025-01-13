@@ -1,6 +1,12 @@
 from typing import List
 from drf_spectacular.utils import extend_schema_field
-from rest_framework.serializers import ModelSerializer, SerializerMethodField, CharField
+from rest_framework.serializers import (
+    ModelSerializer,
+    SerializerMethodField,
+    CharField,
+    Serializer,
+    IntegerField,
+)
 from supabasecon.client import supabase
 from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
 
@@ -55,6 +61,7 @@ class MaterialSerializer(ModelSerializer):
 
 class OwedMaterialSerializer(ModelSerializer):
     material_name = CharField(source="material.name", read_only=True)
+
     class Meta:
         model = OwedMaterial
         fields = "__all__"
@@ -115,6 +122,7 @@ class GameSerializer(ModelSerializer):
 
 class GameSerializerImageUrl(ModelSerializer):
     """Serializer for reading the game via an authenticated user"""
+
     plays = SerializerMethodField()
     image = SerializerMethodField()
 
@@ -161,3 +169,15 @@ class ImageReadSerializer(ModelSerializer):
 
     def get_image(self, obj: Image) -> str:
         return supabase.storage.from_("Cyberprepa").get_public_url(obj.image.name)
+
+
+class PaginationMetadataSerializer(Serializer):
+    count = IntegerField()
+    num_pages = IntegerField()
+    page_size = IntegerField()
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
