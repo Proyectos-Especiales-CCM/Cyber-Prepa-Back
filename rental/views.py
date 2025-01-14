@@ -67,7 +67,7 @@ def send_update_message(message, sender, info=None, room_group_name="updates"):
 class PlayListCreateView(generics.ListCreateAPIView):
     """Create and Read Plays"""
 
-    queryset = Play.objects.all().order_by("pk")
+    queryset = Play.objects.all().order_by("-pk")
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive]
     serializer_class = PlaySerializer
