@@ -1,6 +1,6 @@
+from unittest.mock import Mock
 from django.conf import settings
 from supabase import create_client, Client
-from unittest.mock import Mock
 
 # Initialize Supabase client only if not in debug mode
 if not settings.DEBUG:
@@ -15,10 +15,8 @@ else:
     # Define a mock for the supabase client
     supabase = Mock()
 
-    # Mock the methods you need for your tests
-    supabase.storage.from_.return_value.get_public_url.return_value = (
-        "mocked_public_url"
-    )
+    # Mocked methods required for tests
+    supabase.storage.from_.return_value.get_public_url.return_value = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png"
     supabase.storage.from_.return_value.upload.return_value = Mock(status_code=200)
     supabase.storage.from_.return_value.remove.return_value = [
         {

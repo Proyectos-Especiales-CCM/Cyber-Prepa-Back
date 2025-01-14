@@ -1,10 +1,9 @@
 services:
   web:
     build: .
-    command: sh -c "python manage.py migrate && python manage.py checksuperuserexists && python manage.py runserver 0.0.0.0:8000 & daphne -b 0.0.0.0 -p 8001 main.asgi:application"
+    command: sh -c "python manage.py migrate && python manage.py checksuperuserexists && daphne -b 0.0.0.0 -p 8000 main.asgi:application"
     ports:
       - "8000:8000"  # Django development server
-      - "8001:8001"  # Daphne (WebSockets)
     depends_on:
       redis:
         condition: service_started
@@ -18,14 +17,6 @@ services:
     ports:
       - "6379:6379"
 
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Mount your updated Nginx config
-    depends_on:
-      - web
 networks:
   cyber-net:
     driver: bridge

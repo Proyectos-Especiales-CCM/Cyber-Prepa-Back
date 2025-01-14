@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 class Command(BaseCommand):
     help = 'Create a superuser if none exists'
+    requires_migrations_checks = True
 
     def handle(self, *args, **kwargs):
         User = get_user_model()

@@ -1,8 +1,14 @@
 from typing import List
 from drf_spectacular.utils import extend_schema_field
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import (
+    ModelSerializer,
+    SerializerMethodField,
+    CharField,
+    Serializer,
+    IntegerField,
+)
 from supabasecon.client import supabase
-from .models import Student, Play, Game, Sanction, Image
+from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
 
 
 class StudentSerializer(ModelSerializer):
@@ -33,10 +39,51 @@ class StudentSerializer(ModelSerializer):
         return obj.get_sanctions_number()
 
 
+class NoticeSerializer(ModelSerializer):
+    class Meta:
+        model = Notice
+        fields = "__all__"
+
+
+class NoticeGameSerializer(ModelSerializer):
+    class Meta:
+        model = Notice
+        fields = ["cause", "play", "created_at"]
+        read_only_fields = ["cause", "play", "created_at"]
+
+
+class MaterialSerializer(ModelSerializer):
+
+    class Meta:
+        model = Material
+        fields = "__all__"
+
+
+class OwedMaterialSerializer(ModelSerializer):
+    material_name = CharField(source="material.name", read_only=True)
+
+    class Meta:
+        model = OwedMaterial
+        fields = "__all__"
+
+
 class PlaySerializer(ModelSerializer):
     class Meta:
         model = Play
         fields = "__all__"
+
+
+class PlayGameSerializer(PlaySerializer):
+    owed_materials = SerializerMethodField()
+    notices = SerializerMethodField()
+
+    @extend_schema_field(NoticeSerializer(many=True))
+    def get_notices(self, obj: Play) -> List[dict]:
+        return NoticeGameSerializer(obj.student.get_notices(), many=True).data
+
+    @extend_schema_field(OwedMaterialSerializer(many=True))
+    def get_owed_materials(self, obj: Play) -> List[dict]:
+        return OwedMaterialSerializer(obj.student.get_owed_material(), many=True).data
 
 
 class GameUnauthenticatedSerializer(ModelSerializer):
@@ -55,7 +102,7 @@ class GameUnauthenticatedSerializer(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return supabase.storage.from_('Cyberprepa').get_public_url(image.image.name)
+        return supabase.storage.from_("Cyberprepa").get_public_url(image.image.name)
 
 
 class GameSerializer(ModelSerializer):
@@ -74,6 +121,8 @@ class GameSerializer(ModelSerializer):
 
 
 class GameSerializerImageUrl(ModelSerializer):
+    """Serializer for reading the game via an authenticated user"""
+
     plays = SerializerMethodField()
     image = SerializerMethodField()
 
@@ -85,15 +134,15 @@ class GameSerializerImageUrl(ModelSerializer):
             "image": {"read_only": True},
         }
 
-    @extend_schema_field(PlaySerializer(many=True))
+    @extend_schema_field(PlayGameSerializer(many=True))
     def get_plays(self, obj: Game) -> List[dict]:
-        return PlaySerializer(obj.get_plays(), many=True).data
+        return PlayGameSerializer(obj.get_plays(), many=True).data
 
     def get_image(self, obj: Game) -> str:
         image = obj.image
         if image is None:
             return None
-        return supabase.storage.from_('Cyberprepa').get_public_url(image.image.name)
+        return supabase.storage.from_("Cyberprepa").get_public_url(image.image.name)
 
 
 class SanctionSerializer(ModelSerializer):
@@ -113,9 +162,22 @@ class ImageSerializer(ModelSerializer):
 
 class ImageReadSerializer(ModelSerializer):
     image = SerializerMethodField()
+
     class Meta:
         model = Image
         fields = "__all__"
 
     def get_image(self, obj: Image) -> str:
-        return supabase.storage.from_('Cyberprepa').get_public_url(obj.image.name)
+        return supabase.storage.from_("Cyberprepa").get_public_url(obj.image.name)
+
+
+class PaginationMetadataSerializer(Serializer):
+    count = IntegerField()
+    num_pages = IntegerField()
+    page_size = IntegerField()
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass

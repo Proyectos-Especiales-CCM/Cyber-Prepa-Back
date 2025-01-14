@@ -1,5 +1,5 @@
 from django.db import models, transaction
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 from django.utils import timezone
 from supabasecon.client import supabase
 
@@ -18,26 +18,31 @@ class Image(models.Model):
             # First, save the image to a temporary location using Django's default storage
             super().save(*args, **kwargs)
 
-            # Now, get the image file
-            image_path = self.image.path
+            ### The pylint suggestion is suppresed because path property is defined at runtime
+            image_path = self.image.path  # pylint: disable=no-member
 
             # Determine the content type based on the file extension
-            _, ext = self.image.name.rsplit('.', 1) if '.' in self.image.name else (self.image.name, None)
+            _, ext = (
+                self.image.name.rsplit(".", 1)
+                if "." in self.image.name
+                else (self.image.name, None)
+            )
 
             # Upload the file to Supabase
-            with open(image_path, 'rb') as f:
+            with open(image_path, "rb") as f:
                 response = supabase.storage.from_("Cyberprepa").upload(
                     file=f,
                     path=self.image.name,
-                    file_options={"content-type": f"image/{ext}"}
+                    file_options={"content-type": f"image/{ext}"},
                 )
 
             # Check the upload status code
             if response.status_code != 200:
-                raise Exception(f"Upload failed with status code: {response.status_code}")
+                raise Exception(
+                    f"Upload failed with status code: {response.status_code}"
+                )
 
-        except Exception as e:
-            # Rollback will happen automatically due to transaction.atomic()
+        except Exception:
             raise  # Re-raise the exception to propagate the error
 
     @transaction.atomic
@@ -51,11 +56,13 @@ class Image(models.Model):
             # Check if the response contains a valid status code inside 'metadata'
             if response and isinstance(response, list):
                 # Assume the first item in the response list contains the metadata
-                metadata = response[0].get('metadata', {})
-                status_code = metadata.get('httpStatusCode')
+                metadata = response[0].get("metadata", {})
+                status_code = metadata.get("httpStatusCode")
 
                 if status_code != 200:
-                    raise Exception(f"Failed to delete image {image_path} from Supabase. HTTP Status: {status_code}")
+                    raise Exception(
+                        f"Failed to delete image {image_path} from Supabase. HTTP Status: {status_code}"
+                    )
             else:
                 raise Exception(f"Unexpected response format: {response}")
 
@@ -65,6 +72,7 @@ class Image(models.Model):
         except Exception as e:
             # Rollback will be triggered automatically due to the atomic block
             raise e
+
 
 class Student(models.Model):
     """Modelo de estudiante
@@ -87,6 +95,9 @@ class Student(models.Model):
 
     def is_playing(self):
         return Play.objects.filter(student=self, ended=False).count() > 0
+
+    def get_active_play(self):
+        return Play.objects.filter(student=self, ended=False).first()
 
     def get_played_today(self):
         current_time = timezone.localtime(timezone.now())
@@ -112,6 +123,18 @@ class Student(models.Model):
         return Sanction.objects.filter(
             student=self, end_time__gte=timezone.now()
         ).count()
+
+    def get_notices(self):
+        """Only notices a year ago from now will be taken into account"""
+        return Notice.objects.filter(
+            student=self, created_at__gte=timezone.now() - timezone.timedelta(days=365)
+        )
+
+    def get_owed_material(self):
+        return OwedMaterial.objects.filter(
+            student=self,
+            delivered__lt=models.F("amount"),
+        )
 
     def __str__(self):
         return str(self.id)
@@ -166,6 +189,75 @@ class Play(models.Model):
         return f"{self.student} - {self.game.name} - {self.time}"
 
 
+class Notice(models.Model):
+    """Modelo de llamadas de atención
+    Causa de la llamada de atención
+    Partida en la que se le llamó la atención
+    Estudiante al que se le llama la atención
+    """
+
+    cause = models.CharField(max_length=255, null=False, blank=False)
+    play = models.ForeignKey(Play, on_delete=models.PROTECT, null=True, blank=True)
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, null=False, blank=False
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.student} - {self.cause}"
+
+
+class Material(models.Model):
+    """Modelo para guardar registro del tipo de material que existe en Cyber"""
+
+    name = models.CharField(max_length=100, null=False, blank=False)
+    amount = models.FloatField(default=0)
+    description = models.TextField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.name}. Amount: {self.amount}"
+
+
+class OwedMaterial(models.Model):
+    """
+    Modelo para guardar que un estudiante debe material
+
+    material: Referencia al Material que debe el estudiante
+    amount: Cantidad de material que debe el estudiante
+    delivered: Cantidad de material que ha entregado el estudiante
+    student: Referencia al estudiante que debe el material
+    delivery_deadline: Fecha limite para entregar el material,
+      en caso de que no se entregue se le sancionará
+    """
+
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, null=False, blank=False
+    )
+    amount = models.FloatField(default=1, validators=[MinValueValidator(0.0)])
+    delivered = models.FloatField(default=0, validators=[MinValueValidator(0.0)])
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, null=False, blank=False
+    )
+    delivery_deadline = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @classmethod
+    def get_possible_sanctions(cls) -> models.QuerySet["OwedMaterial"]:
+        """
+        Get all the **OwedMaterial** that are *past* the *delivery deadline*
+        and have *not* been *fully delivered* without associated sanctions
+        """
+        return cls.objects.filter(
+            sanctions__isnull=True,
+            delivery_deadline__lt=timezone.now(),
+            delivered__lt=models.F("amount"),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.student.pk} owes {self.amount} {self.material.name}"
+
+
 class Sanction(models.Model):
     """Modelo de sanciones
     Causa de la sancion, escrita por el usuario
@@ -177,6 +269,13 @@ class Sanction(models.Model):
 
     cause = models.CharField(max_length=255, null=False, blank=False)
     play = models.ForeignKey(Play, on_delete=models.PROTECT, null=True, blank=True)
+    owed_material = models.ForeignKey(
+        OwedMaterial,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sanctions",
+    )
     student = models.ForeignKey(
         Student, on_delete=models.PROTECT, null=False, blank=False
     )

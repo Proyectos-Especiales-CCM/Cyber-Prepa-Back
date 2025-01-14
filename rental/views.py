@@ -8,15 +8,24 @@ from channels.layers import get_channel_layer
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
+from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from main.permissions import IsActive, IsInAdminGroupOrStaff, AdminWriteAllRead
-from .models import Student, Play, Game, Sanction, Image
+from main.permissions import (
+    IsActive,
+    IsInAdminGroupOrStaff,
+    AdminWriteAllRead,
+    UsersWriteAllRead,
+)
+from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
+from .pagination import PlayListPagination
 from .serializers import (
+    NoticeSerializer,
     StudentSerializer,
     PlaySerializer,
     GameUnauthenticatedSerializer,
@@ -25,6 +34,9 @@ from .serializers import (
     SanctionSerializer,
     ImageSerializer,
     ImageReadSerializer,
+    MaterialSerializer,
+    OwedMaterialSerializer,
+    PaginationMetadataSerializer,
 )
 
 transaction_logger = logging.getLogger("transactions")
@@ -55,10 +67,11 @@ def send_update_message(message, sender, info=None, room_group_name="updates"):
 class PlayListCreateView(generics.ListCreateAPIView):
     """Create and Read Plays"""
 
-    queryset = Play.objects.all().order_by("pk")
+    queryset = Play.objects.all().order_by("-pk")
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsActive]
     serializer_class = PlaySerializer
+    pagination_class = PlayListPagination
 
     def create(self, request, *args, **kwargs):
         """
@@ -152,6 +165,29 @@ class PlayListCreateView(generics.ListCreateAPIView):
                     play.game.name,
                 )
                 return response
+
+
+class PlayPaginationMetadataView(APIView):
+    """View to return pagination metadata for Play objects."""
+
+    def get(self, request, *args, **kwargs):
+        # Pagination details
+        page_size = request.query_params.get("page_size", 100)
+        total_count = Play.objects.count()
+        num_pages = (total_count // int(page_size)) + (
+            1 if total_count % int(page_size) > 0 else 0
+        )
+
+        pagination_data = {
+            "count": total_count,
+            "num_pages": num_pages,
+            "page_size": int(page_size),
+        }
+
+        serializer = PaginationMetadataSerializer(data=pagination_data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.data)
 
 
 class PlayDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -415,7 +451,7 @@ class SanctionListCreateView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        student, created = Student.objects.get_or_create(id=student_id)
+        student, _ = Student.objects.get_or_create(id=student_id)
 
         response = super().create(request, *args, **kwargs)
         transaction_logger.info(
@@ -498,3 +534,286 @@ class ImageDetailView(generics.RetrieveDestroyAPIView):
             "%s deleted image %s", request.user.email, instance.image
         )
         return super().destroy(request, *args, **kwargs)
+
+
+class NoticeListCreateView(generics.ListCreateAPIView):
+    """Create and Read Notices"""
+
+    queryset = Notice.objects.all().order_by("pk")
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = NoticeSerializer
+
+
+class NoticeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Notice(id)"""
+
+    queryset = Notice.objects.all()
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = NoticeSerializer
+
+
+class StudentSetForgotIdView(generics.GenericAPIView):
+    """Set a play to end and sets forgoten_id to True"""
+
+    permission_classes = [IsActive]
+    serializer_class = StudentSerializer
+
+    @extend_schema(
+        request=None,
+        description="End the requested play and the student forgoten_id to True",
+    )
+    def post(self, request, pk):
+        play = generics.get_object_or_404(Play, pk=pk)
+        student = play.student
+        student.forgoten_id = True
+        student.save()
+        serializer = self.get_serializer(student)
+        # Log the transaction
+        transaction_logger.info(
+            "%s ended play for %s and forgotten id %s",
+            request.user.email,
+            play.game.name,
+            student.pk,
+        )
+        # Send a message to the websocket to inform about the new play
+        send_update_message(
+            "Plays updated",
+            request.user.email,
+            info=play.game.pk,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StudentRemoveForgotIdView(generics.GenericAPIView):
+    """Sets forgoten_id to False"""
+
+    permission_classes = [IsActive]
+    serializer_class = StudentSerializer
+
+    @extend_schema(
+        request=None,
+        description="Set student forgoten_id to False",
+    )
+    def post(self, request, pk):
+        student = generics.get_object_or_404(Student, pk=pk)
+        student.forgoten_id = False
+        student.save()
+        serializer = self.get_serializer(student)
+        # Log the transaction
+        transaction_logger.info("%s returned id to %s", request.user.email, student.pk)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MaterialListCreateView(generics.ListCreateAPIView):
+    """Creates and reads all available material"""
+
+    queryset = Material.objects.all().order_by("pk")
+    permission_classes = [AdminWriteAllRead]
+    serializer_class = MaterialSerializer
+
+
+class MaterialDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Material(id)"""
+
+    queryset = Material.objects.all()
+    permission_classes = [AdminWriteAllRead]
+    serializer_class = MaterialSerializer
+
+
+class OwedMaterialListCreateView(generics.ListCreateAPIView):
+    """Creates and reads all available material"""
+
+    queryset = OwedMaterial.objects.all().order_by("pk")
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = OwedMaterialSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Validate request data through regex and serializer
+        try:
+            student_id = request.data["student"]
+        except KeyError:
+            return Response(
+                {"student": ["This field is required"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
+        except ValidationError:
+            return Response(
+                {"detail": "Invalid student id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        student = Student.objects.get_or_create(id=student_id)[0]
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        material = serializer.validated_data.get("material")
+
+        # Get the owed material for the student and material if exists
+        owed_material = OwedMaterial.objects.filter(
+            student=student, material=material
+        ).first()
+        if owed_material is not None:
+            amount = serializer.validated_data.get("amount")
+            if not amount:
+                return Response(
+                    {"amount": ["This field is required"]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            owed_material.amount += amount
+            owed_material.delivered += serializer.validated_data.get("delivered", 0)
+            # Update delivey_deadline with the closest date
+            delivery_deadline = serializer.validated_data.get("delivery_deadline")
+            if delivery_deadline is not None:
+                if owed_material.delivery_deadline is None:
+                    owed_material.delivery_deadline = delivery_deadline
+                elif delivery_deadline < owed_material.delivery_deadline:
+                    owed_material.delivery_deadline = delivery_deadline
+            # Reverify if student has already delivered material so we can update the amount
+            if owed_material.delivered >= owed_material.amount:
+                # Delete sanction if any
+                sanction = Sanction.objects.filter(owed_material=owed_material).first()
+                if sanction is not None:
+                    sanction.delete()
+                    transaction_logger.info(
+                        "%s deleted sanction for student %s",
+                        request.user.email,
+                        owed_material.student.id,
+                    )
+                # Reset the owed material to display no owed material
+                owed_material.delivered -= owed_material.amount
+                owed_material.amount = 0
+                if owed_material.delivered == 0:
+                    owed_material.delete()
+                    transaction_logger.info(
+                        "%s added %s owed %s for student %s and was fully delivered, deleting",
+                        request.user.email,
+                        amount,
+                        material.name,
+                        student.id,
+                    )
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+            owed_material.save()
+            response = self.get_serializer(owed_material)
+            transaction_logger.info(
+                "%s added %s owed %s for student %s",
+                request.user.email,
+                amount,
+                material.name,
+                student.id,
+            )
+            return Response(response.data, status=status.HTTP_201_CREATED)
+        else:
+            response = super().create(request, *args, **kwargs)
+            transaction_logger.info(
+                "%s created owed %s - %s for student %s",
+                request.user.email,
+                response.data["amount"],
+                material.name,
+                student.id,
+            )
+            return response
+
+
+class OwedMaterialDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete OwedMaterial(id)"""
+
+    queryset = OwedMaterial.objects.all()
+    permission_classes = [UsersWriteAllRead]
+    serializer_class = OwedMaterialSerializer
+
+    def update(self, request, *args, **kwargs):
+        # Validate request data through regex and serializer
+        try:
+            student_id = request.data["student"]
+            RegexValidator(r"^[a|l][0-9]{8}$")(student_id)
+            _ = Student.objects.get_or_create(id=student_id)
+        except KeyError:
+            pass
+        except ValidationError:
+            return Response(
+                {"detail": "Invalid student id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        response = super().update(request, *args, **kwargs)
+        transaction_logger.info(
+            "%s updated owed material %s fields %s",
+            request.user.email,
+            response.data["id"],
+            serializer.validated_data.keys(),
+        )
+        return response
+
+
+class OwedMaterialReturnView(generics.GenericAPIView):
+    """Return an OwedMaterial"""
+
+    permission_classes = [IsActive]
+    serializer_class = OwedMaterialSerializer
+
+    @extend_schema(
+        request=None,
+        description="Return an OwedMaterial",
+    )
+    def post(self, request, pk):
+        owed_material = generics.get_object_or_404(OwedMaterial, pk=pk)
+        data = request.data
+        amount = data.get("amount", None)
+        if amount is None:
+            return Response(
+                {"amount": ["This field is required"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not isinstance(amount, int) or amount <= 0:
+            return Response(
+                {"amount": ["Must be a positive number"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        with transaction.atomic():
+            owed_material.delivered += amount
+            if owed_material.delivered >= owed_material.amount:
+                # Delete sanction if any
+                sanction = Sanction.objects.filter(owed_material=owed_material).first()
+                if sanction is not None:
+                    sanction.delete()
+                    transaction_logger.info(
+                        "%s deleted sanction for student %s",
+                        request.user.email,
+                        owed_material.student.id,
+                    )
+                # Reset the owed material to display no owed material
+                owed_material.delivered -= owed_material.amount
+                owed_material.amount = 0
+                if owed_material.delivered == 0:
+                    owed_material.delete()
+                else:
+                    owed_material.save()
+            else:
+                owed_material.save()
+        serializer = self.get_serializer(owed_material)
+
+        # Send a message to the websocket to inform about the returned material
+        # only if the student is currently playing
+        play = owed_material.student.get_active_play()
+        if play is not None:
+            send_update_message(
+                "Plays updated",
+                request.user.email,
+                info=play.game.pk,
+            )
+
+        # Log the transaction
+        transaction_logger.info(
+            "%s returned material %s - %s for %s",
+            request.user.email,
+            amount,
+            owed_material.material.name,
+            owed_material.student.id,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
