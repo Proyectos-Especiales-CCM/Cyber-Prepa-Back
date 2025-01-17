@@ -670,6 +670,24 @@ class OwedMaterialListCreateView(generics.ListCreateAPIView):
                     owed_material.delivery_deadline = delivery_deadline
                 elif delivery_deadline < owed_material.delivery_deadline:
                     owed_material.delivery_deadline = delivery_deadline
+            else:
+                # Create an inmediate sanction if there is no delivery_deadline
+                owed_material.delivery_deadline = None
+                sanction = Sanction(
+                    cause=f"Creando sanción por deber {owed_material.amount} {material.name}",
+                    owed_material=owed_material,
+                    student=student,
+                    # Approx. 4 years duration
+                    end_time=timezone.now() + timezone.timedelta(weeks=4 * 12 * 4),
+                )
+                sanction.save()
+                transaction_logger.info(
+                    "%s creo sancion para %s por deber %s %s",
+                    request.user.email,
+                    student.id,
+                    owed_material.amount,
+                    material.name,
+                )
             # Reverify if student has already delivered material so we can update the amount
             if owed_material.delivered >= owed_material.amount:
                 # Delete sanction if any
@@ -677,9 +695,9 @@ class OwedMaterialListCreateView(generics.ListCreateAPIView):
                 if sanction is not None:
                     sanction.delete()
                     transaction_logger.info(
-                        "%s deleted sanction for student %s",
+                        "%s deleted sanction for student %s material fully delivered",
                         request.user.email,
-                        owed_material.student.id,
+                        student.id,
                     )
                 # Reset the owed material to display no owed material
                 owed_material.delivered -= owed_material.amount
@@ -707,6 +725,22 @@ class OwedMaterialListCreateView(generics.ListCreateAPIView):
             return Response(response.data, status=status.HTTP_201_CREATED)
         else:
             response = super().create(request, *args, **kwargs)
+            # Aqui crear la sanción en caso de que no haya fecha límite
+            if response.data["delivery_deadline"] is None:
+                sanction = Sanction(
+                    cause=f"Creando sanción por deber {response.data['amount']} {material.name}",
+                    owed_material=OwedMaterial.objects.filter(pk=response.data["id"]).first(),
+                    student=student,
+                    # Approx. 4 years duration
+                    end_time=timezone.now() + timezone.timedelta(weeks=4 * 12 * 4),
+                )
+                sanction.save()
+                transaction_logger.info(
+                    "%s created sanction for student %s material %s",
+                    request.user.email,
+                    student.id,
+                    response.data["id"],
+                )
             transaction_logger.info(
                 "%s created owed %s - %s for student %s",
                 request.user.email,
@@ -783,9 +817,10 @@ class OwedMaterialReturnView(generics.GenericAPIView):
                 if sanction is not None:
                     sanction.delete()
                     transaction_logger.info(
-                        "%s deleted sanction for student %s",
+                        "%s deleted sanction for student %s material fully returned owmatid %s",
                         request.user.email,
                         owed_material.student.id,
+                        owed_material.pk,
                     )
                 # Reset the owed material to display no owed material
                 owed_material.delivered -= owed_material.amount
