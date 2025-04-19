@@ -4,10 +4,20 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 
+class OnlineUsersConsumer(WebsocketConsumer):
+    """ 
+    Websocket consumer for getting the online users at the index page.
+    """
+
+    def connect(self):
+        return super().connect()
+
+
 class UpdatesConsumer(WebsocketConsumer):
     """ 
     Websocket consumer for getting the updates of the systems data at the
     index page.
+    TODO: Update to only messages from authenticated users
     TODO: Use this consumer to update the admin CRUD with the data updates
     
     Models interaction is restricted for these consumers.

@@ -21,6 +21,8 @@ from .views import (
     OwedMaterialListCreateView,
     OwedMaterialDetailView,
     OwedMaterialReturnView,
+    AnnouncementListCreateView,
+    AnnouncementDetailView,
 )
 
 urlpatterns = [
@@ -45,4 +47,6 @@ urlpatterns = [
     path("owed-materials/", OwedMaterialListCreateView.as_view(), name="owed-materials-list-create"),
     path("owed-materials/<int:pk>/", OwedMaterialDetailView.as_view(), name="owed-materials-detail"),
     path("owed-materials/<int:pk>/return/", OwedMaterialReturnView.as_view(), name="owed-materials-return"),
+    path("announcements/", AnnouncementListCreateView.as_view(), name="announcements-list-create"),
+    path("announcements/<int:pk>/", AnnouncementDetailView.as_view(), name="announcements-detail"),
 ]

@@ -8,7 +8,7 @@ from rest_framework.serializers import (
     IntegerField,
 )
 from supabasecon.client import supabase
-from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
+from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial, Announcement
 
 
 class StudentSerializer(ModelSerializer):
@@ -181,3 +181,9 @@ class PaginationMetadataSerializer(Serializer):
 
     def update(self, instance, validated_data):
         pass
+
+
+class AnnouncementSerializer(ModelSerializer):
+    class Meta:
+        model = Announcement
+        fields = "__all__"
