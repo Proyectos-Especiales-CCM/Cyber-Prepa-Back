@@ -16,6 +16,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from utils.strings import safe_ascii
 from main.permissions import (
     IsActive,
     IsInAdminGroupOrStaff,
@@ -889,7 +890,7 @@ class AnnouncementListCreateView(generics.ListCreateAPIView):
         )
         # Log creation of announcement
         transaction_logger.info(
-            "%s created announcement %s", request.user.email, response.data["title"]
+            "%s created announcement %s", request.user.email, safe_ascii(response.data["title"])
         )
         return response
 
@@ -910,7 +911,7 @@ class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
         transaction_logger.info(
             "%s updated announcement %s fields %s",
             request.user.email,
-            response.data["title"],
+            safe_ascii(response.data["title"]),
             serializer.validated_data.keys(),
         )
         # Send a message to the websocket to inform about the updated announcement
@@ -928,7 +929,7 @@ class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
             "%s deleted announcement %s %s",
             request.user.email,
             instance.pk,
-            instance.title,
+            safe_ascii(instance.title),
         )
         # Send a message to the websocket to inform about the deleted announcement
         send_update_message(
