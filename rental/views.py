@@ -22,7 +22,17 @@ from main.permissions import (
     AdminWriteAllRead,
     UsersWriteAllRead,
 )
-from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial
+from .models import (
+    Student,
+    Play,
+    Game,
+    Sanction,
+    Image,
+    Notice,
+    Material,
+    OwedMaterial,
+    Announcement,
+)
 from .pagination import PlayListPagination
 from .serializers import (
     NoticeSerializer,
@@ -37,6 +47,7 @@ from .serializers import (
     MaterialSerializer,
     OwedMaterialSerializer,
     PaginationMetadataSerializer,
+    AnnouncementSerializer,
 )
 
 transaction_logger = logging.getLogger("transactions")
@@ -852,3 +863,76 @@ class OwedMaterialReturnView(generics.GenericAPIView):
             owed_material.student.id,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AnnouncementListCreateView(generics.ListCreateAPIView):
+    """Create and Read Announcements"""
+
+    permission_classes = [AdminWriteAllRead]
+    serializer_class = AnnouncementSerializer
+
+    def get_queryset(self):
+        """Filter announcements based on query parameters"""
+        queryset = Announcement.objects.all().order_by("start_at")
+        # Show only announcements that have not ended
+        only_active = self.request.query_params.get("only-active")
+        if only_active:
+            queryset = queryset.filter(end_at__gte=timezone.now())
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        # Send a message to the websocket to inform about the new announcement
+        send_update_message(
+            "Announcements updated",
+            request.user.email,
+        )
+        # Log creation of announcement
+        transaction_logger.info(
+            "%s created announcement %s", request.user.email, response.data["title"]
+        )
+        return response
+
+
+class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, Update and Delete Announcement(id)"""
+
+    queryset = Announcement.objects.all()
+    permission_classes = [AdminWriteAllRead]
+    serializer_class = AnnouncementSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        response = super().update(request, *args, **kwargs)
+        # Log the transaction
+        transaction_logger.info(
+            "%s updated announcement %s fields %s",
+            request.user.email,
+            response.data["title"],
+            serializer.validated_data.keys(),
+        )
+        # Send a message to the websocket to inform about the updated announcement
+        send_update_message(
+            "Announcements updated",
+            request.user.email,
+        )
+        return response
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        # Log the transaction
+        transaction_logger.info(
+            "%s deleted announcement %s %s",
+            request.user.email,
+            instance.pk,
+            instance.title,
+        )
+        # Send a message to the websocket to inform about the deleted announcement
+        send_update_message(
+            "Announcements updated",
+            request.user.email,
+        )
+        return response

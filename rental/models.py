@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, MinValueValidator
 from django.utils import timezone
 from supabasecon.client import supabase
@@ -61,7 +62,7 @@ class Image(models.Model):
 
                 if status_code != 200:
                     raise Exception(
-                        f"Failed to delete image {image_path} from Supabase. HTTP Status: {status_code}"
+                        f"Failed to delete image {image_path} from Supabase. HTTP Status: {status_code}"  # pylint: disable=line-too-long
                     )
             else:
                 raise Exception(f"Unexpected response format: {response}")
@@ -284,3 +285,38 @@ class Sanction(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.start_time} - {self.end_time}"
+
+
+class Announcement(models.Model):
+    """Model for announcements
+
+    title: Announcement title
+    content: Announcement content
+    created_at: Timestamp when the announcement was created
+    start_at: Date and time when the announcement becomes visible
+    end_at: Date and time when the announcement expires
+    """
+
+    title = models.CharField(max_length=255)
+    content = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    start_at = models.DateTimeField(blank=False, null=False, default=timezone.now)
+    end_at = models.DateTimeField(blank=False, null=False, default=timezone.now)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["start_at"]),
+        ]
+
+    def clean(self):
+        """Ensure `end_at` is later than `start_at`"""
+        if self.end_at and self.start_at and self.end_at <= self.start_at:
+            raise ValidationError({"end_at": "end_at must be later than start_at"})
+
+    def save(self, *args, **kwargs):
+        """Run clean() before saving"""
+        self.clean()  # Ensures validation is enforced when calling `.save()`
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.title)
