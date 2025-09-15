@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
 from django.db import transaction
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import generics
@@ -84,6 +85,8 @@ class PlayListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsActive]
     serializer_class = PlaySerializer
     pagination_class = PlayListPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["student"]
 
     def create(self, request, *args, **kwargs):
         """
