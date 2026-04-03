@@ -319,7 +319,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["image"], "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png")
+        self.assertEqual(response["image"], "https://avatars.githubusercontent.com/u/85468901?s=96&v=4")
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
@@ -336,7 +336,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["image"], "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png")
+        self.assertEqual(response["image"], "https://avatars.githubusercontent.com/u/85468901?s=96&v=4")
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),
@@ -349,7 +349,7 @@ class GameTests(TestCase):
         response = response.json()
         self.assertEqual(response["name"], "Xbox")
         self.assertTrue(response["show"])
-        self.assertEqual(response["image"], "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png")
+        self.assertEqual(response["image"], "https://avatars.githubusercontent.com/u/85468901?s=96&v=4")
         self.assertEqual(
             response["start_time"],
             timezone.localtime(Game.objects.get(name="Xbox").start_time).isoformat(),

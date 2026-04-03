@@ -1,78 +1,68 @@
-from django.db import models, transaction
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator, MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
+from django.db import models, transaction
 from django.utils import timezone
-from supabasecon.client import supabase
+
+from google_storage.client import storage_client
 
 
 class Image(models.Model):
     """Modelo de imagenes"""
 
-    image = models.ImageField(upload_to="images/")
+    image = models.ImageField(upload_to="cyberprepa/")
 
     def __str__(self):
         return self.image.name
 
     @transaction.atomic
     def save(self, *args, **kwargs):
-        try:
-            # First, save the image to a temporary location using Django's default storage
-            super().save(*args, **kwargs)
+        # First, save the image to a temporary location using Django's default
+        # storage
+        super().save(*args, **kwargs)
 
-            ### The pylint suggestion is suppresed because path property is defined at runtime
-            image_path = self.image.path  # pylint: disable=no-member
+        ### The pylint suggestion is suppresed because path property is defined
+        # at runtime
+        image_path = self.image.path  # pylint: disable=no-member
 
-            # Determine the content type based on the file extension
-            _, ext = (
-                self.image.name.rsplit(".", 1)
-                if "." in self.image.name
-                else (self.image.name, None)
+        # Determine the content type based on the file extension
+        _, ext = (
+            self.image.name.rsplit(".", 1)
+            if "." in self.image.name
+            else (self.image.name, None)
+        )
+
+        # Upload the file to GCS
+        with open(image_path, "rb") as f:
+            response = storage_client.upload(
+                file=f,
+                path=self.image.name,
+                file_options={"content-type": f"image/{ext}"},
             )
 
-            # Upload the file to Supabase
-            with open(image_path, "rb") as f:
-                response = supabase.storage.from_("Cyberprepa").upload(
-                    file=f,
-                    path=self.image.name,
-                    file_options={"content-type": f"image/{ext}"},
-                )
-
-            # Check the upload status code
-            if response.status_code != 200:
-                raise Exception(
-                    f"Upload failed with status code: {response.status_code}"
-                )
-
-        except Exception:
-            raise  # Re-raise the exception to propagate the error
+        # Check the upload status code
+        if response.status_code != 200:
+            raise Exception(
+                f"Upload failed with status code: {response.status_code}"
+            )
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
-        try:
-            # Extract image path from the image field
-            image_path = self.image.name
-            # Delete image from Supabase storage
-            response = supabase.storage.from_("Cyberprepa").remove([image_path])
+        # Extract image path from the image field
+        image_path = self.image.name
+        # Delete image from GCS
+        response = storage_client.remove(image_path)
 
-            # Check if the response contains a valid status code inside 'metadata'
-            if response and isinstance(response, list):
-                # Assume the first item in the response list contains the metadata
-                metadata = response[0].get("metadata", {})
-                status_code = metadata.get("httpStatusCode")
+        # Check if the response contains a valid status code inside 'metadata'
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to delete image {image_path} from GCS. "
+                f"HTTP Status: {response.status_code}"
+                f"Message: {response.message}"
+            )
 
-                if status_code != 200:
-                    raise Exception(
-                        f"Failed to delete image {image_path} from Supabase. HTTP Status: {status_code}"  # pylint: disable=line-too-long
-                    )
-            else:
-                raise Exception(f"Unexpected response format: {response}")
-
-            # Call the parent class's delete method to delete the record from the database
-            super().delete(*args, **kwargs)
-
-        except Exception as e:
-            # Rollback will be triggered automatically due to the atomic block
-            raise e
+        # Call the parent class's delete method to delete the record from the
+        # database
+        super().delete(*args, **kwargs)
 
 
 class Student(models.Model):
@@ -88,7 +78,9 @@ class Student(models.Model):
     """
 
     id = models.CharField(
-        primary_key=True, max_length=9, validators=[RegexValidator(r"^[a|l][0-9]{8}$")]
+        primary_key=True,
+        max_length=9,
+        validators=[RegexValidator(r"^[a|l][0-9]{8}$")],
     )
     name = models.CharField(max_length=100, null=True, blank=True)
     forgoten_id = models.BooleanField(default=False)
@@ -102,7 +94,9 @@ class Student(models.Model):
 
     def get_played_today(self):
         current_time = timezone.localtime(timezone.now())
-        return Play.objects.filter(student=self, time__date=current_time.date()).count()
+        return Play.objects.filter(
+            student=self, time__date=current_time.date()
+        ).count()
 
     def get_weekly_plays(self):
         today = timezone.localtime(timezone.now())
@@ -128,7 +122,8 @@ class Student(models.Model):
     def get_notices(self):
         """Only notices a year ago from now will be taken into account"""
         return Notice.objects.filter(
-            student=self, created_at__gte=timezone.now() - timezone.timedelta(days=365)
+            student=self,
+            created_at__gte=timezone.now() - timezone.timedelta(days=365),
         )
 
     def get_owed_material(self):
@@ -151,7 +146,9 @@ class Game(models.Model):
     _get_plays: Regresa todos los juegos que se han jugado de este juego
     """
 
-    name = models.CharField(max_length=100, null=False, blank=False, unique=True)
+    name = models.CharField(
+        max_length=100, null=False, blank=False, unique=True
+    )
     show = models.BooleanField(default=True)
     start_time = models.DateTimeField(null=True, blank=True)
     image = models.ForeignKey(
@@ -182,7 +179,9 @@ class Play(models.Model):
     student = models.ForeignKey(
         Student, on_delete=models.PROTECT, null=False, blank=False
     )
-    game = models.ForeignKey(Game, on_delete=models.PROTECT, null=False, blank=False)
+    game = models.ForeignKey(
+        Game, on_delete=models.PROTECT, null=False, blank=False
+    )
     ended = models.BooleanField(default=False)
     time = models.DateTimeField(auto_now_add=True)
 
@@ -198,7 +197,9 @@ class Notice(models.Model):
     """
 
     cause = models.CharField(max_length=255, null=False, blank=False)
-    play = models.ForeignKey(Play, on_delete=models.PROTECT, null=True, blank=True)
+    play = models.ForeignKey(
+        Play, on_delete=models.PROTECT, null=True, blank=True
+    )
     student = models.ForeignKey(
         Student, on_delete=models.PROTECT, null=False, blank=False
     )
@@ -235,7 +236,9 @@ class OwedMaterial(models.Model):
         Material, on_delete=models.PROTECT, null=False, blank=False
     )
     amount = models.FloatField(default=1, validators=[MinValueValidator(0.0)])
-    delivered = models.FloatField(default=0, validators=[MinValueValidator(0.0)])
+    delivered = models.FloatField(
+        default=0, validators=[MinValueValidator(0.0)]
+    )
     student = models.ForeignKey(
         Student, on_delete=models.PROTECT, null=False, blank=False
     )
@@ -269,7 +272,9 @@ class Sanction(models.Model):
     """
 
     cause = models.CharField(max_length=255, null=False, blank=False)
-    play = models.ForeignKey(Play, on_delete=models.PROTECT, null=True, blank=True)
+    play = models.ForeignKey(
+        Play, on_delete=models.PROTECT, null=True, blank=True
+    )
     owed_material = models.ForeignKey(
         OwedMaterial,
         on_delete=models.PROTECT,
@@ -300,7 +305,9 @@ class Announcement(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    start_at = models.DateTimeField(blank=False, null=False, default=timezone.now)
+    start_at = models.DateTimeField(
+        blank=False, null=False, default=timezone.now
+    )
     end_at = models.DateTimeField(blank=False, null=False, default=timezone.now)
 
     class Meta:
@@ -311,7 +318,9 @@ class Announcement(models.Model):
     def clean(self):
         """Ensure `end_at` is later than `start_at`"""
         if self.end_at and self.start_at and self.end_at <= self.start_at:
-            raise ValidationError({"end_at": "end_at must be later than start_at"})
+            raise ValidationError(
+                {"end_at": "end_at must be later than start_at"}
+            )
 
     def save(self, *args, **kwargs):
         """Run clean() before saving"""

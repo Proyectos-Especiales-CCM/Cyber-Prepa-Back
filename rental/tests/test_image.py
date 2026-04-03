@@ -102,7 +102,7 @@ class ImageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response = response.json()
         self.assertEqual(response["id"], self.image.pk)
-        self.assertRegex(response["image"], "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png")
+        self.assertEqual(response["image"], "https://avatars.githubusercontent.com/u/85468901?s=96&v=4")
 
     def test_images_api_read_detail_fail(self):
         # Test: Read an image without an authenticated user

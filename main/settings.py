@@ -11,8 +11,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import logging
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Creates a logger for this module
+logger = logging.getLogger(__name__)
 
 # Load secrets
 load_dotenv()
@@ -31,9 +36,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.environ.get("DEBUG", "False").lower() == "true" else False
 mode = "debug" if DEBUG else "production"
-print(f"Running in {mode} mode. Using "
-    f"{'Sqlite3 database, Supabase client mock, and in-memory cache'\
-        if DEBUG else 'PostgreSQL, Supabase, and Redis'}.")
+db_info = ('Sqlite3 database, GCS client mock, and in-memory cache' 
+           if DEBUG else 'PostgreSQL, GCS, and Redis')
+logger.info("Running in %s mode. Using %s.", mode, db_info)
 
 ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "").split(",")
 
@@ -166,6 +171,9 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Google Cloud Storage
+BUCKET_NAME = os.environ.get("BUCKET_NAME", "bucket-name")
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -198,6 +206,11 @@ LOGGING = {
             "filename": f"{BASE_DIR}/logs/transactions_logs.log",
             "formatter": "verbose",
         },
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
     },
     "loggers": {
         "django": {
@@ -214,8 +227,16 @@ LOGGING = {
             "maxBytes": 1024 * 1024 * 10,  # 10MB
             "backupCount": 10,
         },
+        "rest_framework_simplejwt": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
+
+if 'test' in sys.argv:
+    LOGGING['loggers']['rest_framework_simplejwt']['level'] = 'ERROR'
 
 # EMAIL
 
@@ -292,7 +313,3 @@ SPECTACULAR_SETTINGS = {
 
 # Frontend
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-
-# Supabase
-SUPABASE_URL = os.environ.get("SUPABASE_URL", None)
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", None)

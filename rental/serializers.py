@@ -1,14 +1,27 @@
 from typing import List
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.serializers import (
-    ModelSerializer,
-    SerializerMethodField,
     CharField,
-    Serializer,
     IntegerField,
+    ModelSerializer,
+    Serializer,
+    SerializerMethodField,
 )
-from supabasecon.client import supabase
-from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial, Announcement
+
+from google_storage.client import storage_client
+
+from .models import (
+    Announcement,
+    Game,
+    Image,
+    Material,
+    Notice,
+    OwedMaterial,
+    Play,
+    Sanction,
+    Student,
+)
 
 
 class StudentSerializer(ModelSerializer):
@@ -83,7 +96,9 @@ class PlayGameSerializer(PlaySerializer):
 
     @extend_schema_field(OwedMaterialSerializer(many=True))
     def get_owed_materials(self, obj: Play) -> List[dict]:
-        return OwedMaterialSerializer(obj.student.get_owed_material(), many=True).data
+        return OwedMaterialSerializer(
+            obj.student.get_owed_material(), many=True
+        ).data
 
 
 class GameUnauthenticatedSerializer(ModelSerializer):
@@ -102,7 +117,7 @@ class GameUnauthenticatedSerializer(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return supabase.storage.from_("Cyberprepa").get_public_url(image.image.name)
+        return storage_client.get_public_url(image.image.name)
 
 
 class GameSerializer(ModelSerializer):
@@ -142,7 +157,7 @@ class GameSerializerImageUrl(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return supabase.storage.from_("Cyberprepa").get_public_url(image.image.name)
+        return storage_client.get_public_url(image.image.name)
 
 
 class SanctionSerializer(ModelSerializer):
@@ -168,7 +183,7 @@ class ImageReadSerializer(ModelSerializer):
         fields = "__all__"
 
     def get_image(self, obj: Image) -> str:
-        return supabase.storage.from_("Cyberprepa").get_public_url(obj.image.name)
+        return storage_client.get_public_url(obj.image.name)
 
 
 class PaginationMetadataSerializer(Serializer):
