@@ -17,7 +17,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Creates a logger for this module
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("django")
 
 # Load secrets
 load_dotenv()

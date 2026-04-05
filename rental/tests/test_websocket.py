@@ -216,7 +216,6 @@ class WebSocketTests(TestCase):
 
         # User 1 receives the list [User A]
         resp1 = await conn1.receive_json_from()
-        self.assertEqual(resp1["event"], "user_list_update")
         self.assertIn(self.user_a.email, resp1["users"])
 
         # 2. Second user joins
@@ -306,7 +305,6 @@ class WebSocketTests(TestCase):
 
         # 4. User B should receive an update list [User B only]
         resp = await conn_b.receive_json_from()
-        self.assertEqual(resp["event"], "user_list_update")
         self.assertNotIn(self.user_a.email, resp["users"])
         self.assertIn(self.user_b.email, resp["users"])
 

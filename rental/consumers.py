@@ -1,8 +1,12 @@
 import json
+import logging
 from collections import Counter
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+
+
+logger = logging.getLogger("django")
 
 
 class OnlineUsersConsumer(WebsocketConsumer):
@@ -78,11 +82,7 @@ class OnlineUsersConsumer(WebsocketConsumer):
         Handler for the 'user_list_update' event.
         Sends the full list of online emails to the React client.
         """
-        self.send(
-            text_data=json.dumps(
-                {"event": "user_list_update", "users": event["users"]}
-            )
-        )
+        self.send(text_data=json.dumps({"users": event["users"]}))
 
 
 class UpdatesConsumer(WebsocketConsumer):
@@ -142,7 +142,16 @@ class UpdatesConsumer(WebsocketConsumer):
         if not user or not user.is_authenticated:
             return
 
-        text_data_json = json.loads(text_data)
+        try:
+            text_data_json = json.loads(text_data)
+        except Exception as e:
+            logger.warning(
+                'Failed to parse JSON message from raw text data: "%s" | Error: %s',
+                text_data,
+                str(e),
+            )
+            # If the message is not a valid JSON, ignore it
+            return
         message = text_data_json["message"]
 
         if message == "Plays updated":
