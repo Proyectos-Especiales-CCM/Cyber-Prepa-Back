@@ -173,6 +173,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Google Cloud Storage
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "bucket-name")
+DEFAULT_IMAGE_URL = os.environ.get("DEFAULT_IMAGE_URL", "")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
