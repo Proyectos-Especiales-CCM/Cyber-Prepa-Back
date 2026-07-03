@@ -1,14 +1,31 @@
+import logging
 from typing import List
+
+from django.conf import settings
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.serializers import (
-    ModelSerializer,
-    SerializerMethodField,
     CharField,
-    Serializer,
     IntegerField,
+    ModelSerializer,
+    Serializer,
+    SerializerMethodField,
 )
-from supabasecon.client import supabase
-from .models import Student, Play, Game, Sanction, Image, Notice, Material, OwedMaterial, Announcement
+
+from google_storage.client import storage_client
+
+logger = logging.getLogger("django")
+
+from .models import (
+    Announcement,
+    Game,
+    Image,
+    Material,
+    Notice,
+    OwedMaterial,
+    Play,
+    Sanction,
+    Student,
+)
 
 
 class StudentSerializer(ModelSerializer):
@@ -83,7 +100,9 @@ class PlayGameSerializer(PlaySerializer):
 
     @extend_schema_field(OwedMaterialSerializer(many=True))
     def get_owed_materials(self, obj: Play) -> List[dict]:
-        return OwedMaterialSerializer(obj.student.get_owed_material(), many=True).data
+        return OwedMaterialSerializer(
+            obj.student.get_owed_material(), many=True
+        ).data
 
 
 class GameUnauthenticatedSerializer(ModelSerializer):
@@ -102,7 +121,11 @@ class GameUnauthenticatedSerializer(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return supabase.storage.from_("Cyberprepa").get_public_url(image.image.name)
+        try:
+            return storage_client.get_public_url(image.image.name)
+        except Exception:
+            logger.warning("Failed to get public URL for image %s", image.image.name)
+            return settings.DEFAULT_IMAGE_URL
 
 
 class GameSerializer(ModelSerializer):
@@ -142,7 +165,11 @@ class GameSerializerImageUrl(ModelSerializer):
         image = obj.image
         if image is None:
             return None
-        return supabase.storage.from_("Cyberprepa").get_public_url(image.image.name)
+        try:
+            return storage_client.get_public_url(image.image.name)
+        except Exception:
+            logger.warning("Failed to get public URL for image %s", image.image.name)
+            return settings.DEFAULT_IMAGE_URL
 
 
 class SanctionSerializer(ModelSerializer):
@@ -168,7 +195,11 @@ class ImageReadSerializer(ModelSerializer):
         fields = "__all__"
 
     def get_image(self, obj: Image) -> str:
-        return supabase.storage.from_("Cyberprepa").get_public_url(obj.image.name)
+        try:
+            return storage_client.get_public_url(obj.image.name)
+        except Exception:
+            logger.warning("Failed to get public URL for image %s", obj.image.name)
+            return settings.DEFAULT_IMAGE_URL
 
 
 class PaginationMetadataSerializer(Serializer):

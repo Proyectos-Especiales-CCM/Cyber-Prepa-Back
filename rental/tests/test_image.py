@@ -1,6 +1,7 @@
 import os
 import io
-from django.test import TestCase, Client
+from unittest.mock import patch
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
@@ -102,7 +103,7 @@ class ImageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response = response.json()
         self.assertEqual(response["id"], self.image.pk)
-        self.assertRegex(response["image"], "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/1280px-Playstation_logo_colour.svg.png")
+        self.assertEqual(response["image"], "https://avatars.githubusercontent.com/u/85468901?s=96&v=4")
 
     def test_images_api_read_detail_fail(self):
         # Test: Read an image without an authenticated user
@@ -203,3 +204,19 @@ class ImageTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 401)
+
+    @override_settings(DEFAULT_IMAGE_URL="http://example.com/default.png")
+    def test_images_api_read_detail_gcs_failure_returns_default_image(self):
+        # Test: When GCS fails to retrieve the public URL, the default image
+        # URL from settings is returned instead of raising an exception
+        access_token = AccessToken.for_user(self.admin_user)
+        with patch(
+            "rental.serializers.storage_client.get_public_url",
+            side_effect=Exception("GCS unavailable"),
+        ):
+            response = self.client.get(
+                f"/rental/images/{self.image.pk}/",
+                HTTP_AUTHORIZATION=f"Bearer {access_token}",
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["image"], "http://example.com/default.png")

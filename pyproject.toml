@@ -1,0 +1,37 @@
+[project]
+name = "cyber-prepa-back"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "channels>=4.3.2",
+    "channels-redis>=4.3.0",
+    "daphne>=4.2.1",
+    "django>=4.2.29",
+    "django-cors-headers>=4.9.0",
+    "django-filter>=25.1",
+    "django-redis>=6.0.0",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "drf-spectacular>=0.29.0",
+    "google-cloud-storage>=3.9.0",
+    "pillow>=11.3.0",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.1",
+]
+
+[dependency-groups]
+dev = [
+    "pylint-django>=2.7.0",
+]
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+select = ["I", "E", "F", "W"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+split-on-trailing-comma = true
