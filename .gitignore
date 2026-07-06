@@ -227,3 +227,6 @@ staticfiles/
 certs/
 certificate.pem
 key.pem
+
+### Google Service Account ###
+*sa.json

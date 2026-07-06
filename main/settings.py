@@ -314,3 +314,8 @@ SPECTACULAR_SETTINGS = {
 
 # Frontend
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+# Google Application Credentials
+# TODO: Replace by ADC
+GOOGLE_APPLICATION_CREDENTIALS = str(BASE_DIR / os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "sa.json"))
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
