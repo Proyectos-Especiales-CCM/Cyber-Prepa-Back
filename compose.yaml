@@ -11,6 +11,7 @@ services:
       - ./.env
     volumes:
       - ./logs:/app/logs
+      - ./sa.json:/app/sa.json:ro
 
   redis:
     image: "redis:alpine"
